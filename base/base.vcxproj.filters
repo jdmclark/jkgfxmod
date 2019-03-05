@@ -66,6 +66,18 @@
     <ClCompile Include="default_logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="file_block.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="file_stream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="input_stream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="memory_block.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="diagnostic_context_location.hpp">
@@ -156,6 +168,33 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="default_logger.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="memory_block.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="output_block.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="file_block.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="file_stream.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input_block.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="input_stream.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="buffered_output_stream.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="buffered_input_stream.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="constants.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

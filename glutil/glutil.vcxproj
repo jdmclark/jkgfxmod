@@ -11,43 +11,54 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="buffer.cpp" />
+    <ClCompile Include="framebuffer.cpp" />
+    <ClCompile Include="gl.cpp" />
+    <ClCompile Include="gl_types.cpp" />
+    <ClCompile Include="program.cpp" />
+    <ClCompile Include="renderbuffer.cpp" />
+    <ClCompile Include="shader.cpp" />
+    <ClCompile Include="texture.cpp" />
+    <ClCompile Include="vertex_array.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="buffer.hpp" />
+    <ClInclude Include="framebuffer.hpp" />
+    <ClInclude Include="gl.hpp" />
+    <ClInclude Include="gl_types.hpp" />
+    <ClInclude Include="program.hpp" />
+    <ClInclude Include="renderbuffer.hpp" />
+    <ClInclude Include="shader.hpp" />
+    <ClInclude Include="texture.hpp" />
+    <ClInclude Include="vertex_array.hpp" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\base\base.vcxproj">
       <Project>{0fe8f927-740c-443c-8548-87edb23f9374}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\detours\detours.vcxproj">
-      <Project>{e00f966e-ff4a-4451-98a0-f193fd23336e}</Project>
+    <ProjectReference Include="..\glad\glad.vcxproj">
+      <Project>{3c333f61-ffb8-41b1-90c5-83eff3ccc071}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\glutil\glutil.vcxproj">
-      <Project>{62102508-42ac-470c-8fad-bd866428cce9}</Project>
+    <ProjectReference Include="..\math\math.vcxproj">
+      <Project>{042bfc1f-0b4f-4b7b-bbbc-7660d120079e}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="ddraw_impl.cpp" />
-    <ClCompile Include="dxguids.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="renderer.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="ddraw_impl.hpp" />
-    <ClInclude Include="dxguids.hpp" />
-    <ClInclude Include="renderer.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{98040698-4306-4D5C-BE26-8C309DD2E938}</ProjectGuid>
+    <ProjectGuid>{62102508-42AC-470C-8FAD-BD866428CCE9}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>renderer</RootNamespace>
+    <RootNamespace>glutil</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -77,17 +88,16 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NOMINMAX;BUILD_DEBUG;ARCHITECTURE_X86;PLATFORM_WINDOWS;WIN32;_DEBUG;RENDERER_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;BUILD_DEBUG;ARCHITECTURE_X86;PLATFORM_WINDOWS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
+      <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -98,11 +108,11 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NOMINMAX;BUILD_RELEASE;ARCHITECTURE_X86;PLATFORM_WINDOWS;WIN32;NDEBUG;RENDERER_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;BUILD_RELEASE;ARCHITECTURE_X86;PLATFORM_WINDOWS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
+      <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -110,7 +120,6 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

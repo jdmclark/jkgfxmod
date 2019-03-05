@@ -1,5 +1,8 @@
 #include "ddraw_impl.hpp"
 #include "base/log.hpp"
+#include "dxguids.hpp"
+#include <d3d.h>
+
 
 jkgm::DirectDraw_impl::DirectDraw_impl(IDirectDraw *orig)
     : orig(orig)
@@ -8,7 +11,7 @@ jkgm::DirectDraw_impl::DirectDraw_impl(IDirectDraw *orig)
 
 HRESULT WINAPI jkgm::DirectDraw_impl::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
-    LOG_DEBUG("DirectDraw::QueryInterface");
+    LOG_DEBUG("DirectDraw::QueryInterface(", to_string(riid), ")");
     return orig->QueryInterface(riid, ppvObj);
 }
 

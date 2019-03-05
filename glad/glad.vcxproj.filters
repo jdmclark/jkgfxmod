@@ -15,28 +15,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ddraw_impl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="dxguids.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="renderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <ClInclude Include="gl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="glad.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ddraw_impl.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dxguids.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="renderer.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClCompile Include="glad.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

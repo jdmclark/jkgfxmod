@@ -11,6 +11,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "inject", "inject\inject.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "base", "base\base.vcxproj", "{0FE8F927-740C-443C-8548-87EDB23F9374}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glad", "glad\glad.vcxproj", "{3C333F61-FFB8-41B1-90C5-83EFF3CCC071}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glutil", "glutil\glutil.vcxproj", "{62102508-42AC-470C-8FAD-BD866428CCE9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "math", "math\math.vcxproj", "{042BFC1F-0B4F-4B7B-BBBC-7660D120079E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -33,6 +39,18 @@ Global
 		{0FE8F927-740C-443C-8548-87EDB23F9374}.Debug|x86.Build.0 = Debug|Win32
 		{0FE8F927-740C-443C-8548-87EDB23F9374}.Release|x86.ActiveCfg = Release|Win32
 		{0FE8F927-740C-443C-8548-87EDB23F9374}.Release|x86.Build.0 = Release|Win32
+		{3C333F61-FFB8-41B1-90C5-83EFF3CCC071}.Debug|x86.ActiveCfg = Debug|Win32
+		{3C333F61-FFB8-41B1-90C5-83EFF3CCC071}.Debug|x86.Build.0 = Debug|Win32
+		{3C333F61-FFB8-41B1-90C5-83EFF3CCC071}.Release|x86.ActiveCfg = Release|Win32
+		{3C333F61-FFB8-41B1-90C5-83EFF3CCC071}.Release|x86.Build.0 = Release|Win32
+		{62102508-42AC-470C-8FAD-BD866428CCE9}.Debug|x86.ActiveCfg = Debug|Win32
+		{62102508-42AC-470C-8FAD-BD866428CCE9}.Debug|x86.Build.0 = Debug|Win32
+		{62102508-42AC-470C-8FAD-BD866428CCE9}.Release|x86.ActiveCfg = Release|Win32
+		{62102508-42AC-470C-8FAD-BD866428CCE9}.Release|x86.Build.0 = Release|Win32
+		{042BFC1F-0B4F-4B7B-BBBC-7660D120079E}.Debug|x86.ActiveCfg = Debug|Win32
+		{042BFC1F-0B4F-4B7B-BBBC-7660D120079E}.Debug|x86.Build.0 = Debug|Win32
+		{042BFC1F-0B4F-4B7B-BBBC-7660D120079E}.Release|x86.ActiveCfg = Release|Win32
+		{042BFC1F-0B4F-4B7B-BBBC-7660D120079E}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

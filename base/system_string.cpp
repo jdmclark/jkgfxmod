@@ -8,13 +8,13 @@
 std::string jkgm::detail::ss_to_u8(detail::ss_u16_view sv)
 {
     std::wstring_convert<std::codecvt_utf8_utf16<detail::ss_u16_char>, detail::ss_u16_char> wsc;
-    return wsc.to_bytes(sv.data(), sv.data() + sv.size()); // NOLINT
+    return wsc.to_bytes(sv.data(), sv.data() + sv.size());
 }
 
 jkgm::detail::ss_u16_str jkgm::detail::ss_to_u16(std::string_view sv)
 {
     std::wstring_convert<std::codecvt_utf8_utf16<detail::ss_u16_char>, detail::ss_u16_char> wsc;
-    return wsc.from_bytes(sv.data(), sv.data() + sv.size()); // NOLINT
+    return wsc.from_bytes(sv.data(), sv.data() + sv.size());
 }
 
 std::string jkgm::escape_windows_cmdline_arg(std::string arg)

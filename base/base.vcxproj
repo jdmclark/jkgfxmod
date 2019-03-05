@@ -11,32 +11,72 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\base\base.vcxproj">
-      <Project>{0fe8f927-740c-443c-8548-87edb23f9374}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\detours\detours.vcxproj">
-      <Project>{e00f966e-ff4a-4451-98a0-f193fd23336e}</Project>
-    </ProjectReference>
+    <ClCompile Include="default_logger.cpp" />
+    <ClCompile Include="diagnostic_context.cpp" />
+    <ClCompile Include="diagnostic_context_location.cpp" />
+    <ClCompile Include="env.cpp" />
+    <ClCompile Include="fd_output_stream.cpp" />
+    <ClCompile Include="file_log_backend.cpp" />
+    <ClCompile Include="format_base.cpp" />
+    <ClCompile Include="global.cpp" />
+    <ClCompile Include="local.cpp" />
+    <ClCompile Include="log.cpp" />
+    <ClCompile Include="log_frontend.cpp" />
+    <ClCompile Include="log_level.cpp" />
+    <ClCompile Include="log_midend.cpp" />
+    <ClCompile Include="output_stream.cpp" />
+    <ClCompile Include="pipe.cpp" />
+    <ClCompile Include="system_string.cpp" />
+    <ClCompile Include="win32.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
+    <ClInclude Include="build_traits.hpp" />
+    <ClInclude Include="cstring_view.hpp" />
+    <ClInclude Include="default_logger.hpp" />
+    <ClInclude Include="diagnostic_context.hpp" />
+    <ClInclude Include="diagnostic_context_location.hpp" />
+    <ClInclude Include="env.hpp" />
+    <ClInclude Include="fd_output_stream.hpp" />
+    <ClInclude Include="filesystem.hpp" />
+    <ClInclude Include="file_log_backend.hpp" />
+    <ClInclude Include="flag_set.hpp" />
+    <ClInclude Include="format.hpp" />
+    <ClInclude Include="format_base.hpp" />
+    <ClInclude Include="format_numeric.hpp" />
+    <ClInclude Include="global.hpp" />
+    <ClInclude Include="id.hpp" />
+    <ClInclude Include="local.hpp" />
+    <ClInclude Include="log.hpp" />
+    <ClInclude Include="log_backend.hpp" />
+    <ClInclude Include="log_frontend.hpp" />
+    <ClInclude Include="log_level.hpp" />
+    <ClInclude Include="log_midend.hpp" />
+    <ClInclude Include="narrow.hpp" />
+    <ClInclude Include="output_stream.hpp" />
+    <ClInclude Include="pipe.hpp" />
+    <ClInclude Include="span.hpp" />
+    <ClInclude Include="system_string.hpp" />
+    <ClInclude Include="tagged.hpp" />
+    <ClInclude Include="uid.hpp" />
+    <ClInclude Include="unique_handle.hpp" />
+    <ClInclude Include="win32.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{40C101D2-80D4-4222-AE0E-1B8C9DB862B8}</ProjectGuid>
+    <ProjectGuid>{0FE8F927-740C-443C-8548-87EDB23F9374}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>inject</RootNamespace>
+    <RootNamespace>base</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -66,12 +106,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>BUILD_DEBUG;ARCHITECTURE_X86;PLATFORM_WINDOWS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BUILD_DEBUG;ARCHITECTURE_X86;PLATFORM_WINDOWS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -86,12 +126,12 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>BUILD_RELEASE;ARCHITECTURE_X86;PLATFORM_WINDOWS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BUILD_RELEASE;ARCHITECTURE_X86;PLATFORM_WINDOWS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

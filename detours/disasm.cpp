@@ -615,7 +615,7 @@ PBYTE CDetourDis::Copy0F78(REFCOPYENTRY, PBYTE pbDst, PBYTE pbSrc)
 
     ASSERT(!(m_bF2 && m_bOperandOverride));
 
-    // For insertq and presumably despite documentation extrq, mode must be 11, not checked.
+    // For insertq and presumably desjkgme documentation extrq, mode must be 11, not checked.
     // insertq/extrq/78 are followed by two immediate bytes, and given mode == 11, mod/rm byte is always one byte,
     // and the 0x78 makes 4 bytes (not counting the 66/F2/F which are accounted for elsewhere)
 

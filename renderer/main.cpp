@@ -1,7 +1,42 @@
+#include "base/default_logger.hpp"
+#include "base/log.hpp"
 #include <Windows.h>
 #include <detours/detours.h>
 
 constexpr wchar_t const *appname = L"JkGfxMod";
+
+void show_error_message(wchar_t const *message);
+bool attach_hooks();
+bool detach_hooks();
+
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID /*lpReserved*/)
+{
+    if(DetourIsHelperProcess()) {
+        return TRUE;
+    }
+
+    if(ul_reason_for_call == DLL_PROCESS_ATTACH) {
+        jkgm::setup_default_logging();
+
+        LOG_DEBUG("Attaching renderer to process");
+
+        if(!attach_hooks()) {
+            LOG_ERROR("Failed to commit Detours hook transaction");
+            show_error_message(L"Failed to install renderer");
+            return FALSE;
+        }
+
+        LOG_DEBUG("Finished attaching renderer to process");
+    }
+    else if(ul_reason_for_call == DLL_PROCESS_DETACH) {
+        detach_hooks();
+    }
+
+    return TRUE;
+}
+
+#include <Windows.h>
+#include <detours/detours.h>
 
 void show_error_message(wchar_t const *message)
 {
@@ -14,39 +49,25 @@ __declspec(dllexport) BOOL WINAPI export_workaround()
     return TRUE;
 }
 
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID /*lpReserved*/)
+bool attach_hooks()
 {
-    if(DetourIsHelperProcess()) {
-        return TRUE;
-    }
+    DetourRestoreAfterWith();
+    DetourTransactionBegin();
+    DetourUpdateThread(GetCurrentThread());
 
-    if(ul_reason_for_call == DLL_PROCESS_ATTACH) {
-        DetourRestoreAfterWith();
-        DetourTransactionBegin();
-        DetourUpdateThread(GetCurrentThread());
+    // Injected functions
 
-        // Injected functions
+    LONG error = DetourTransactionCommit();
+    return error == NO_ERROR;
+}
 
-        LONG error = DetourTransactionCommit();
+bool detach_hooks()
+{
+    DetourTransactionBegin();
+    DetourUpdateThread(GetCurrentThread());
 
-        if(error != NO_ERROR) {
-            show_error_message(L"Failed to install renderer");
-            return FALSE;
-        }
-    }
-    else if(ul_reason_for_call == DLL_PROCESS_DETACH) {
-        DetourTransactionBegin();
-        DetourUpdateThread(GetCurrentThread());
+    // Detach injected functions
 
-        // Detach injected functions
-
-        LONG error = DetourTransactionCommit();
-
-        if(error != NO_ERROR) {
-            show_error_message(L"Failed to uninstall renderer");
-            return FALSE;
-        }
-    }
-
-    return TRUE;
+    LONG error = DetourTransactionCommit();
+    return error == NO_ERROR;
 }

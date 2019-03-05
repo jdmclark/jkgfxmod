@@ -1,5 +1,8 @@
 # Ignore Visual Studio artifacts
 
+## User specific files
+*.user
+
 ## Build results
 [Dd]ebug/
 [Rr]elease/

@@ -1,0 +1,9 @@
+# Ignore Visual Studio artifacts
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x86/
+
+## Caches
+.vs/

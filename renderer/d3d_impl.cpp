@@ -99,18 +99,16 @@ HRESULT WINAPI jkgm::Direct3D_impl::EnumDevices(LPD3DENUMDEVICESCALLBACK a, LPVO
     hal_dev.dpcTriCaps.dwStippleHeight = 0;
 
     hal_dev.dwDeviceRenderBitDepth = DDBD_16;
-    hal_dev.dwDeviceZBufferBitDepth = DDBD_24;
-    hal_dev.dwMaxBufferSize = 0;
+    hal_dev.dwDeviceZBufferBitDepth = DDBD_16;
+    hal_dev.dwMaxBufferSize = 8388608;
     hal_dev.dwMaxVertexCount = 8388608;
-    hal_dev.dwMinTextureWidth = 0;
-    hal_dev.dwMinTextureHeight = 0;
+    hal_dev.dwMinTextureWidth = 1;
+    hal_dev.dwMinTextureHeight = 1;
     hal_dev.dwMaxTextureWidth = 4096;
     hal_dev.dwMaxTextureHeight = 4096;
 
     _D3DDeviceDesc hel_dev;
-    ZeroMemory(&hel_dev, sizeof(hel_dev));
-
-    hel_dev.dwSize = sizeof(hel_dev);
+    CopyMemory(&hel_dev, &hal_dev, sizeof(hel_dev));
 
     std::string desc_buf = "JkGfxMod OpenGL Renderer";
     std::string dev_buf = "device";

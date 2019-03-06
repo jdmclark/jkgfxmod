@@ -90,8 +90,9 @@ HRESULT WINAPI jkgm::DirectDraw_primary_surface_impl::EnumOverlayZOrders(DWORD a
 
 HRESULT WINAPI jkgm::DirectDraw_primary_surface_impl::Flip(LPDIRECTDRAWSURFACE a, DWORD b)
 {
-    LOG_ERROR("DirectDraw primary surface::Flip unimplemented");
-    abort();
+    LOG_DEBUG("DirectDraw primary surface::Flip");
+    r->present_game();
+    return DD_OK;
 }
 
 HRESULT WINAPI jkgm::DirectDraw_primary_surface_impl::GetAttachedSurface(LPDDSCAPS a,
@@ -140,8 +141,8 @@ HRESULT WINAPI jkgm::DirectDraw_primary_surface_impl::GetDC(HDC *a)
 
 HRESULT WINAPI jkgm::DirectDraw_primary_surface_impl::GetFlipStatus(DWORD a)
 {
-    LOG_ERROR("DirectDraw primary surface::GetFlipStatus unimplemented");
-    abort();
+    LOG_DEBUG("DirectDraw primary surface::GetFlipStatus call ignored");
+    return DD_OK;
 }
 
 HRESULT WINAPI jkgm::DirectDraw_primary_surface_impl::GetOverlayPosition(LPLONG a, LPLONG b)

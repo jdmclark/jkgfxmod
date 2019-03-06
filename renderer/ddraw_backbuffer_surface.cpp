@@ -5,11 +5,22 @@
 jkgm::DirectDraw_backbuffer_surface_impl::DirectDraw_backbuffer_surface_impl(renderer *r)
     : r(r)
 {
+    // JK tries to lock the backbuffer to write raw data into it. Obviously this isn't something
+    // that can reasonably happen today. Preallocate some reasonable size buffer to use as scratch
+    // space to return to JK.
+    scratch.resize(4096 * 4096 * 8);
 }
 
 HRESULT WINAPI jkgm::DirectDraw_backbuffer_surface_impl::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
-    LOG_ERROR("DirectDraw backbuffer surface::QueryInterface(", to_string(riid), ") unimplemented");
+    LOG_WARNING("DirectDraw backbuffer surface::QueryInterface(", to_string(riid), ")");
+
+    if(riid == ReusablePrimaryDirect3DDevice) {
+        *ppvObj = r->get_direct3ddevice();
+        return S_OK;
+    }
+
+    LOG_ERROR("DirectDraw backbuffer surface::QueryInterface not implemented for this type");
     abort();
 }
 
@@ -29,8 +40,8 @@ ULONG WINAPI jkgm::DirectDraw_backbuffer_surface_impl::Release()
 
 HRESULT WINAPI jkgm::DirectDraw_backbuffer_surface_impl::AddAttachedSurface(LPDIRECTDRAWSURFACE a)
 {
-    LOG_ERROR("DirectDraw backbuffer surface::AddAttachedSurface unimplemented");
-    abort();
+    LOG_DEBUG("DirectDraw backbuffer surface::AddAttachedSurface call ignored");
+    return DD_OK;
 }
 
 HRESULT WINAPI jkgm::DirectDraw_backbuffer_surface_impl::AddOverlayDirtyRect(LPRECT a)
@@ -45,8 +56,9 @@ HRESULT WINAPI jkgm::DirectDraw_backbuffer_surface_impl::Blt(LPRECT a,
                                                              DWORD d,
                                                              LPDDBLTFX e)
 {
-    LOG_ERROR("DirectDraw backbuffer surface::Blt unimplemented");
-    abort();
+    LOG_DEBUG("DirectDraw backbuffer surface::Blt call ignored");
+    // Hack: Ignore this backbuffer blt for now. This is probably used for the HUD.
+    return DD_OK;
 }
 
 HRESULT WINAPI jkgm::DirectDraw_backbuffer_surface_impl::BltBatch(LPDDBLTBATCH a, DWORD b, DWORD c)
@@ -68,8 +80,8 @@ HRESULT WINAPI jkgm::DirectDraw_backbuffer_surface_impl::BltFast(DWORD a,
 HRESULT WINAPI
     jkgm::DirectDraw_backbuffer_surface_impl::DeleteAttachedSurface(DWORD a, LPDIRECTDRAWSURFACE b)
 {
-    LOG_ERROR("DirectDraw backbuffer surface::DeleteAttachedSurface unimplemented");
-    abort();
+    LOG_DEBUG("DirectDraw backbuffer surface::DeleteAttachedSurface call ignored");
+    return DD_OK;
 }
 
 HRESULT WINAPI
@@ -185,8 +197,10 @@ HRESULT WINAPI jkgm::DirectDraw_backbuffer_surface_impl::Lock(LPRECT a,
                                                               DWORD c,
                                                               HANDLE d)
 {
-    LOG_ERROR("DirectDraw backbuffer surface::Lock unimplemented");
-    abort();
+    LOG_ERROR("DirectDraw backbuffer surface::Lock(", c, ") call ignored");
+    b->lpSurface = scratch.data();
+
+    return DD_OK;
 }
 
 HRESULT WINAPI jkgm::DirectDraw_backbuffer_surface_impl::ReleaseDC(HDC a)
@@ -227,8 +241,8 @@ HRESULT WINAPI jkgm::DirectDraw_backbuffer_surface_impl::SetPalette(LPDIRECTDRAW
 
 HRESULT WINAPI jkgm::DirectDraw_backbuffer_surface_impl::Unlock(LPVOID a)
 {
-    LOG_ERROR("DirectDraw backbuffer surface::Unlock unimplemented");
-    abort();
+    LOG_ERROR("DirectDraw backbuffer surface::Unlock call ignored");
+    return DD_OK;
 }
 
 HRESULT WINAPI jkgm::DirectDraw_backbuffer_surface_impl::UpdateOverlay(LPRECT a,

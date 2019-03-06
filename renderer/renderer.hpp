@@ -19,11 +19,15 @@ namespace jkgm {
         virtual void set_menu_source(char const *indexed_bitmap) = 0;
         virtual void present_menu() = 0;
 
+        virtual void present_game() = 0;
+
         virtual IDirectDraw *get_directdraw() = 0;
         virtual IDirect3D *get_direct3d() = 0;
+        virtual IDirect3DDevice *get_direct3ddevice() = 0;
 
         virtual IDirectDrawSurface *get_directdraw_primary_surface() = 0;
         virtual IDirectDrawSurface *get_directdraw_backbuffer_surface() = 0;
+        virtual IDirectDrawSurface *get_directdraw_phony_surface(DDSURFACEDESC desc) = 0;
 
         virtual IDirectDrawPalette *get_directdraw_palette(span<PALETTEENTRY const> entries) = 0;
     };

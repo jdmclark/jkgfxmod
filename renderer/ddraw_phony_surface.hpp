@@ -2,16 +2,15 @@
 
 #include "renderer.hpp"
 #include <ddraw.h>
-#include <vector>
 
 namespace jkgm {
-    class DirectDraw_backbuffer_surface_impl : public IDirectDrawSurface {
+    class DirectDraw_phony_surface_impl : public IDirectDrawSurface {
     private:
         renderer *r;
-        std::vector<char> scratch;
+        DDSURFACEDESC desc;
 
     public:
-        explicit DirectDraw_backbuffer_surface_impl(renderer *r);
+        DirectDraw_phony_surface_impl(renderer *r, DDSURFACEDESC desc);
 
         HRESULT WINAPI QueryInterface(REFIID riid, LPVOID *ppvObj) override;
         ULONG WINAPI AddRef() override;

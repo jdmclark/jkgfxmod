@@ -1,6 +1,6 @@
 #include "dxguids.hpp"
 
-char const* jkgm::to_string(REFIID riid)
+char const *jkgm::to_string(REFIID riid)
 {
     if(riid == IID_IDirectDraw) {
         return "IDirectDraw";
@@ -121,6 +121,9 @@ char const* jkgm::to_string(REFIID riid)
     }
     else if(riid == IID_IDirect3DVertexBuffer7) {
         return "IDirect3DVertexBuffer7";
+    }
+    else if(riid == ReusablePrimaryDirect3DDevice) {
+        return "EmulatedDirect3DDevice";
     }
     else {
         return "Unknown";

@@ -4,9 +4,11 @@
 #include "base/memory_block.hpp"
 #include "base/win32.hpp"
 #include "d3d_impl.hpp"
+#include "d3ddevice_impl.hpp"
 #include "ddraw_backbuffer_surface.hpp"
 #include "ddraw_impl.hpp"
 #include "ddraw_palette_impl.hpp"
+#include "ddraw_phony_surface.hpp"
 #include "ddraw_primary_surface.hpp"
 #include "glad/glad.h"
 #include "glutil/buffer.hpp"
@@ -136,11 +138,13 @@ namespace jkgm {
     private:
         DirectDraw_impl ddraw1;
         Direct3D_impl d3d1;
+        Direct3DDevice_impl d3ddevice1;
 
         DirectDraw_primary_surface_impl ddraw1_primary_surface;
         DirectDraw_backbuffer_surface_impl ddraw1_backbuffer_surface;
 
         std::vector<std::unique_ptr<DirectDrawPalette_impl>> ddraw1_palettes;
+        std::vector<std::unique_ptr<DirectDraw_phony_surface_impl>> phony_surfaces;
 
         HINSTANCE dll_instance;
         HWND hWnd;
@@ -161,6 +165,7 @@ namespace jkgm {
         explicit renderer_impl(HINSTANCE dll_instance)
             : ddraw1(this)
             , d3d1(this)
+            , d3ddevice1(this)
             , ddraw1_primary_surface(this)
             , ddraw1_backbuffer_surface(this)
             , dll_instance(dll_instance)
@@ -299,6 +304,12 @@ namespace jkgm {
             SwapBuffers(hDC);
         }
 
+        void present_game() override
+        {
+            gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
+            SwapBuffers(hDC);
+        }
+
         IDirectDraw *get_directdraw() override
         {
             return &ddraw1;
@@ -309,6 +320,11 @@ namespace jkgm {
             return &d3d1;
         }
 
+        IDirect3DDevice *get_direct3ddevice() override
+        {
+            return &d3ddevice1;
+        }
+
         IDirectDrawSurface *get_directdraw_primary_surface() override
         {
             return &ddraw1_primary_surface;
@@ -317,6 +333,12 @@ namespace jkgm {
         IDirectDrawSurface *get_directdraw_backbuffer_surface() override
         {
             return &ddraw1_backbuffer_surface;
+        }
+
+        IDirectDrawSurface *get_directdraw_phony_surface(DDSURFACEDESC desc) override
+        {
+            phony_surfaces.push_back(std::make_unique<DirectDraw_phony_surface_impl>(this, desc));
+            return phony_surfaces.back().get();
         }
 
         IDirectDrawPalette *get_directdraw_palette(span<PALETTEENTRY const> entries) override

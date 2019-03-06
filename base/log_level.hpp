@@ -5,7 +5,7 @@
 #include <string>
 
 namespace jkgm {
-    enum class log_level : uint8_t { error = 0, warning = 1, info = 2, debug = 3, trace = 4 };
+    enum class log_level : uint8_t { error = 1, warning = 2, info = 4, debug = 8, trace = 16 };
 
     using log_levels = flag_set<log_level>;
 

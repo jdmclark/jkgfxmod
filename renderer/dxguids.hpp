@@ -488,5 +488,18 @@ namespace jkgm {
               0x29,
               0xa8);
 
+    DECL_GUID(ReusablePrimaryDirect3DDevice,
+              0x1234,
+              0x1234,
+              0x1234,
+              0xFE,
+              0xEF,
+              0xFE,
+              0xEF,
+              0xFE,
+              0xEF,
+              0xFE,
+              0xEF);
+
     char const * to_string(REFIID riid);
 }

@@ -1,14 +1,15 @@
 #pragma once
 
 #include <ddraw.h>
+#include "renderer.hpp"
 
 namespace jkgm {
     class DirectDraw_impl : public IDirectDraw {
     private:
-        IDirectDraw *orig;
+        renderer *r;
 
     public:
-        explicit DirectDraw_impl(IDirectDraw *orig);
+        explicit DirectDraw_impl(renderer *r);
 
         HRESULT WINAPI QueryInterface(REFIID riid, LPVOID *ppvObj) override;
         ULONG WINAPI AddRef() override;

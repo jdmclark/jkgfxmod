@@ -3,6 +3,11 @@
 #include "base/log.hpp"
 #include "base/memory_block.hpp"
 #include "base/win32.hpp"
+#include "d3d_impl.hpp"
+#include "ddraw_backbuffer_surface.hpp"
+#include "ddraw_impl.hpp"
+#include "ddraw_palette_impl.hpp"
+#include "ddraw_primary_surface.hpp"
 #include "glad/glad.h"
 #include "glutil/buffer.hpp"
 #include "glutil/gl.hpp"
@@ -129,6 +134,14 @@ namespace jkgm {
 
     class renderer_impl : public renderer {
     private:
+        DirectDraw_impl ddraw1;
+        Direct3D_impl d3d1;
+
+        DirectDraw_primary_surface_impl ddraw1_primary_surface;
+        DirectDraw_backbuffer_surface_impl ddraw1_backbuffer_surface;
+
+        std::vector<std::unique_ptr<DirectDrawPalette_impl>> ddraw1_palettes;
+
         HINSTANCE dll_instance;
         HWND hWnd;
         HDC hDC;
@@ -146,7 +159,11 @@ namespace jkgm {
 
     public:
         explicit renderer_impl(HINSTANCE dll_instance)
-            : dll_instance(dll_instance)
+            : ddraw1(this)
+            , d3d1(this)
+            , ddraw1_primary_surface(this)
+            , ddraw1_backbuffer_surface(this)
+            , dll_instance(dll_instance)
         {
             indexed_bitmap_colors.resize(256, color_rgba8::zero());
             register_renderer_wndclass(dll_instance);
@@ -207,6 +224,16 @@ namespace jkgm {
             curr_ticks = prev_ticks;
         }
 
+        HRESULT enumerate_devices(LPDDENUMCALLBACKA cb, LPVOID lpContext) override
+        {
+            // Emit only a single device, the default system device
+            std::string fullname = "JkGfxMod OpenGL Device";
+            std::string shortname = "device";
+            cb(NULL, &fullname[0], &shortname[0], lpContext);
+
+            return DD_OK;
+        }
+
         void set_menu_source(char const *indexed_bitmap) override
         {
             indexed_bitmap_source = indexed_bitmap;
@@ -237,7 +264,7 @@ namespace jkgm {
 
             accumulator += elapsed;
             if(accumulator < menu_update_interval) {
-                //return;
+                // return;
             }
 
             accumulator = 0.0;
@@ -270,6 +297,36 @@ namespace jkgm {
             gl::draw_elements(gl::element_type::triangles, 6U, gl::index_type::uint32);
 
             SwapBuffers(hDC);
+        }
+
+        IDirectDraw *get_directdraw() override
+        {
+            return &ddraw1;
+        }
+
+        IDirect3D *get_direct3d() override
+        {
+            return &d3d1;
+        }
+
+        IDirectDrawSurface *get_directdraw_primary_surface() override
+        {
+            return &ddraw1_primary_surface;
+        }
+
+        IDirectDrawSurface *get_directdraw_backbuffer_surface() override
+        {
+            return &ddraw1_backbuffer_surface;
+        }
+
+        IDirectDrawPalette *get_directdraw_palette(span<PALETTEENTRY const> entries) override
+        {
+            ddraw1_palettes.push_back(std::make_unique<DirectDrawPalette_impl>(this));
+
+            auto *rv = ddraw1_palettes.back().get();
+            std::copy(entries.begin(), entries.end(), rv->entries.begin());
+
+            return rv;
         }
     };
 }

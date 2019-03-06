@@ -2,12 +2,14 @@
 
 #include "renderer.hpp"
 #include <ddraw.h>
+#include <vector>
 
 namespace jkgm {
     class DirectDraw_phony_surface_impl : public IDirectDrawSurface {
     private:
         renderer *r;
         DDSURFACEDESC desc;
+        std::vector<char> buffer;
 
     public:
         DirectDraw_phony_surface_impl(renderer *r, DDSURFACEDESC desc);

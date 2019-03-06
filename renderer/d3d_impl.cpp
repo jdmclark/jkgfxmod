@@ -134,8 +134,9 @@ HRESULT WINAPI jkgm::Direct3D_impl::CreateMaterial(LPDIRECT3DMATERIAL *a, IUnkno
 
 HRESULT WINAPI jkgm::Direct3D_impl::CreateViewport(LPDIRECT3DVIEWPORT *a, IUnknown *b)
 {
-    LOG_ERROR("Direct3D::CreateViewport unimplemented");
-    abort();
+    LOG_DEBUG("Direct3D::CreateViewport");
+    *a = r->get_direct3dviewport();
+    return D3D_OK;
 }
 
 HRESULT WINAPI jkgm::Direct3D_impl::FindDevice(LPD3DFINDDEVICESEARCH a, LPD3DFINDDEVICERESULT b)

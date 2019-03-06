@@ -6,11 +6,20 @@ jkgm::DirectDraw_phony_surface_impl::DirectDraw_phony_surface_impl(renderer *r, 
     : r(r)
     , desc(desc)
 {
+    // Construct some pessimistic backbuffer size
+    buffer.resize(desc.dwWidth * desc.dwHeight * 4 * 32);
 }
 
 HRESULT WINAPI jkgm::DirectDraw_phony_surface_impl::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
-    LOG_ERROR("DirectDraw phony surface::QueryInterface(", to_string(riid), ") unimplemented");
+    LOG_DEBUG("DirectDraw phony surface::QueryInterface(", to_string(riid), ")");
+
+    if(riid == IID_IDirect3DTexture) {
+        *ppvObj = r->get_direct3dtexture();
+        return S_OK;
+    }
+
+    LOG_ERROR("Called unimplemented DirectDraw phony surface::QueryInterface");
     abort();
 }
 
@@ -158,6 +167,7 @@ HRESULT WINAPI jkgm::DirectDraw_phony_surface_impl::GetPixelFormat(LPDDPIXELFORM
 HRESULT WINAPI jkgm::DirectDraw_phony_surface_impl::GetSurfaceDesc(LPDDSURFACEDESC a)
 {
     LOG_DEBUG("DirectDraw phony surface::GetSurfaceDesc(", a->dwFlags, ")");
+    LOG_DEBUG("Desc size: ", desc.dwSize, " dest size: ", a->dwSize);
     *a = desc;
     return DD_OK;
 }
@@ -179,8 +189,12 @@ HRESULT WINAPI jkgm::DirectDraw_phony_surface_impl::Lock(LPRECT a,
                                                          DWORD c,
                                                          HANDLE d)
 {
-    LOG_ERROR("DirectDraw phony surface::Lock unimplemented");
-    abort();
+    LOG_DEBUG("DirectDraw phony surface::Lock ignored");
+    // TODO: This is how texture data is uploaded. Implement.
+    LOG_DEBUG("Desc size: ", desc.dwSize, " dest size: ", b->dwSize);
+    *b = desc;
+    b->lpSurface = buffer.data();
+    return DD_OK;
 }
 
 HRESULT WINAPI jkgm::DirectDraw_phony_surface_impl::ReleaseDC(HDC a)
@@ -221,8 +235,9 @@ HRESULT WINAPI jkgm::DirectDraw_phony_surface_impl::SetPalette(LPDIRECTDRAWPALET
 
 HRESULT WINAPI jkgm::DirectDraw_phony_surface_impl::Unlock(LPVOID a)
 {
-    LOG_ERROR("DirectDraw phony surface::Unlock unimplemented");
-    abort();
+    LOG_DEBUG("DirectDraw phony surface::Unlock ignored");
+    // TODO: This is how texture data is uploaded. Implement.
+    return DD_OK;
 }
 
 HRESULT WINAPI jkgm::DirectDraw_phony_surface_impl::UpdateOverlay(LPRECT a,

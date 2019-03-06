@@ -17,6 +17,10 @@ HRESULT WINAPI jkgm::DirectDraw_impl::QueryInterface(REFIID riid, LPVOID *ppvObj
         *ppvObj = r->get_direct3d();
         return S_OK;
     }
+    else if(riid == IID_IDirectDraw2) {
+        *ppvObj = r->get_directdraw2();
+        return S_OK;
+    }
 
     LOG_ERROR("Called unimplemented DirectDraw::QueryInterface");
     abort();
@@ -80,6 +84,19 @@ HRESULT WINAPI jkgm::DirectDraw_impl::CreateSurface(LPDDSURFACEDESC a,
     }
     else if(a->ddsCaps.dwCaps & DDSCAPS_ZBUFFER) {
         LOG_DEBUG("DirectDraw::CreateSurface(zbuffer)");
+        *b = r->get_directdraw_phony_surface(*a);
+        return DD_OK;
+    }
+    else if(a->ddsCaps.dwCaps & DDSCAPS_TEXTURE) {
+        LOG_DEBUG("DirectDraw::CreateSurface(texture)");
+        LOG_DEBUG("Format: ",
+                  a->dwWidth,
+                  " - ",
+                  a->dwHeight,
+                  " - ",
+                  a->ddpfPixelFormat.dwRGBBitCount,
+                  " - ",
+                  a->ddpfPixelFormat.dwFlags);
         *b = r->get_directdraw_phony_surface(*a);
         return DD_OK;
     }

@@ -50,8 +50,14 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::CreateExecuteBuffer(LPD3DEXECUTEBUFFER
                                                               LPDIRECT3DEXECUTEBUFFER *b,
                                                               IUnknown *c)
 {
-    LOG_ERROR("Direct3DDevice::CreateExecuteBuffer unimplemented");
-    abort();
+    LOG_DEBUG("Direct3DDevice::CreateExecuteBuffer(caps: ", a->dwCaps, ", size: ", a->dwBufferSize, ")");
+
+    if(a->lpData != NULL) {
+        LOG_WARNING("Execute buffer may have received data at creation time");
+    }
+
+    *b = r->get_direct3dexecutebuffer(a->dwBufferSize);
+    return D3D_OK;
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::GetStats(LPD3DSTATS a)
@@ -64,14 +70,17 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::Execute(LPDIRECT3DEXECUTEBUFFER a,
                                                   LPDIRECT3DVIEWPORT b,
                                                   DWORD c)
 {
-    LOG_ERROR("Direct3DDevice::Execute unimplemented");
-    abort();
+    LOG_DEBUG("Direct3DDevice::Execute");
+
+    // TODO: Implement
+    return D3D_OK;
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::AddViewport(LPDIRECT3DVIEWPORT a)
 {
-    LOG_ERROR("Direct3DDevice::AddViewport unimplemented");
-    abort();
+    LOG_DEBUG("Direct3DDevice::AddViewport call ignored");
+    // TODO: Implement
+    return D3D_OK;
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::DeleteViewport(LPDIRECT3DVIEWPORT a)
@@ -157,14 +166,16 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::DeleteMatrix(D3DMATRIXHANDLE a)
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::BeginScene()
 {
-    LOG_ERROR("Direct3DDevice::BeginScene unimplemented");
-    abort();
+    LOG_DEBUG("Direct3DDevice::BeginScene");
+    // TODO Implement
+    return D3D_OK;
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::EndScene()
 {
-    LOG_ERROR("Direct3DDevice::EndScene unimplemented");
-    abort();
+    LOG_DEBUG("Direct3DDevice::EndScene");
+    // TODO: Implement
+    return D3D_OK;
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::GetDirect3D(LPDIRECT3D *a)

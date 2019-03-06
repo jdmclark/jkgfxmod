@@ -91,7 +91,8 @@ HRESULT WINAPI jkgm::DirectDraw_primary_surface_impl::EnumOverlayZOrders(DWORD a
 HRESULT WINAPI jkgm::DirectDraw_primary_surface_impl::Flip(LPDIRECTDRAWSURFACE a, DWORD b)
 {
     LOG_DEBUG("DirectDraw primary surface::Flip");
-    r->present_game();
+    // HACK: Implement
+    //r->present_game();
     return DD_OK;
 }
 

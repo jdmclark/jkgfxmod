@@ -8,7 +8,7 @@ jkgm::DirectDraw_backbuffer_surface_impl::DirectDraw_backbuffer_surface_impl(ren
     // JK tries to lock the backbuffer to write raw data into it. Obviously this isn't something
     // that can reasonably happen today. Preallocate some reasonable size buffer to use as scratch
     // space to return to JK.
-    scratch.resize(4096 * 4096 * 8);
+    scratch.resize(4096 * 4096 * 32);
 }
 
 HRESULT WINAPI jkgm::DirectDraw_backbuffer_surface_impl::QueryInterface(REFIID riid, LPVOID *ppvObj)

@@ -5,6 +5,10 @@
 #include "base/win32.hpp"
 #include "d3d_impl.hpp"
 #include "d3ddevice_impl.hpp"
+#include "d3dexecutebuffer_impl.hpp"
+#include "d3dtexture_impl.hpp"
+#include "d3dviewport_impl.hpp"
+#include "ddraw2_impl.hpp"
 #include "ddraw_backbuffer_surface.hpp"
 #include "ddraw_impl.hpp"
 #include "ddraw_palette_impl.hpp"
@@ -137,14 +141,18 @@ namespace jkgm {
     class renderer_impl : public renderer {
     private:
         DirectDraw_impl ddraw1;
+        DirectDraw2_impl ddraw2;
         Direct3D_impl d3d1;
         Direct3DDevice_impl d3ddevice1;
+        Direct3DViewport_impl d3dviewport1;
+        Direct3DTexture_impl d3dtexture1;
 
         DirectDraw_primary_surface_impl ddraw1_primary_surface;
         DirectDraw_backbuffer_surface_impl ddraw1_backbuffer_surface;
 
         std::vector<std::unique_ptr<DirectDrawPalette_impl>> ddraw1_palettes;
         std::vector<std::unique_ptr<DirectDraw_phony_surface_impl>> phony_surfaces;
+        std::vector<std::unique_ptr<Direct3DExecuteBuffer_impl>> execute_buffers;
 
         HINSTANCE dll_instance;
         HWND hWnd;
@@ -164,8 +172,11 @@ namespace jkgm {
     public:
         explicit renderer_impl(HINSTANCE dll_instance)
             : ddraw1(this)
+            , ddraw2(this)
             , d3d1(this)
             , d3ddevice1(this)
+            , d3dviewport1(this)
+            , d3dtexture1(this)
             , ddraw1_primary_surface(this)
             , ddraw1_backbuffer_surface(this)
             , dll_instance(dll_instance)
@@ -315,6 +326,11 @@ namespace jkgm {
             return &ddraw1;
         }
 
+        IDirectDraw2 *get_directdraw2() override
+        {
+            return &ddraw2;
+        }
+
         IDirect3D *get_direct3d() override
         {
             return &d3d1;
@@ -323,6 +339,16 @@ namespace jkgm {
         IDirect3DDevice *get_direct3ddevice() override
         {
             return &d3ddevice1;
+        }
+
+        IDirect3DViewport *get_direct3dviewport() override
+        {
+            return &d3dviewport1;
+        }
+
+        IDirect3DTexture *get_direct3dtexture() override
+        {
+            return &d3dtexture1;
         }
 
         IDirectDrawSurface *get_directdraw_primary_surface() override
@@ -349,6 +375,12 @@ namespace jkgm {
             std::copy(entries.begin(), entries.end(), rv->entries.begin());
 
             return rv;
+        }
+
+        IDirect3DExecuteBuffer *get_direct3dexecutebuffer(size_t bufsz) override
+        {
+            execute_buffers.push_back(std::make_unique<Direct3DExecuteBuffer_impl>(this, bufsz));
+            return execute_buffers.back().get();
         }
     };
 }

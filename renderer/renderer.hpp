@@ -22,8 +22,12 @@ namespace jkgm {
         virtual void present_game() = 0;
 
         virtual IDirectDraw *get_directdraw() = 0;
+        virtual IDirectDraw2 *get_directdraw2() = 0;
         virtual IDirect3D *get_direct3d() = 0;
         virtual IDirect3DDevice *get_direct3ddevice() = 0;
+        virtual IDirect3DViewport *get_direct3dviewport() = 0;
+        virtual IDirect3DTexture *get_direct3dtexture() = 0;
+        virtual IDirect3DExecuteBuffer *get_direct3dexecutebuffer(size_t bufsz) = 0;
 
         virtual IDirectDrawSurface *get_directdraw_primary_surface() = 0;
         virtual IDirectDrawSurface *get_directdraw_backbuffer_surface() = 0;

@@ -4,12 +4,15 @@
 #include <d3d.h>
 
 namespace jkgm {
-    class Direct3DTexture_impl : public IDirect3DTexture {
+    class DirectDraw_vidmem_texture_surface_impl;
+
+    class Direct3DTexture_vidmem_impl : public IDirect3DTexture {
     private:
         renderer *r;
+        DirectDraw_vidmem_texture_surface_impl *surf;
 
     public:
-        explicit Direct3DTexture_impl(renderer *r);
+        Direct3DTexture_vidmem_impl(renderer *r, DirectDraw_vidmem_texture_surface_impl *surf);
 
         HRESULT WINAPI QueryInterface(REFIID riid, LPVOID *ppvObj) override;
         ULONG WINAPI AddRef() override;

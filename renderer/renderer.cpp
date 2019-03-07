@@ -6,7 +6,6 @@
 #include "d3d_impl.hpp"
 #include "d3ddevice_impl.hpp"
 #include "d3dexecutebuffer_impl.hpp"
-#include "d3dtexture_impl.hpp"
 #include "d3dviewport_impl.hpp"
 #include "ddraw2_impl.hpp"
 #include "ddraw_backbuffer_surface.hpp"
@@ -14,6 +13,8 @@
 #include "ddraw_palette_impl.hpp"
 #include "ddraw_phony_surface.hpp"
 #include "ddraw_primary_surface.hpp"
+#include "ddraw_sysmem_texture_surface.hpp"
+#include "ddraw_vidmem_texture_surface.hpp"
 #include "glad/glad.h"
 #include "glutil/buffer.hpp"
 #include "glutil/gl.hpp"
@@ -148,13 +149,16 @@ namespace jkgm {
         Direct3D_impl d3d1;
         Direct3DDevice_impl d3ddevice1;
         Direct3DViewport_impl d3dviewport1;
-        Direct3DTexture_impl d3dtexture1;
 
         DirectDraw_primary_surface_impl ddraw1_primary_surface;
         DirectDraw_backbuffer_surface_impl ddraw1_backbuffer_surface;
 
         std::vector<std::unique_ptr<DirectDrawPalette_impl>> ddraw1_palettes;
         std::vector<std::unique_ptr<DirectDraw_phony_surface_impl>> phony_surfaces;
+        std::vector<std::unique_ptr<DirectDraw_sysmem_texture_surface_impl>>
+            sysmem_texture_surfaces;
+        std::vector<std::unique_ptr<DirectDraw_vidmem_texture_surface_impl>>
+            vidmem_texture_surfaces;
         std::vector<std::unique_ptr<Direct3DExecuteBuffer_impl>> execute_buffers;
 
         HINSTANCE dll_instance;
@@ -174,7 +178,6 @@ namespace jkgm {
             , d3d1(this)
             , d3ddevice1(this)
             , d3dviewport1(this)
-            , d3dtexture1(this)
             , ddraw1_primary_surface(this)
             , ddraw1_backbuffer_surface(this)
             , dll_instance(dll_instance)
@@ -191,7 +194,7 @@ namespace jkgm {
                                 700,
                                 300,
                                 1920,
-                                1080,
+                                1440,
                                 /*parent*/ NULL,
                                 /*menu*/ NULL,
                                 dll_instance,
@@ -297,10 +300,13 @@ namespace jkgm {
 
         void execute_game(IDirect3DExecuteBuffer *cmdbuf, IDirect3DViewport *vp) override
         {
-            //gl::set_face_cull_mode(gl::face_mode::front);
             gl::enable(gl::capability::depth_test);
+            gl::enable(gl::capability::blend);
+            gl::set_blend_function(gl::blend_function::one,
+                                   gl::blend_function::one_minus_source_alpha);
             gl::set_depth_function(gl::comparison_function::less);
             gl::use_program(ogs->game_program);
+            gl::set_uniform_integer(gl::uniform_location_id(0), 0);
 
             D3DEXECUTEDATA ed;
             cmdbuf->GetExecuteData(&ed);
@@ -324,6 +330,9 @@ namespace jkgm {
 
                 for(size_t i = 0; i < inst.wCount; ++i) {
                     switch(inst.bOpcode) {
+                    case D3DOP_EXIT:
+                        break;
+
                     case D3DOP_PROCESSVERTICES: {
                         auto const *payload = (D3DPROCESSVERTICES const *)cmd_span.data();
                         if(payload->dwFlags != D3DPROCESSVERTICES_COPY || payload->wStart != 0 ||
@@ -342,10 +351,11 @@ namespace jkgm {
 
                     case D3DOP_STATERENDER: {
                         auto const *payload = (D3DSTATE const *)cmd_span.data();
-                        switch(payload->dtstTransformStateType) {
+                        switch(payload->drstRenderStateType) {
                         case D3DRENDERSTATE_TEXTUREHANDLE:
-                            LOG_DEBUG("Set texture handle");
-                            // TODO
+                            gl::bind_texture(
+                                gl::texture_bind_target::texture_2d,
+                                vidmem_texture_surfaces.at(payload->dwArg[0])->ogl_texture);
                             break;
 
                         // Silently ignore some useless commands
@@ -388,25 +398,31 @@ namespace jkgm {
                         // HACK:
                         ::glBegin(GL_TRIANGLES);
 
-                        // Convert color to 565
                         auto r1 = float(RGBA_GETRED(v1.color)) / 255.0f;
                         auto g1 = float(RGBA_GETGREEN(v1.color)) / 255.0f;
                         auto b1 = float(RGBA_GETBLUE(v1.color)) / 255.0f;
+                        auto a1 = float(RGBA_GETALPHA(v1.color)) / 255.0f;
 
-                        ::glColor3f(r1, g1, b1);
+                        ::glColor4f(r1, g1, b1, a1);
+                        ::glTexCoord2f(v1.tu, v1.tv);
                         ::glVertex4f(v1.sx, v1.sy, v1.sz, v1.rhw);
 
                         auto r2 = float(RGBA_GETRED(v2.color)) / 255.0f;
                         auto g2 = float(RGBA_GETGREEN(v2.color)) / 255.0f;
                         auto b2 = float(RGBA_GETBLUE(v2.color)) / 255.0f;
+                        auto a2 = float(RGBA_GETALPHA(v2.color)) / 255.0f;
 
-                        ::glColor3f(r2, g2, b2);
+                        ::glColor4f(r2, g2, b2, a2);
+                        ::glTexCoord2f(v2.tu, v2.tv);
                         ::glVertex4f(v2.sx, v2.sy, v2.sz, v2.rhw);
 
                         auto r3 = float(RGBA_GETRED(v3.color)) / 255.0f;
                         auto g3 = float(RGBA_GETGREEN(v3.color)) / 255.0f;
                         auto b3 = float(RGBA_GETBLUE(v3.color)) / 255.0f;
-                        ::glColor3f(r3, g3, b3);
+                        auto a3 = float(RGBA_GETALPHA(v3.color)) / 255.0f;
+
+                        ::glColor4f(r3, g3, b3, a3);
+                        ::glTexCoord2f(v3.tu, v3.tv);
                         ::glVertex4f(v3.sx, v3.sy, v3.sz, v3.rhw);
                         ::glEnd();
                     } break;
@@ -454,11 +470,6 @@ namespace jkgm {
             return &d3dviewport1;
         }
 
-        IDirect3DTexture *get_direct3dtexture() override
-        {
-            return &d3dtexture1;
-        }
-
         IDirectDrawSurface *get_directdraw_primary_surface() override
         {
             return &ddraw1_primary_surface;
@@ -469,10 +480,27 @@ namespace jkgm {
             return &ddraw1_backbuffer_surface;
         }
 
-        IDirectDrawSurface *get_directdraw_phony_surface(DDSURFACEDESC desc) override
+        IDirectDrawSurface *get_directdraw_phony_surface(DDSURFACEDESC desc,
+                                                         std::string name) override
         {
-            phony_surfaces.push_back(std::make_unique<DirectDraw_phony_surface_impl>(this, desc));
+            phony_surfaces.push_back(
+                std::make_unique<DirectDraw_phony_surface_impl>(this, desc, std::move(name)));
             return phony_surfaces.back().get();
+        }
+
+        IDirectDrawSurface *get_directdraw_sysmem_texture_surface(DDSURFACEDESC desc) override
+        {
+            sysmem_texture_surfaces.push_back(
+                std::make_unique<DirectDraw_sysmem_texture_surface_impl>(this, desc));
+            return sysmem_texture_surfaces.back().get();
+        }
+
+        IDirectDrawSurface *get_directdraw_vidmem_texture_surface(DDSURFACEDESC desc) override
+        {
+            vidmem_texture_surfaces.push_back(
+                std::make_unique<DirectDraw_vidmem_texture_surface_impl>(
+                    this, desc, vidmem_texture_surfaces.size()));
+            return vidmem_texture_surfaces.back().get();
         }
 
         IDirectDrawPalette *get_directdraw_palette(span<PALETTEENTRY const> entries) override

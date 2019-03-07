@@ -54,7 +54,16 @@
     <ClCompile Include="ddraw2_impl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="d3dtexture_impl.cpp">
+    <ClCompile Include="d3dtexture_sysmem_impl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="d3dtexture_vidmem_impl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ddraw_sysmem_texture_surface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ddraw_vidmem_texture_surface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -95,7 +104,16 @@
     <ClInclude Include="ddraw2_impl.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="d3dtexture_impl.hpp">
+    <ClInclude Include="d3dtexture_sysmem_impl.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ddraw_sysmem_texture_surface.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ddraw_vidmem_texture_surface.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="d3dtexture_vidmem_impl.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

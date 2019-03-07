@@ -24,7 +24,8 @@
   <ItemGroup>
     <ClCompile Include="d3ddevice_impl.cpp" />
     <ClCompile Include="d3dexecutebuffer_impl.cpp" />
-    <ClCompile Include="d3dtexture_impl.cpp" />
+    <ClCompile Include="d3dtexture_sysmem_impl.cpp" />
+    <ClCompile Include="d3dtexture_vidmem_impl.cpp" />
     <ClCompile Include="d3dviewport_impl.cpp" />
     <ClCompile Include="d3d_impl.cpp" />
     <ClCompile Include="ddraw2_impl.cpp" />
@@ -33,6 +34,8 @@
     <ClCompile Include="ddraw_palette_impl.cpp" />
     <ClCompile Include="ddraw_phony_surface.cpp" />
     <ClCompile Include="ddraw_primary_surface.cpp" />
+    <ClCompile Include="ddraw_sysmem_texture_surface.cpp" />
+    <ClCompile Include="ddraw_vidmem_texture_surface.cpp" />
     <ClCompile Include="dxguids.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="renderer.cpp" />
@@ -40,7 +43,8 @@
   <ItemGroup>
     <ClInclude Include="d3ddevice_impl.hpp" />
     <ClInclude Include="d3dexecutebuffer_impl.hpp" />
-    <ClInclude Include="d3dtexture_impl.hpp" />
+    <ClInclude Include="d3dtexture_sysmem_impl.hpp" />
+    <ClInclude Include="d3dtexture_vidmem_impl.hpp" />
     <ClInclude Include="d3dviewport_impl.hpp" />
     <ClInclude Include="d3d_impl.hpp" />
     <ClInclude Include="ddraw2_impl.hpp" />
@@ -49,6 +53,8 @@
     <ClInclude Include="ddraw_palette_impl.hpp" />
     <ClInclude Include="ddraw_phony_surface.hpp" />
     <ClInclude Include="ddraw_primary_surface.hpp" />
+    <ClInclude Include="ddraw_sysmem_texture_surface.hpp" />
+    <ClInclude Include="ddraw_vidmem_texture_surface.hpp" />
     <ClInclude Include="dxguids.hpp" />
     <ClInclude Include="renderer.hpp" />
   </ItemGroup>

@@ -1,20 +1,23 @@
 #pragma once
 
+#include "d3dtexture_sysmem_impl.hpp"
+#include "glutil/texture.hpp"
 #include "renderer.hpp"
 #include <ddraw.h>
 #include <vector>
 
 namespace jkgm {
-    class DirectDraw_phony_surface_impl : public IDirectDrawSurface {
+    class DirectDraw_sysmem_texture_surface_impl : public IDirectDrawSurface {
     private:
         renderer *r;
-        DDSURFACEDESC desc;
-        std::vector<char> buffer;
+        Direct3DTexture_sysmem_impl d3dtexture;
 
-        std::string name;
+        DDSURFACEDESC desc;
 
     public:
-        DirectDraw_phony_surface_impl(renderer *r, DDSURFACEDESC desc, std::string name);
+        std::vector<char> buffer;
+
+        DirectDraw_sysmem_texture_surface_impl(renderer *r, DDSURFACEDESC desc);
 
         HRESULT WINAPI QueryInterface(REFIID riid, LPVOID *ppvObj) override;
         ULONG WINAPI AddRef() override;

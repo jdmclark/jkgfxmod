@@ -28,7 +28,8 @@ ULONG WINAPI jkgm::Direct3DDevice_impl::Release()
     return 1000;
 }
 
-HRESULT WINAPI jkgm::Direct3DDevice_impl::Initialize(LPDIRECT3D a, LPGUID b, LPD3DDEVICEDESC c) {
+HRESULT WINAPI jkgm::Direct3DDevice_impl::Initialize(LPDIRECT3D a, LPGUID b, LPD3DDEVICEDESC c)
+{
     LOG_ERROR("Direct3DDevice::Initialize unimplemented");
     abort();
 }
@@ -50,7 +51,8 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::CreateExecuteBuffer(LPD3DEXECUTEBUFFER
                                                               LPDIRECT3DEXECUTEBUFFER *b,
                                                               IUnknown *c)
 {
-    LOG_DEBUG("Direct3DDevice::CreateExecuteBuffer(caps: ", a->dwCaps, ", size: ", a->dwBufferSize, ")");
+    LOG_DEBUG(
+        "Direct3DDevice::CreateExecuteBuffer(caps: ", a->dwCaps, ", size: ", a->dwBufferSize, ")");
 
     if(a->lpData != NULL) {
         LOG_ERROR("Execute buffer may have received data at creation time");
@@ -124,16 +126,52 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::EnumTextureFormats(LPD3DENUMTEXTUREFOR
     ddsd.dwFlags = DDSD_PIXELFORMAT | DDSD_CAPS;
     ddsd.dwWidth = 4096;
     ddsd.dwHeight = 4096;
-    ddsd.dwMipMapCount = 32;
+    ddsd.dwMipMapCount = 0;
     ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
     ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+
     ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-    ddsd.ddpfPixelFormat.dwRGBBitCount = 24;
-    ddsd.ddpfPixelFormat.dwAlphaBitDepth = 8;
-    ddsd.ddpfPixelFormat.dwRBitMask = 0xFF;
-    ddsd.ddpfPixelFormat.dwGBitMask = 0xFF00;
-    ddsd.ddpfPixelFormat.dwBBitMask = 0xFF0000;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 32;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x000000FF;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x0000FF00;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0x00FF0000;
     ddsd.ddpfPixelFormat.dwRGBAlphaBitMask = 0xFF000000;
+
+    a(&ddsd, b);
+
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 32;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x000000FF;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x0000FF00;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0x00FF0000;
+    ddsd.ddpfPixelFormat.dwRGBAlphaBitMask = 0;
+
+    a(&ddsd, b);
+
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 24;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x000000FF;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x0000FF00;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0x00FF0000;
+    ddsd.ddpfPixelFormat.dwRGBAlphaBitMask = 0;
+
+    a(&ddsd, b);
+
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x0000001F;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x000007E0;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0x0000F800;
+    ddsd.ddpfPixelFormat.dwRGBAlphaBitMask = 0;
+
+    a(&ddsd, b);
+
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x0000001F;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x000003E0;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0x00007C00;
+    ddsd.ddpfPixelFormat.dwRGBAlphaBitMask = 0x00008000;
 
     a(&ddsd, b);
 

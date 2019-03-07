@@ -1,20 +1,25 @@
 #pragma once
 
+#include "d3dtexture_vidmem_impl.hpp"
+#include "glutil/texture.hpp"
 #include "renderer.hpp"
 #include <ddraw.h>
 #include <vector>
 
 namespace jkgm {
-    class DirectDraw_phony_surface_impl : public IDirectDrawSurface {
+    class DirectDraw_vidmem_texture_surface_impl : public IDirectDrawSurface {
     private:
         renderer *r;
+        Direct3DTexture_vidmem_impl d3dtexture;
+
+    public:
         DDSURFACEDESC desc;
         std::vector<char> buffer;
 
-        std::string name;
+        size_t texture_index = 0U;
+        gl::texture ogl_texture;
 
-    public:
-        DirectDraw_phony_surface_impl(renderer *r, DDSURFACEDESC desc, std::string name);
+        DirectDraw_vidmem_texture_surface_impl(renderer *r, DDSURFACEDESC desc, size_t texture_index);
 
         HRESULT WINAPI QueryInterface(REFIID riid, LPVOID *ppvObj) override;
         ULONG WINAPI AddRef() override;
@@ -58,5 +63,7 @@ namespace jkgm {
                                      LPDDOVERLAYFX e) override;
         HRESULT WINAPI UpdateOverlayDisplay(DWORD a) override;
         HRESULT WINAPI UpdateOverlayZOrder(DWORD a, LPDIRECTDRAWSURFACE b) override;
+
+        void regenerate_texture();
     };
 }

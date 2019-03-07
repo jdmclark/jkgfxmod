@@ -79,26 +79,25 @@ HRESULT WINAPI jkgm::DirectDraw_impl::CreateSurface(LPDDSURFACEDESC a,
     }
     else if(a->ddsCaps.dwCaps & DDSCAPS_OFFSCREENPLAIN) {
         LOG_DEBUG("DirectDraw::CreateSurface(offscreen plain)");
-        *b = r->get_directdraw_phony_surface(*a);
+        *b = r->get_directdraw_phony_surface(*a, "offscreen plain");
         return DD_OK;
     }
     else if(a->ddsCaps.dwCaps & DDSCAPS_ZBUFFER) {
         LOG_DEBUG("DirectDraw::CreateSurface(zbuffer)");
-        *b = r->get_directdraw_phony_surface(*a);
+        *b = r->get_directdraw_phony_surface(*a, "zbuffer");
         return DD_OK;
     }
     else if(a->ddsCaps.dwCaps & DDSCAPS_TEXTURE) {
-        LOG_DEBUG("DirectDraw::CreateSurface(texture)");
-        LOG_DEBUG("Format: ",
-                  a->dwWidth,
-                  " - ",
-                  a->dwHeight,
-                  " - ",
-                  a->ddpfPixelFormat.dwRGBBitCount,
-                  " - ",
-                  a->ddpfPixelFormat.dwFlags);
-        *b = r->get_directdraw_phony_surface(*a);
-        return DD_OK;
+        if(a->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY) {
+            LOG_DEBUG("DirectDraw::CreateSurface(sysmem texture)");
+            *b = r->get_directdraw_sysmem_texture_surface(*a);
+            return DD_OK;
+        }
+        else if(a->ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY) {
+            LOG_DEBUG("DirectDraw::CreateSurface(vidmem texture)");
+            *b = r->get_directdraw_vidmem_texture_surface(*a);
+            return DD_OK;
+        }
     }
 
     LOG_ERROR("DirectDraw::CreateSurface(", a->ddsCaps.dwCaps, ") unimplemented for this type");
@@ -141,7 +140,7 @@ HRESULT WINAPI jkgm::DirectDraw_impl::EnumDisplayModes(DWORD a,
     d(&ddsd, c);
 
     ddsd.dwWidth = 1920;
-    ddsd.dwHeight = 1080;
+    ddsd.dwHeight = 1440;
     d(&ddsd, c);
 
     return DD_OK;

@@ -85,6 +85,7 @@ namespace jkgm {
 
     struct opengl_state {
         gl::program menu_program;
+        gl::program game_program;
 
         gl::vertex_array menu_vao;
         gl::buffer menu_vb;
@@ -99,6 +100,8 @@ namespace jkgm {
 
             link_program_from_files(
                 "menu", &menu_program, "jkgm/shaders/menu.vert", "jkgm/shaders/menu.frag");
+            link_program_from_files(
+                "game", &game_program, "jkgm/shaders/game.vert", "jkgm/shaders/game.frag");
 
             gl::bind_vertex_array(menu_vao);
 
@@ -163,11 +166,6 @@ namespace jkgm {
 
         char const *indexed_bitmap_source = nullptr;
         std::vector<color_rgba8> indexed_bitmap_colors;
-
-        using timestamp_t = std::chrono::high_resolution_clock::time_point;
-        timestamp_t prev_ticks;
-        timestamp_t curr_ticks;
-        double accumulator = 0.0;
 
     public:
         explicit renderer_impl(HINSTANCE dll_instance)
@@ -235,9 +233,6 @@ namespace jkgm {
             SwapBuffers(hDC);
 
             ogs = std::make_unique<opengl_state>();
-
-            prev_ticks = std::chrono::high_resolution_clock::now();
-            curr_ticks = prev_ticks;
         }
 
         HRESULT enumerate_devices(LPDDENUMCALLBACKA cb, LPVOID lpContext) override
@@ -270,21 +265,6 @@ namespace jkgm {
 
         void present_menu() override
         {
-            // Cap menu presentation at 15 Hz
-            constexpr double menu_update_interval = (1.0 / 60.0);
-
-            prev_ticks = curr_ticks;
-            curr_ticks = std::chrono::high_resolution_clock::now();
-            auto elapsed_ticks = curr_ticks - prev_ticks;
-            double elapsed = std::chrono::duration<double>(elapsed_ticks).count();
-
-            accumulator += elapsed;
-            if(accumulator < menu_update_interval) {
-                // return;
-            }
-
-            accumulator = 0.0;
-
             gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
 
             // Copy new data from menu source
@@ -315,10 +295,138 @@ namespace jkgm {
             SwapBuffers(hDC);
         }
 
+        void execute_game(IDirect3DExecuteBuffer *cmdbuf, IDirect3DViewport *vp) override
+        {
+            //gl::set_face_cull_mode(gl::face_mode::front);
+            gl::enable(gl::capability::depth_test);
+            gl::set_depth_function(gl::comparison_function::less);
+            gl::use_program(ogs->game_program);
+
+            D3DEXECUTEDATA ed;
+            cmdbuf->GetExecuteData(&ed);
+
+            D3DEXECUTEBUFFERDESC ebd;
+            cmdbuf->Lock(&ebd);
+
+            D3DVIEWPORT vpd;
+            vp->GetViewport(&vpd);
+
+            auto vertex_span =
+                make_span((D3DTLVERTEX const *)((char const *)ebd.lpData + ed.dwVertexOffset),
+                          ed.dwVertexCount);
+
+            auto cmd_span = make_span((char const *)ebd.lpData + ed.dwInstructionOffset,
+                                      ed.dwInstructionLength);
+
+            while(!cmd_span.empty()) {
+                D3DINSTRUCTION inst = *(D3DINSTRUCTION const *)cmd_span.data();
+                cmd_span = cmd_span.subspan(sizeof(D3DINSTRUCTION), span_to_end);
+
+                for(size_t i = 0; i < inst.wCount; ++i) {
+                    switch(inst.bOpcode) {
+                    case D3DOP_PROCESSVERTICES: {
+                        auto const *payload = (D3DPROCESSVERTICES const *)cmd_span.data();
+                        if(payload->dwFlags != D3DPROCESSVERTICES_COPY || payload->wStart != 0 ||
+                           payload->wDest != 0) {
+                            LOG_ERROR("Unimplemented process vertices opcode ignored: ",
+                                      payload->dwFlags,
+                                      " ",
+                                      payload->dwCount,
+                                      " ",
+                                      payload->wStart,
+                                      " ",
+                                      payload->wDest);
+                            abort();
+                        }
+                    } break;
+
+                    case D3DOP_STATERENDER: {
+                        auto const *payload = (D3DSTATE const *)cmd_span.data();
+                        switch(payload->dtstTransformStateType) {
+                        case D3DRENDERSTATE_TEXTUREHANDLE:
+                            LOG_DEBUG("Set texture handle");
+                            // TODO
+                            break;
+
+                        // Silently ignore some useless commands
+                        case D3DRENDERSTATE_ANTIALIAS:
+                        case D3DRENDERSTATE_TEXTUREPERSPECTIVE:
+                        case D3DRENDERSTATE_FILLMODE:
+                        case D3DRENDERSTATE_SHADEMODE:
+                        case D3DRENDERSTATE_MONOENABLE:
+                        case D3DRENDERSTATE_TEXTUREMAPBLEND:
+                        case D3DRENDERSTATE_TEXTUREMAG:
+                        case D3DRENDERSTATE_TEXTUREMIN:
+                        case D3DRENDERSTATE_SRCBLEND:
+                        case D3DRENDERSTATE_DESTBLEND:
+                        case D3DRENDERSTATE_CULLMODE:
+                        case D3DRENDERSTATE_ZFUNC:
+                        case D3DRENDERSTATE_ALPHAFUNC:
+                        case D3DRENDERSTATE_DITHERENABLE:
+                        case D3DRENDERSTATE_ALPHABLENDENABLE:
+                        case D3DRENDERSTATE_FOGENABLE:
+                        case D3DRENDERSTATE_SPECULARENABLE:
+                        case D3DRENDERSTATE_SUBPIXEL:
+                        case D3DRENDERSTATE_SUBPIXELX:
+                        case D3DRENDERSTATE_STIPPLEDALPHA:
+                            break;
+
+                        default:
+                            LOG_WARNING("Ignored unknown state render opcode: ",
+                                        (int)payload->dtstTransformStateType);
+                            break;
+                        }
+                    } break;
+
+                    case D3DOP_TRIANGLE: {
+                        auto const *payload = (D3DTRIANGLE const *)cmd_span.data();
+
+                        auto const &v1 = vertex_span.data()[payload->v1];
+                        auto const &v2 = vertex_span.data()[payload->v2];
+                        auto const &v3 = vertex_span.data()[payload->v3];
+
+                        // HACK:
+                        ::glBegin(GL_TRIANGLES);
+
+                        // Convert color to 565
+                        auto r1 = float(RGBA_GETRED(v1.color)) / 255.0f;
+                        auto g1 = float(RGBA_GETGREEN(v1.color)) / 255.0f;
+                        auto b1 = float(RGBA_GETBLUE(v1.color)) / 255.0f;
+
+                        ::glColor3f(r1, g1, b1);
+                        ::glVertex4f(v1.sx, v1.sy, v1.sz, v1.rhw);
+
+                        auto r2 = float(RGBA_GETRED(v2.color)) / 255.0f;
+                        auto g2 = float(RGBA_GETGREEN(v2.color)) / 255.0f;
+                        auto b2 = float(RGBA_GETBLUE(v2.color)) / 255.0f;
+
+                        ::glColor3f(r2, g2, b2);
+                        ::glVertex4f(v2.sx, v2.sy, v2.sz, v2.rhw);
+
+                        auto r3 = float(RGBA_GETRED(v3.color)) / 255.0f;
+                        auto g3 = float(RGBA_GETGREEN(v3.color)) / 255.0f;
+                        auto b3 = float(RGBA_GETBLUE(v3.color)) / 255.0f;
+                        ::glColor3f(r3, g3, b3);
+                        ::glVertex4f(v3.sx, v3.sy, v3.sz, v3.rhw);
+                        ::glEnd();
+                    } break;
+
+                    default:
+                        LOG_WARNING(
+                            "Unimplemented execute buffer opcode ", inst.bOpcode, " was ignored");
+                    }
+
+                    cmd_span = cmd_span.subspan(inst.bSize, span_to_end);
+                }
+            }
+
+            cmdbuf->Unlock();
+        }
+
         void present_game() override
         {
-            gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
             SwapBuffers(hDC);
+            gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
         }
 
         IDirectDraw *get_directdraw() override

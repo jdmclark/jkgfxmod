@@ -36,14 +36,15 @@ HRESULT WINAPI jkgm::Direct3DViewport_impl::Initialize(LPDIRECT3D a)
 
 HRESULT WINAPI jkgm::Direct3DViewport_impl::GetViewport(LPD3DVIEWPORT a)
 {
-    LOG_ERROR("Direct3DViewport::GetViewport unimplemented");
-    abort();
+    LOG_DEBUG("Direct3DViewport::GetViewport");
+    *a = data;
+    return D3D_OK;
 }
 
 HRESULT WINAPI jkgm::Direct3DViewport_impl::SetViewport(LPD3DVIEWPORT a)
 {
-    LOG_DEBUG("Direct3DViewport::SetViewport call ignored");
-    // Hack: SetViewport must be implemented in order for graphics to appear.
+    LOG_DEBUG("Direct3DViewport::SetViewport call");
+    data = *a;
     return D3D_OK;
 }
 

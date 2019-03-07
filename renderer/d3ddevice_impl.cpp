@@ -53,7 +53,8 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::CreateExecuteBuffer(LPD3DEXECUTEBUFFER
     LOG_DEBUG("Direct3DDevice::CreateExecuteBuffer(caps: ", a->dwCaps, ", size: ", a->dwBufferSize, ")");
 
     if(a->lpData != NULL) {
-        LOG_WARNING("Execute buffer may have received data at creation time");
+        LOG_ERROR("Execute buffer may have received data at creation time");
+        abort();
     }
 
     *b = r->get_direct3dexecutebuffer(a->dwBufferSize);
@@ -71,8 +72,7 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::Execute(LPDIRECT3DEXECUTEBUFFER a,
                                                   DWORD c)
 {
     LOG_DEBUG("Direct3DDevice::Execute");
-
-    // TODO: Implement
+    r->execute_game(a, b);
     return D3D_OK;
 }
 
@@ -174,7 +174,7 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::BeginScene()
 HRESULT WINAPI jkgm::Direct3DDevice_impl::EndScene()
 {
     LOG_DEBUG("Direct3DDevice::EndScene");
-    // TODO: Implement
+    r->present_game();
     return D3D_OK;
 }
 

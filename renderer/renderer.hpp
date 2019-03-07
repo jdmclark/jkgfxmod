@@ -19,6 +19,7 @@ namespace jkgm {
         virtual void set_menu_source(char const *indexed_bitmap) = 0;
         virtual void present_menu() = 0;
 
+        virtual void execute_game(IDirect3DExecuteBuffer *cmdbuf, IDirect3DViewport *vp) = 0;
         virtual void present_game() = 0;
 
         virtual IDirectDraw *get_directdraw() = 0;

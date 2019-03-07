@@ -7,6 +7,7 @@ namespace jkgm {
     class Direct3DViewport_impl : public IDirect3DViewport {
     private:
         renderer *r;
+        D3DVIEWPORT data;
 
     public:
         explicit Direct3DViewport_impl(renderer *r);

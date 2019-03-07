@@ -58,22 +58,22 @@ HRESULT WINAPI jkgm::Direct3DExecuteBuffer_impl::Lock(LPD3DEXECUTEBUFFERDESC a)
 HRESULT WINAPI jkgm::Direct3DExecuteBuffer_impl::Unlock()
 {
     LOG_DEBUG("Direct3DExecuteBuffer::Unlock");
-
     return D3D_OK;
 }
 
 HRESULT WINAPI jkgm::Direct3DExecuteBuffer_impl::SetExecuteData(LPD3DEXECUTEDATA a)
 {
-    LOG_DEBUG("Direct3DExecuteBuffer::SetExecuteData ignored");
-    // HACK: Definitely needs to be implemented
-    //exec_data = *a;
+    LOG_DEBUG("Direct3DExecuteBuffer::SetExecuteData");
+    exec_data = *a;
+
     return D3D_OK;
 }
 
 HRESULT WINAPI jkgm::Direct3DExecuteBuffer_impl::GetExecuteData(LPD3DEXECUTEDATA a)
 {
-    LOG_ERROR("Direct3DExecuteBuffer::GetExecuteData unimplemented");
-    abort();
+    LOG_DEBUG("Direct3DExecuteBuffer::GetExecuteData");
+    *a = exec_data;
+    return D3D_OK;
 }
 
 HRESULT WINAPI jkgm::Direct3DExecuteBuffer_impl::Validate(LPDWORD a,

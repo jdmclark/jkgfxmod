@@ -19,7 +19,7 @@ jkgm::DirectDraw_vidmem_texture_surface_impl::DirectDraw_vidmem_texture_surface_
     }
 
     // Construct some pessimistic backbuffer size
-    buffer.resize(desc.dwWidth * desc.dwHeight * 4, char(0x44));
+    buffer.resize(desc.dwWidth * desc.dwHeight, solid(color_rgb8::zero()));
 }
 
 HRESULT WINAPI jkgm::DirectDraw_vidmem_texture_surface_impl::QueryInterface(REFIID riid,
@@ -289,7 +289,7 @@ void jkgm::DirectDraw_vidmem_texture_surface_impl::regenerate_texture()
                      make_size((int)desc.dwWidth, (int)desc.dwHeight),
                      gl::texture_pixel_format::rgba,
                      gl::texture_pixel_type::uint8,
-                     make_span(buffer));
+                     make_span(buffer).as_const_bytes());
     gl::generate_mipmap(gl::texture_bind_target::texture_2d);
     gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
     gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,

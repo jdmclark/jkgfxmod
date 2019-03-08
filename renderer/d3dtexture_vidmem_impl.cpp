@@ -3,6 +3,7 @@
 #include "ddraw_sysmem_texture_surface.hpp"
 #include "ddraw_vidmem_texture_surface.hpp"
 #include "dxguids.hpp"
+#include "math/color_conv.hpp"
 
 jkgm::Direct3DTexture_vidmem_impl::Direct3DTexture_vidmem_impl(
     renderer *r,
@@ -67,9 +68,8 @@ HRESULT WINAPI jkgm::Direct3DTexture_vidmem_impl::Load(LPDIRECT3DTEXTURE a)
     }
 
     uint16_t const *in_em = (uint16_t const *)cast_tex->surf->buffer.data();
-    uint32_t *out_em = (uint32_t *)surf->buffer.data();
 
-    for(size_t i = 0; i < (surf->buffer.size() / 4); ++i) {
+    for(auto &out_em : surf->buffer) {
         // Convert from indexed to RGB888
         float r, g, b, a;
         if(surf->desc.ddpfPixelFormat.dwRGBAlphaBitMask) {
@@ -87,15 +87,8 @@ HRESULT WINAPI jkgm::Direct3DTexture_vidmem_impl::Load(LPDIRECT3DTEXTURE a)
             b = float((*in_em >> 0) & 0x1F) / float(0x1F);
         }
 
-        auto a_byte = unsigned int(a * 255.0f);
-        auto r_byte = unsigned int((r * a) * 255.0f);
-        auto g_byte = unsigned int((g * a) * 255.0f);
-        auto b_byte = unsigned int((b * a) * 255.0f);
-
-        *out_em = (a_byte << 24) | (b_byte << 16) | (g_byte << 8) | (r_byte << 0);
-
+        out_em = to_discrete_color(srgb_to_linear(color(r * a, g * a, b * a, a)));
         ++in_em;
-        ++out_em;
     }
 
     surf->regenerate_texture();

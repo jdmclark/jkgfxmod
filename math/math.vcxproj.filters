@@ -72,9 +72,12 @@
     <ClInclude Include="abstract_vector.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="color_conv.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stub.cpp">
+    <ClCompile Include="color_conv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -14,12 +14,14 @@ namespace jkgm {
 
     public:
         DDSURFACEDESC desc;
-        std::vector<char> buffer;
+        std::vector<color_rgba8> buffer;
 
         size_t texture_index = 0U;
         gl::texture ogl_texture;
 
-        DirectDraw_vidmem_texture_surface_impl(renderer *r, DDSURFACEDESC desc, size_t texture_index);
+        DirectDraw_vidmem_texture_surface_impl(renderer *r,
+                                               DDSURFACEDESC desc,
+                                               size_t texture_index);
 
         HRESULT WINAPI QueryInterface(REFIID riid, LPVOID *ppvObj) override;
         ULONG WINAPI AddRef() override;

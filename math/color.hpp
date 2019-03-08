@@ -135,6 +135,34 @@ namespace jkgm {
             v);
     }
 
+    namespace detail {
+        template <class VecT, size_t N, size_t I>
+        struct to_discrete_color_detail {
+            template <class InVecT, class... ArgT>
+            static inline constexpr auto op(InVecT const &v, ArgT &&... args)
+            {
+                return to_discrete_color_detail<VecT, N, I + 1>::op(
+                    v, std::forward<ArgT>(args)..., static_cast<uint8_t>(get<I>(v) * 255.0f));
+            }
+        };
+
+        template <class VecT, size_t N>
+        struct to_discrete_color_detail<VecT, N, N> {
+            template <class InVecT, class... ArgT>
+            static inline constexpr auto op(InVecT const & /*v*/, ArgT &&... args)
+            {
+                return VecT(std::forward<ArgT>(args)...);
+            }
+        };
+    }
+
+    template <size_t N>
+    constexpr auto to_discrete_color(abstract_vector<N, float, color_vector_tag> const &v)
+    {
+        return detail::
+            to_discrete_color_detail<abstract_vector<N, uint8_t, color_vector_tag>, N, 0>::op(v);
+    }
+
     inline constexpr color_rgb8 operator"" _rgb8(unsigned long long value)
     {
         return color_rgb8(static_cast<uint8_t>(value >> 16U),

@@ -21,6 +21,7 @@
     <ClInclude Include="clamp.hpp" />
     <ClInclude Include="color.hpp" />
     <ClInclude Include="colors.hpp" />
+    <ClInclude Include="color_conv.hpp" />
     <ClInclude Include="constants.hpp" />
     <ClInclude Include="direction.hpp" />
     <ClInclude Include="lerp.hpp" />
@@ -32,7 +33,7 @@
     <ClInclude Include="to_opengl.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stub.cpp" />
+    <ClCompile Include="color_conv.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

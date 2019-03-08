@@ -688,7 +688,11 @@ namespace jkgm {
                         auto g1 = float(RGBA_GETGREEN(v1.color)) / 255.0f;
                         auto b1 = float(RGBA_GETBLUE(v1.color)) / 255.0f;
                         auto a1 = float(RGBA_GETALPHA(v1.color)) / 255.0f;
+                        auto sr1 = float(RGB_GETRED(v1.specular)) / 255.0f;
+                        auto sg1 = float(RGB_GETGREEN(v1.specular)) / 255.0f;
+                        auto sb1 = float(RGB_GETBLUE(v1.specular)) / 255.0f;
 
+                        ::glSecondaryColor3f(sr1, sg1, sb1);
                         ::glColor4f(r1, g1, b1, a1);
                         ::glTexCoord2f(v1.tu, v1.tv);
                         ::glVertex4f(v1.sx, v1.sy, v1.sz, v1.rhw);
@@ -697,7 +701,11 @@ namespace jkgm {
                         auto g2 = float(RGBA_GETGREEN(v2.color)) / 255.0f;
                         auto b2 = float(RGBA_GETBLUE(v2.color)) / 255.0f;
                         auto a2 = float(RGBA_GETALPHA(v2.color)) / 255.0f;
+                        auto sr2 = float(RGB_GETRED(v2.specular)) / 255.0f;
+                        auto sg2 = float(RGB_GETGREEN(v2.specular)) / 255.0f;
+                        auto sb2 = float(RGB_GETBLUE(v2.specular)) / 255.0f;
 
+                        ::glSecondaryColor3f(sr2, sg2, sb2);
                         ::glColor4f(r2, g2, b2, a2);
                         ::glTexCoord2f(v2.tu, v2.tv);
                         ::glVertex4f(v2.sx, v2.sy, v2.sz, v2.rhw);
@@ -706,7 +714,11 @@ namespace jkgm {
                         auto g3 = float(RGBA_GETGREEN(v3.color)) / 255.0f;
                         auto b3 = float(RGBA_GETBLUE(v3.color)) / 255.0f;
                         auto a3 = float(RGBA_GETALPHA(v3.color)) / 255.0f;
+                        auto sr3 = float(RGB_GETRED(v3.specular)) / 255.0f;
+                        auto sg3 = float(RGB_GETGREEN(v3.specular)) / 255.0f;
+                        auto sb3 = float(RGB_GETBLUE(v3.specular)) / 255.0f;
 
+                        ::glSecondaryColor3f(sr3, sg3, sb3);
                         ::glColor4f(r3, g3, b3, a3);
                         ::glTexCoord2f(v3.tu, v3.tv);
                         ::glVertex4f(v3.sx, v3.sy, v3.sz, v3.rhw);

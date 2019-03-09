@@ -79,12 +79,12 @@ HRESULT WINAPI jkgm::DirectDraw_impl::CreateSurface(LPDDSURFACEDESC a,
     }
     else if(a->ddsCaps.dwCaps & DDSCAPS_OFFSCREENPLAIN) {
         LOG_DEBUG("DirectDraw::CreateSurface(offscreen plain)");
-        *b = r->get_directdraw_phony_surface(*a, "offscreen plain");
+        *b = r->get_directdraw_offscreen_surface(*a);
         return DD_OK;
     }
     else if(a->ddsCaps.dwCaps & DDSCAPS_ZBUFFER) {
         LOG_DEBUG("DirectDraw::CreateSurface(zbuffer)");
-        *b = r->get_directdraw_phony_surface(*a, "zbuffer");
+        *b = r->get_directdraw_zbuffer_surface(*a);
         return DD_OK;
     }
     else if(a->ddsCaps.dwCaps & DDSCAPS_TEXTURE) {

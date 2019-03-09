@@ -23,40 +23,42 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="d3ddevice_impl.cpp" />
-    <ClCompile Include="d3dexecutebuffer_impl.cpp" />
-    <ClCompile Include="d3dtexture_sysmem_impl.cpp" />
-    <ClCompile Include="d3dtexture_vidmem_impl.cpp" />
+    <ClCompile Include="d3dtexture_impl.cpp" />
+    <ClCompile Include="ddrawsurface_impl.cpp" />
+    <ClCompile Include="execute_buffer.cpp" />
     <ClCompile Include="d3dviewport_impl.cpp" />
     <ClCompile Include="d3d_impl.cpp" />
     <ClCompile Include="ddraw2_impl.cpp" />
-    <ClCompile Include="ddraw_backbuffer_surface.cpp" />
+    <ClCompile Include="backbuffer_surface.cpp" />
     <ClCompile Include="ddraw_impl.cpp" />
-    <ClCompile Include="ddraw_palette_impl.cpp" />
-    <ClCompile Include="ddraw_phony_surface.cpp" />
-    <ClCompile Include="ddraw_primary_surface.cpp" />
-    <ClCompile Include="ddraw_sysmem_texture_surface.cpp" />
-    <ClCompile Include="ddraw_vidmem_texture_surface.cpp" />
+    <ClCompile Include="ddrawpalette_impl.cpp" />
+    <ClCompile Include="offscreen_surface.cpp" />
+    <ClCompile Include="primary_surface.cpp" />
     <ClCompile Include="dxguids.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="renderer.cpp" />
+    <ClCompile Include="sysmem_texture.cpp" />
+    <ClCompile Include="vidmem_texture.cpp" />
+    <ClCompile Include="zbuffer_surface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="d3ddevice_impl.hpp" />
-    <ClInclude Include="d3dexecutebuffer_impl.hpp" />
-    <ClInclude Include="d3dtexture_sysmem_impl.hpp" />
-    <ClInclude Include="d3dtexture_vidmem_impl.hpp" />
+    <ClInclude Include="d3dtexture_impl.hpp" />
+    <ClInclude Include="ddrawsurface_impl.hpp" />
+    <ClInclude Include="execute_buffer.hpp" />
     <ClInclude Include="d3dviewport_impl.hpp" />
     <ClInclude Include="d3d_impl.hpp" />
     <ClInclude Include="ddraw2_impl.hpp" />
-    <ClInclude Include="ddraw_backbuffer_surface.hpp" />
+    <ClInclude Include="backbuffer_surface.hpp" />
     <ClInclude Include="ddraw_impl.hpp" />
-    <ClInclude Include="ddraw_palette_impl.hpp" />
-    <ClInclude Include="ddraw_phony_surface.hpp" />
-    <ClInclude Include="ddraw_primary_surface.hpp" />
-    <ClInclude Include="ddraw_sysmem_texture_surface.hpp" />
-    <ClInclude Include="ddraw_vidmem_texture_surface.hpp" />
+    <ClInclude Include="ddrawpalette_impl.hpp" />
+    <ClInclude Include="offscreen_surface.hpp" />
+    <ClInclude Include="primary_surface.hpp" />
     <ClInclude Include="dxguids.hpp" />
     <ClInclude Include="renderer.hpp" />
+    <ClInclude Include="sysmem_texture.hpp" />
+    <ClInclude Include="vidmem_texture.hpp" />
+    <ClInclude Include="zbuffer_surface.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

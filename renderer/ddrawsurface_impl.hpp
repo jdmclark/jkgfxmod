@@ -1,19 +1,16 @@
 #pragma once
 
-#include "renderer.hpp"
 #include <ddraw.h>
 
 namespace jkgm {
-    class DirectDraw_primary_surface_impl : public IDirectDrawSurface {
+    class DirectDrawSurface_impl : public IDirectDrawSurface {
     private:
-        renderer *r;
+        char const *obj_name;
 
     public:
-        explicit DirectDraw_primary_surface_impl(renderer *r);
+        explicit DirectDrawSurface_impl(char const *obj_name);
 
         HRESULT WINAPI QueryInterface(REFIID riid, LPVOID *ppvObj) override;
-        ULONG WINAPI AddRef() override;
-        ULONG WINAPI Release() override;
 
         HRESULT WINAPI AddAttachedSurface(LPDIRECTDRAWSURFACE a) override;
         HRESULT WINAPI AddOverlayDirtyRect(LPRECT a) override;

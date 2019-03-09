@@ -59,7 +59,7 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::CreateExecuteBuffer(LPD3DEXECUTEBUFFER
         abort();
     }
 
-    *b = r->get_direct3dexecutebuffer(a->dwBufferSize);
+    *b = r->create_direct3dexecutebuffer(a->dwBufferSize);
     return D3D_OK;
 }
 

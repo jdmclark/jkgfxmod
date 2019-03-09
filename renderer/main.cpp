@@ -105,7 +105,7 @@ HBITMAP WINAPI HookedCreateDIBSection(HDC hDC,
 {
     LOG_DEBUG("CreateDIBSection hook called");
     auto rv = TrueCreateDIBSection(hDC, pbmi, usage, ppvBits, hSection, offset);
-    the_renderer->set_menu_source(reinterpret_cast<char const *>(*ppvBits));
+    the_renderer->set_menu_source(rv, reinterpret_cast<char const *>(*ppvBits));
     return rv;
 }
 
@@ -126,6 +126,14 @@ BOOL WINAPI HookedGdiFlush()
 {
     the_renderer->present_menu();
     return TrueGdiFlush();
+}
+
+using DeleteObject_type = BOOL(WINAPI *)(HGDIOBJ ho);
+static DeleteObject_type TrueDeleteObject = nullptr;
+BOOL WINAPI HookedDeleteObject(HGDIOBJ ho)
+{
+    the_renderer->maybe_clear_menu_source(ho);
+    return TrueDeleteObject(ho);
 }
 
 __declspec(dllexport) BOOL WINAPI export_workaround()
@@ -165,6 +173,9 @@ bool attach_hooks()
 
     TrueGdiFlush = (GdiFlush_type)DetourFindFunction("gdi32.dll", "GdiFlush");
     DetourAttach(&(PVOID &)TrueGdiFlush, HookedGdiFlush);
+
+    TrueDeleteObject = (DeleteObject_type)DetourFindFunction("gdi32.dll", "DeleteObject");
+    DetourAttach(&(PVOID &)TrueDeleteObject, HookedDeleteObject);
 
     LONG error = DetourTransactionCommit();
     return error == NO_ERROR;

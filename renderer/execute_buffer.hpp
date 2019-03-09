@@ -5,15 +5,14 @@
 #include <vector>
 
 namespace jkgm {
-    class Direct3DExecuteBuffer_impl : public IDirect3DExecuteBuffer {
-    private:
-        renderer *r;
-        size_t bufsz;
-        std::vector<char> buffer;
-        D3DEXECUTEDATA exec_data;
-
+    class execute_buffer : public IDirect3DExecuteBuffer {
     public:
-        Direct3DExecuteBuffer_impl(renderer *r, size_t bufsz);
+        int refct = 1;
+        size_t bufsz = 0;
+        D3DEXECUTEDATA exec_data;
+        std::vector<char> buffer;
+
+        explicit execute_buffer(size_t bufsz);
 
         HRESULT WINAPI QueryInterface(REFIID riid, LPVOID *ppvObj) override;
         ULONG WINAPI AddRef() override;

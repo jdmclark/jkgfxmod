@@ -1,4 +1,4 @@
-#include "ddraw_palette_impl.hpp"
+#include "ddrawpalette_impl.hpp"
 #include "base/log.hpp"
 #include "dxguids.hpp"
 

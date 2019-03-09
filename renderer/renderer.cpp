@@ -1,20 +1,16 @@
 #include "renderer.hpp"
+#include "backbuffer_surface.hpp"
 #include "base/file_stream.hpp"
 #include "base/log.hpp"
 #include "base/memory_block.hpp"
 #include "base/win32.hpp"
 #include "d3d_impl.hpp"
 #include "d3ddevice_impl.hpp"
-#include "d3dexecutebuffer_impl.hpp"
 #include "d3dviewport_impl.hpp"
 #include "ddraw2_impl.hpp"
-#include "ddraw_backbuffer_surface.hpp"
 #include "ddraw_impl.hpp"
-#include "ddraw_palette_impl.hpp"
-#include "ddraw_phony_surface.hpp"
-#include "ddraw_primary_surface.hpp"
-#include "ddraw_sysmem_texture_surface.hpp"
-#include "ddraw_vidmem_texture_surface.hpp"
+#include "ddrawpalette_impl.hpp"
+#include "execute_buffer.hpp"
 #include "glad/glad.h"
 #include "glutil/buffer.hpp"
 #include "glutil/framebuffer.hpp"
@@ -25,6 +21,11 @@
 #include "glutil/vertex_array.hpp"
 #include "math/color_conv.hpp"
 #include "math/colors.hpp"
+#include "offscreen_surface.hpp"
+#include "primary_surface.hpp"
+#include "sysmem_texture.hpp"
+#include "vidmem_texture.hpp"
+#include "zbuffer_surface.hpp"
 #include <Windows.h>
 #include <chrono>
 
@@ -310,16 +311,15 @@ namespace jkgm {
         Direct3DDevice_impl d3ddevice1;
         Direct3DViewport_impl d3dviewport1;
 
-        DirectDraw_primary_surface_impl ddraw1_primary_surface;
-        DirectDraw_backbuffer_surface_impl ddraw1_backbuffer_surface;
+        primary_surface ddraw1_primary_surface;
+        backbuffer_surface ddraw1_backbuffer_surface;
+        zbuffer_surface ddraw1_zbuffer_surface;
+        offscreen_surface ddraw1_offscreen_surface;
 
         std::vector<std::unique_ptr<DirectDrawPalette_impl>> ddraw1_palettes;
-        std::vector<std::unique_ptr<DirectDraw_phony_surface_impl>> phony_surfaces;
-        std::vector<std::unique_ptr<DirectDraw_sysmem_texture_surface_impl>>
-            sysmem_texture_surfaces;
-        std::vector<std::unique_ptr<DirectDraw_vidmem_texture_surface_impl>>
-            vidmem_texture_surfaces;
-        std::vector<std::unique_ptr<Direct3DExecuteBuffer_impl>> execute_buffers;
+        std::vector<std::unique_ptr<sysmem_texture_surface>> sysmem_texture_surfaces;
+        std::vector<std::unique_ptr<vidmem_texture_surface>> vidmem_texture_surfaces;
+        std::vector<std::unique_ptr<execute_buffer>> execute_buffers;
 
         HINSTANCE dll_instance;
         HWND hWnd;
@@ -328,6 +328,7 @@ namespace jkgm {
 
         std::unique_ptr<opengl_state> ogs;
 
+        HGDIOBJ indexed_bitmap_dc = NULL;
         char const *indexed_bitmap_source = nullptr;
         std::vector<color_rgba8> indexed_bitmap_colors;
 
@@ -535,9 +536,18 @@ namespace jkgm {
             return DD_OK;
         }
 
-        void set_menu_source(char const *indexed_bitmap) override
+        void set_menu_source(HGDIOBJ ho, char const *indexed_bitmap) override
         {
+            indexed_bitmap_dc = ho;
             indexed_bitmap_source = indexed_bitmap;
+        }
+
+        void maybe_clear_menu_source(HGDIOBJ ho) override
+        {
+            if(ho == indexed_bitmap_dc) {
+                indexed_bitmap_dc = NULL;
+                indexed_bitmap_source = nullptr;
+            }
         }
 
         void set_menu_palette(UINT start, span<RGBQUAD const> entries) override
@@ -555,6 +565,11 @@ namespace jkgm {
 
         void present_menu() override
         {
+            if(!indexed_bitmap_source) {
+                end_frame();
+                return;
+            }
+
             // Copy new data from menu source
             if(indexed_bitmap_source) {
                 for(size_t idx = 0U; idx < ogs->menu_texture_data.size(); ++idx) {
@@ -693,7 +708,7 @@ namespace jkgm {
                         auto sb1 = float(RGB_GETBLUE(v1.specular)) / 255.0f;
 
                         ::glSecondaryColor3f(sr1, sg1, sb1);
-                        ::glColor4f(r1, g1, b1, a1);
+                        ::glColor4f(r1 * a1, g1 * a1, b1 * a1, a1);
                         ::glTexCoord2f(v1.tu, v1.tv);
                         ::glVertex4f(v1.sx, v1.sy, v1.sz, v1.rhw);
 
@@ -706,7 +721,7 @@ namespace jkgm {
                         auto sb2 = float(RGB_GETBLUE(v2.specular)) / 255.0f;
 
                         ::glSecondaryColor3f(sr2, sg2, sb2);
-                        ::glColor4f(r2, g2, b2, a2);
+                        ::glColor4f(r2 * a2, g2 * a2, b2 * a2, a2);
                         ::glTexCoord2f(v2.tu, v2.tv);
                         ::glVertex4f(v2.sx, v2.sy, v2.sz, v2.rhw);
 
@@ -719,7 +734,7 @@ namespace jkgm {
                         auto sb3 = float(RGB_GETBLUE(v3.specular)) / 255.0f;
 
                         ::glSecondaryColor3f(sr3, sg3, sb3);
-                        ::glColor4f(r3, g3, b3, a3);
+                        ::glColor4f(r3 * a3, g3 * a3, b3 * a3, a3);
                         ::glTexCoord2f(v3.tu, v3.tv);
                         ::glVertex4f(v3.sx, v3.sy, v3.sz, v3.rhw);
                         ::glEnd();
@@ -777,26 +792,30 @@ namespace jkgm {
             return &ddraw1_backbuffer_surface;
         }
 
-        IDirectDrawSurface *get_directdraw_phony_surface(DDSURFACEDESC desc,
-                                                         std::string name) override
+        IDirectDrawSurface *get_directdraw_zbuffer_surface(DDSURFACEDESC const &desc) override
         {
-            phony_surfaces.push_back(
-                std::make_unique<DirectDraw_phony_surface_impl>(this, desc, std::move(name)));
-            return phony_surfaces.back().get();
+            ddraw1_zbuffer_surface.sd = desc;
+            return &ddraw1_zbuffer_surface;
         }
 
-        IDirectDrawSurface *get_directdraw_sysmem_texture_surface(DDSURFACEDESC desc) override
+        IDirectDrawSurface *get_directdraw_offscreen_surface(DDSURFACEDESC const &desc) override
         {
-            sysmem_texture_surfaces.push_back(
-                std::make_unique<DirectDraw_sysmem_texture_surface_impl>(this, desc));
+            ddraw1_offscreen_surface.sd = desc;
+            return &ddraw1_offscreen_surface;
+        }
+
+        IDirectDrawSurface *
+            get_directdraw_sysmem_texture_surface(DDSURFACEDESC const &desc) override
+        {
+            sysmem_texture_surfaces.push_back(std::make_unique<sysmem_texture_surface>(this, desc));
             return sysmem_texture_surfaces.back().get();
         }
 
-        IDirectDrawSurface *get_directdraw_vidmem_texture_surface(DDSURFACEDESC desc) override
+        IDirectDrawSurface *
+            get_directdraw_vidmem_texture_surface(DDSURFACEDESC const &desc) override
         {
-            vidmem_texture_surfaces.push_back(
-                std::make_unique<DirectDraw_vidmem_texture_surface_impl>(
-                    this, desc, vidmem_texture_surfaces.size()));
+            vidmem_texture_surfaces.push_back(std::make_unique<vidmem_texture_surface>(
+                this, desc, vidmem_texture_surfaces.size()));
             return vidmem_texture_surfaces.back().get();
         }
 
@@ -810,9 +829,16 @@ namespace jkgm {
             return rv;
         }
 
-        IDirect3DExecuteBuffer *get_direct3dexecutebuffer(size_t bufsz) override
+        IDirect3DExecuteBuffer *create_direct3dexecutebuffer(size_t bufsz) override
         {
-            execute_buffers.push_back(std::make_unique<Direct3DExecuteBuffer_impl>(this, bufsz));
+            // Look for expired execute buffer of the same size
+            for(auto &em : execute_buffers) {
+                if(em->bufsz == bufsz && em->refct <= 0) {
+                    return em.get();
+                }
+            }
+
+            execute_buffers.push_back(std::make_unique<execute_buffer>(bufsz));
             return execute_buffers.back().get();
         }
     };

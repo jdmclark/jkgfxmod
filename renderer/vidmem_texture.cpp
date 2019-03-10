@@ -41,23 +41,15 @@ HRESULT WINAPI jkgm::vidmem_texture::Load(LPDIRECT3DTEXTURE a)
 
     for(auto &out_em : src->conv_buffer) {
         // Convert from indexed to RGB888
-        float r, g, b, a;
         if(src->desc.ddpfPixelFormat.dwRGBAlphaBitMask) {
             // Convert from RGBA5551 to RGBA8888
-            a = float((*in_em >> 15) & 0x1) / float(0x1);
-            r = float((*in_em >> 10) & 0x1F) / float(0x1F);
-            g = float((*in_em >> 5) & 0x1F) / float(0x1F);
-            b = float((*in_em >> 0) & 0x1F) / float(0x1F);
+            out_em = rgba5551_to_linear(*in_em);
         }
         else {
             // Convert from RGB565 to RGBA8888
-            a = 1.0f;
-            r = float((*in_em >> 11) & 0x1F) / float(0x1F);
-            g = float((*in_em >> 5) & 0x3F) / float(0x3F);
-            b = float((*in_em >> 0) & 0x1F) / float(0x1F);
+            out_em = rgb565_to_linear(*in_em);
         }
 
-        out_em = to_discrete_color(srgb_to_linear(color(r * a, g * a, b * a, a)));
         ++in_em;
     }
 

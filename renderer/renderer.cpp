@@ -662,18 +662,12 @@ namespace jkgm {
 
             ZeroMemory(ogs->hud_texture_data.data(), ogs->hud_texture_data.size());
 
-            // Copy as much data from the backbuffer as possible:
             for(size_t i = 0; i < ddraw1_backbuffer_surface.buffer.size(); ++i) {
                 auto const &in_em = ddraw1_backbuffer_surface.buffer[i];
 
                 // Convert from RGB565 to RGBA8888
-                float a = (in_em == ddraw1_backbuffer_surface.color_key ? 0.0f : 1.0f);
-                float r = float((in_em >> 11) & 0x1F) / float(0x1F);
-                float g = float((in_em >> 5) & 0x3F) / float(0x3F);
-                float b = float((in_em >> 0) & 0x1F) / float(0x1F);
-
-                ogs->hud_texture_data[i] =
-                    to_discrete_color(srgb_to_linear(color(r * a, g * a, b * a, a)));
+                ogs->hud_texture_data[i] = rgb565_key_to_linear(
+                    in_em, /*transparent?*/ in_em == ddraw1_backbuffer_surface.color_key);
             }
 
             // Blit texture data into texture

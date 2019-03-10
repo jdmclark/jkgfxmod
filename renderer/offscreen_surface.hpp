@@ -5,13 +5,15 @@
 
 namespace jkgm {
     class offscreen_surface : public DirectDrawSurface_impl {
-    private:
-        std::vector<char> buffer;
-
     public:
         DDSURFACEDESC sd;
+        std::vector<uint16_t> buffer;
+        std::vector<uint16_t> dblbuffer;
+        uint16_t color_key;
 
         offscreen_surface();
+
+        void set_surface_desc(DDSURFACEDESC const &sd);
 
         ULONG WINAPI AddRef() override;
         ULONG WINAPI Release() override;

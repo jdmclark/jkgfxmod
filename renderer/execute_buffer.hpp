@@ -7,7 +7,7 @@
 namespace jkgm {
     class execute_buffer : public IDirect3DExecuteBuffer {
     public:
-        int refct = 1;
+        int refct = 0;
         size_t bufsz = 0;
         D3DEXECUTEDATA exec_data;
         std::vector<char> buffer;

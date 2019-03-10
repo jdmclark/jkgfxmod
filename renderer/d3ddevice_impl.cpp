@@ -9,22 +9,19 @@ jkgm::Direct3DDevice_impl::Direct3DDevice_impl(renderer *r)
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
-    LOG_DEBUG("Direct3DDevice::QueryInterface(", to_string(riid), ")");
-    LOG_ERROR("Called unimplemented Direct3D::QueryInterface");
+    LOG_ERROR("Direct3DDevice::QueryInterface(", to_string(riid), ") unimplemented");
     abort();
 }
 
 ULONG WINAPI jkgm::Direct3DDevice_impl::AddRef()
 {
     // Direct3DDevice is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("Direct3DDevice::AddRef");
     return 1000;
 }
 
 ULONG WINAPI jkgm::Direct3DDevice_impl::Release()
 {
     // Direct3DDevice is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("Direct3DDevice::Release");
     return 1000;
 }
 
@@ -51,11 +48,9 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::CreateExecuteBuffer(LPD3DEXECUTEBUFFER
                                                               LPDIRECT3DEXECUTEBUFFER *b,
                                                               IUnknown *c)
 {
-    LOG_DEBUG(
-        "Direct3DDevice::CreateExecuteBuffer(caps: ", a->dwCaps, ", size: ", a->dwBufferSize, ")");
-
     if(a->lpData != NULL) {
-        LOG_ERROR("Execute buffer may have received data at creation time");
+        LOG_ERROR("Direct3DDevice::CreateExecuteBuffer: received data at creation time, which is "
+                  "unsupported");
         abort();
     }
 
@@ -73,7 +68,6 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::Execute(LPDIRECT3DEXECUTEBUFFER a,
                                                   LPDIRECT3DVIEWPORT b,
                                                   DWORD c)
 {
-    LOG_DEBUG("Direct3DDevice::Execute");
     r->execute_game(a, b);
     return D3D_OK;
 }
@@ -117,8 +111,6 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::GetPickRecords(LPDWORD a, LPD3DPICKREC
 HRESULT WINAPI jkgm::Direct3DDevice_impl::EnumTextureFormats(LPD3DENUMTEXTUREFORMATSCALLBACK a,
                                                              LPVOID b)
 {
-    LOG_DEBUG("Direct3DDevice::EnumTextureFormats");
-
     _DDSURFACEDESC ddsd;
     ZeroMemory(&ddsd, sizeof(ddsd));
 
@@ -204,15 +196,11 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::DeleteMatrix(D3DMATRIXHANDLE a)
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::BeginScene()
 {
-    LOG_DEBUG("Direct3DDevice::BeginScene");
-    // TODO Implement
     return D3D_OK;
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::EndScene()
 {
-    LOG_DEBUG("Direct3DDevice::EndScene");
-    r->present_game();
     return D3D_OK;
 }
 

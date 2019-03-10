@@ -340,7 +340,8 @@ namespace jkgm {
             , d3ddevice1(this)
             , d3dviewport1(this)
             , ddraw1_primary_surface(this)
-            , ddraw1_backbuffer_surface(this)
+            , ddraw1_backbuffer_surface(this, make_size(640, 480))
+            , ddraw1_zbuffer_surface(this)
             , dll_instance(dll_instance)
         {
             indexed_bitmap_colors.resize(256, color_rgba8::zero());
@@ -599,6 +600,49 @@ namespace jkgm {
             end_frame();
         }
 
+        void update_hud_texture()
+        {
+            gl::disable(gl::capability::depth_test);
+
+            ZeroMemory(ogs->menu_texture_data.data(), ogs->menu_texture_data.size());
+
+            // Copy as much data from the backbuffer as possible:
+            for(size_t i = 0; i < ddraw1_backbuffer_surface.buffer.size(); ++i) {
+                auto const &in_em = ddraw1_backbuffer_surface.buffer[i];
+
+                // Convert from RGB565 to RGBA8888
+                float a = (in_em == ddraw1_backbuffer_surface.color_key ? 0.0f : 1.0f);
+                float r = float((in_em >> 11) & 0x1F) / float(0x1F);
+                float g = float((in_em >> 5) & 0x3F) / float(0x3F);
+                float b = float((in_em >> 0) & 0x1F) / float(0x1F);
+
+                ogs->menu_texture_data[i] =
+                    to_discrete_color(srgb_to_linear(color(r * a, g * a, b * a, a)));
+            }
+
+            // Blit texture data into texture
+            gl::set_active_texture_unit(0);
+            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->menu_texture);
+            gl::tex_sub_image_2d(gl::texture_bind_target::texture_2d,
+                                 0,
+                                 make_box(make_point(0, 0), make_point(640, 480)),
+                                 gl::texture_pixel_format::rgba,
+                                 gl::texture_pixel_type::uint8,
+                                 make_span(ogs->menu_texture_data).as_const_bytes());
+
+            // Render
+            gl::use_program(ogs->menu_program);
+            gl::set_uniform_integer(gl::uniform_location_id(0), 0);
+
+            gl::bind_vertex_array(ogs->postmdl.vao);
+            gl::draw_elements(
+                gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
+
+            for(auto &em : ddraw1_backbuffer_surface.buffer) {
+                em = ddraw1_backbuffer_surface.color_key;
+            }
+        }
+
         void execute_game(IDirect3DExecuteBuffer *cmdbuf, IDirect3DViewport *vp) override
         {
             gl::enable(gl::capability::depth_test);
@@ -754,7 +798,13 @@ namespace jkgm {
 
         void present_game() override
         {
+            update_hud_texture();
             end_frame();
+        }
+
+        void depth_clear_game() override
+        {
+            gl::clear({gl::clear_flag::depth});
         }
 
         IDirectDraw *get_directdraw() override
@@ -800,23 +850,51 @@ namespace jkgm {
 
         IDirectDrawSurface *get_directdraw_offscreen_surface(DDSURFACEDESC const &desc) override
         {
-            ddraw1_offscreen_surface.sd = desc;
+            ddraw1_offscreen_surface.set_surface_desc(desc);
             return &ddraw1_offscreen_surface;
         }
 
         IDirectDrawSurface *
             get_directdraw_sysmem_texture_surface(DDSURFACEDESC const &desc) override
         {
-            sysmem_texture_surfaces.push_back(std::make_unique<sysmem_texture_surface>(this, desc));
-            return sysmem_texture_surfaces.back().get();
+            auto get_matching_buffer = [&] {
+                size_t num_pixels = desc.dwWidth * desc.dwHeight;
+                for(auto &tex : sysmem_texture_surfaces) {
+                    if(tex->refct <= 0 && tex->num_pixels == num_pixels) {
+                        return tex.get();
+                    }
+                }
+
+                sysmem_texture_surfaces.push_back(
+                    std::make_unique<sysmem_texture_surface>(num_pixels));
+                return sysmem_texture_surfaces.back().get();
+            };
+
+            auto *rv = get_matching_buffer();
+            rv->set_surface_desc(desc);
+            rv->AddRef();
+            return rv;
         }
 
         IDirectDrawSurface *
             get_directdraw_vidmem_texture_surface(DDSURFACEDESC const &desc) override
         {
-            vidmem_texture_surfaces.push_back(std::make_unique<vidmem_texture_surface>(
-                this, desc, vidmem_texture_surfaces.size()));
-            return vidmem_texture_surfaces.back().get();
+            auto get_matching_buffer = [&] {
+                for(auto &tex : vidmem_texture_surfaces) {
+                    if(tex->refct <= 0) {
+                        return tex.get();
+                    }
+                }
+
+                vidmem_texture_surfaces.push_back(
+                    std::make_unique<vidmem_texture_surface>(vidmem_texture_surfaces.size()));
+                return vidmem_texture_surfaces.back().get();
+            };
+
+            auto *rv = get_matching_buffer();
+            rv->set_surface_desc(desc);
+            rv->AddRef();
+            return rv;
         }
 
         IDirectDrawPalette *get_directdraw_palette(span<PALETTEENTRY const> entries) override
@@ -831,15 +909,21 @@ namespace jkgm {
 
         IDirect3DExecuteBuffer *create_direct3dexecutebuffer(size_t bufsz) override
         {
-            // Look for expired execute buffer of the same size
-            for(auto &em : execute_buffers) {
-                if(em->bufsz == bufsz && em->refct <= 0) {
-                    return em.get();
+            auto get_matching_buffer = [&] {
+                // Look for expired execute buffer of the same size
+                for(auto &em : execute_buffers) {
+                    if(em->refct <= 0 && em->bufsz == bufsz) {
+                        return em.get();
+                    }
                 }
-            }
 
-            execute_buffers.push_back(std::make_unique<execute_buffer>(bufsz));
-            return execute_buffers.back().get();
+                execute_buffers.push_back(std::make_unique<execute_buffer>(bufsz));
+                return execute_buffers.back().get();
+            };
+
+            auto *rv = get_matching_buffer();
+            rv->AddRef();
+            return rv;
         }
     };
 }

@@ -13,11 +13,10 @@ namespace jkgm {
 
     class vidmem_texture : public Direct3DTexture_impl {
     private:
-        renderer *r;
         vidmem_texture_surface *surf;
 
     public:
-        vidmem_texture(renderer *r, vidmem_texture_surface *surf);
+        explicit vidmem_texture(vidmem_texture_surface *surf);
 
         ULONG WINAPI AddRef() override;
         ULONG WINAPI Release() override;
@@ -32,20 +31,20 @@ namespace jkgm {
         vidmem_texture d3dtexture;
 
     public:
+        int refct = 0;
         DDSURFACEDESC desc;
-        std::vector<color_rgba8> buffer;
 
         size_t texture_index = 0U;
         gl::texture ogl_texture;
 
-        vidmem_texture_surface(renderer *r, DDSURFACEDESC desc, size_t texture_index);
+        explicit vidmem_texture_surface(size_t texture_index);
+
+        void set_surface_desc(DDSURFACEDESC const &desc);
 
         HRESULT WINAPI QueryInterface(REFIID riid, LPVOID *ppvObj) override;
         ULONG WINAPI AddRef() override;
         ULONG WINAPI Release() override;
 
         HRESULT WINAPI GetSurfaceDesc(LPDDSURFACEDESC a) override;
-
-        void regenerate_texture();
     };
 }

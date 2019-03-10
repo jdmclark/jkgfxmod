@@ -2,57 +2,54 @@
 #include "base/log.hpp"
 #include "dxguids.hpp"
 
-jkgm::sysmem_texture::sysmem_texture(renderer *r, sysmem_texture_surface *surf)
+jkgm::sysmem_texture::sysmem_texture(sysmem_texture_surface *surf)
     : Direct3DTexture_impl("sysmem")
-    , r(r)
     , surf(surf)
 {
 }
 
 ULONG WINAPI jkgm::sysmem_texture::AddRef()
 {
-    // Direct3DTexture_sysmem_impl is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("Direct3DTexture(sysmem)::AddRef");
-    return 1000;
+    return surf->AddRef();
 }
 
 ULONG WINAPI jkgm::sysmem_texture::Release()
 {
-    // Direct3DTexture_sysmem_impl is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("Direct3DTexture(sysmem)::Release");
-    return 1000;
+    return surf->Release();
 }
 
-jkgm::sysmem_texture_surface::sysmem_texture_surface(renderer *r, DDSURFACEDESC desc)
+jkgm::sysmem_texture_surface::sysmem_texture_surface(size_t num_pixels)
     : DirectDrawSurface_impl("sysmem texture")
-    , r(r)
-    , d3dtexture(r, this)
-    , desc(desc)
+    , d3dtexture(this)
+    , num_pixels(num_pixels)
 {
+    buffer.resize(num_pixels * 2);
+    conv_buffer.resize(num_pixels, color_rgba8::zero());
+}
+
+void jkgm::sysmem_texture_surface::set_surface_desc(DDSURFACEDESC const &desc)
+{
+    // Basic sanity checking
     if(desc.lpSurface != nullptr) {
-        LOG_ERROR("JK IS PASSING A BUFFER TO A SYSMEM TEXTURE");
+        LOG_ERROR("DirectDraw::CreateSurface(sysmem texture) call passes a buffer, which is not "
+                  "implemented");
         abort();
     }
 
-    LOG_DEBUG("Texture depth: ",
-              desc.ddpfPixelFormat.dwRGBBitCount,
-              " width: ",
-              desc.dwWidth,
-              " height: ",
-              desc.dwHeight,
-              " amask: ",
-              desc.ddpfPixelFormat.dwRGBAlphaBitMask);
+    if(desc.ddpfPixelFormat.dwRGBBitCount != 16) {
+        LOG_ERROR("DirectDraw::CreateSurface(sysmem texture) call specifies a non-16 bit texture");
+        abort();
+    }
 
-    // Construct some pessimistic backbuffer size
+    this->desc = desc;
     this->desc.lPitch = desc.dwWidth * (desc.ddpfPixelFormat.dwRGBBitCount / 8);
-    buffer.resize(desc.dwWidth * desc.dwHeight * (desc.ddpfPixelFormat.dwRGBBitCount / 8),
-                  char(0x7C));
 }
 
 HRESULT WINAPI jkgm::sysmem_texture_surface::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
     if(riid == IID_IDirect3DTexture) {
         *ppvObj = &d3dtexture;
+        AddRef();
         return S_OK;
     }
 
@@ -61,16 +58,12 @@ HRESULT WINAPI jkgm::sysmem_texture_surface::QueryInterface(REFIID riid, LPVOID 
 
 ULONG WINAPI jkgm::sysmem_texture_surface::AddRef()
 {
-    // Primary surface is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("DirectDraw sysmem texture surface::AddRef");
-    return 1000;
+    return ++refct;
 }
 
 ULONG WINAPI jkgm::sysmem_texture_surface::Release()
 {
-    // Primary surface is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("DirectDraw sysmem texture surface::Release");
-    return 1000;
+    return --refct;
 }
 
 HRESULT WINAPI jkgm::sysmem_texture_surface::GetSurfaceDesc(LPDDSURFACEDESC a)

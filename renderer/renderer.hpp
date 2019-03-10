@@ -20,6 +20,7 @@ namespace jkgm {
         virtual void maybe_clear_menu_source(HGDIOBJ ho) = 0;
         virtual void present_menu() = 0;
 
+        virtual void depth_clear_game() = 0;
         virtual void execute_game(IDirect3DExecuteBuffer *cmdbuf, IDirect3DViewport *vp) = 0;
         virtual void present_game() = 0;
 

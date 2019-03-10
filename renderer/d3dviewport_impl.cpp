@@ -9,22 +9,19 @@ jkgm::Direct3DViewport_impl::Direct3DViewport_impl(renderer *r)
 
 HRESULT WINAPI jkgm::Direct3DViewport_impl::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
-    LOG_DEBUG("Direct3DViewport::QueryInterface(", to_string(riid), ")");
-    LOG_ERROR("Called unimplemented Direct3DViewport::QueryInterface");
+    LOG_ERROR("Direct3DViewport::QueryInterface(", to_string(riid), ") unimplemented");
     abort();
 }
 
 ULONG WINAPI jkgm::Direct3DViewport_impl::AddRef()
 {
     // Direct3DViewport is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("Direct3DViewport::AddRef");
     return 1000;
 }
 
 ULONG WINAPI jkgm::Direct3DViewport_impl::Release()
 {
     // Direct3DViewport is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("Direct3DViewport::Release");
     return 1000;
 }
 
@@ -36,14 +33,12 @@ HRESULT WINAPI jkgm::Direct3DViewport_impl::Initialize(LPDIRECT3D a)
 
 HRESULT WINAPI jkgm::Direct3DViewport_impl::GetViewport(LPD3DVIEWPORT a)
 {
-    LOG_DEBUG("Direct3DViewport::GetViewport");
     *a = data;
     return D3D_OK;
 }
 
 HRESULT WINAPI jkgm::Direct3DViewport_impl::SetViewport(LPD3DVIEWPORT a)
 {
-    LOG_DEBUG("Direct3DViewport::SetViewport call");
     data = *a;
     return D3D_OK;
 }

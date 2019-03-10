@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ddrawsurface_impl.hpp"
+#include "math/size.hpp"
 #include "renderer.hpp"
 #include <vector>
 
@@ -8,10 +9,14 @@ namespace jkgm {
     class backbuffer_surface : public DirectDrawSurface_impl {
     private:
         renderer *r;
-        std::vector<char> scratch;
 
     public:
-        explicit backbuffer_surface(renderer *r);
+        std::vector<uint16_t> buffer;
+        size<2, int> dims;
+
+        uint16_t color_key = 0xF81FUL; // Magenta in RGB555
+
+        backbuffer_surface(renderer *r, size<2, int> dims);
 
         HRESULT WINAPI QueryInterface(REFIID riid, LPVOID *ppvObj) override;
         ULONG WINAPI AddRef() override;

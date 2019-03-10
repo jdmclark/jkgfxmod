@@ -2,6 +2,7 @@
 
 #include "d3dtexture_impl.hpp"
 #include "ddrawsurface_impl.hpp"
+#include "math/color.hpp"
 #include "renderer.hpp"
 #include <vector>
 
@@ -9,13 +10,10 @@ namespace jkgm {
     class sysmem_texture_surface;
 
     class sysmem_texture : public Direct3DTexture_impl {
-    private:
-        renderer *r;
-
     public:
         sysmem_texture_surface *surf;
 
-        sysmem_texture(renderer *r, sysmem_texture_surface *surf);
+        explicit sysmem_texture(sysmem_texture_surface *surf);
 
         ULONG WINAPI AddRef() override;
         ULONG WINAPI Release() override;
@@ -23,15 +21,19 @@ namespace jkgm {
 
     class sysmem_texture_surface : public DirectDrawSurface_impl {
     private:
-        renderer *r;
         sysmem_texture d3dtexture;
 
-        DDSURFACEDESC desc;
-
     public:
-        std::vector<char> buffer;
+        int refct = 0;
+        size_t num_pixels;
 
-        sysmem_texture_surface(renderer *r, DDSURFACEDESC desc);
+        DDSURFACEDESC desc;
+        std::vector<char> buffer;
+        std::vector<color_rgba8> conv_buffer;
+
+        explicit sysmem_texture_surface(size_t num_pixels);
+
+        void set_surface_desc(DDSURFACEDESC const &desc);
 
         HRESULT WINAPI QueryInterface(REFIID riid, LPVOID *ppvObj) override;
         ULONG WINAPI AddRef() override;

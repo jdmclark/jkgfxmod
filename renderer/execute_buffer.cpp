@@ -10,8 +10,7 @@ jkgm::execute_buffer::execute_buffer(size_t bufsz)
 
 HRESULT WINAPI jkgm::execute_buffer::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
-    LOG_DEBUG("Direct3DExecuteBuffer::QueryInterface(", to_string(riid), ")");
-    LOG_ERROR("Called unimplemented Direct3DExecuteBuffer::QueryInterface");
+    LOG_ERROR("Direct3DExecuteBuffer::QueryInterface(", to_string(riid), ") unimplemented");
     abort();
 }
 
@@ -33,8 +32,6 @@ HRESULT WINAPI jkgm::execute_buffer::Initialize(LPDIRECT3DDEVICE a, LPD3DEXECUTE
 
 HRESULT WINAPI jkgm::execute_buffer::Lock(LPD3DEXECUTEBUFFERDESC a)
 {
-    LOG_DEBUG("Direct3DExecuteBuffer::Lock");
-
     D3DEXECUTEBUFFERDESC desc;
     ZeroMemory(&desc, sizeof(desc));
 
@@ -43,7 +40,6 @@ HRESULT WINAPI jkgm::execute_buffer::Lock(LPD3DEXECUTEBUFFERDESC a)
     desc.dwBufferSize = bufsz;
     desc.lpData = buffer.data();
 
-    LOG_DEBUG("Desc size: ", sizeof(desc), ", target size: ", a->dwSize);
     CopyMemory(a, &desc, sizeof(desc));
 
     return D3D_OK;
@@ -51,15 +47,12 @@ HRESULT WINAPI jkgm::execute_buffer::Lock(LPD3DEXECUTEBUFFERDESC a)
 
 HRESULT WINAPI jkgm::execute_buffer::Unlock()
 {
-    LOG_DEBUG("Direct3DExecuteBuffer::Unlock");
     return D3D_OK;
 }
 
 HRESULT WINAPI jkgm::execute_buffer::SetExecuteData(LPD3DEXECUTEDATA a)
 {
-    LOG_DEBUG("Direct3DExecuteBuffer::SetExecuteData");
     exec_data = *a;
-
     return D3D_OK;
 }
 

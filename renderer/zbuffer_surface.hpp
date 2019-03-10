@@ -6,10 +6,13 @@
 
 namespace jkgm {
     class zbuffer_surface : public DirectDrawSurface_impl {
+    private:
+        renderer *r;
+
     public:
         DDSURFACEDESC sd;
 
-        zbuffer_surface();
+        explicit zbuffer_surface(renderer *r);
 
         ULONG WINAPI AddRef() override;
         ULONG WINAPI Release() override;

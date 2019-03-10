@@ -4,52 +4,45 @@
 #include "math/color_conv.hpp"
 #include "sysmem_texture.hpp"
 
-jkgm::vidmem_texture::vidmem_texture(renderer *r, vidmem_texture_surface *surf)
+jkgm::vidmem_texture::vidmem_texture(vidmem_texture_surface *surf)
     : Direct3DTexture_impl("vidmem")
-    , r(r)
     , surf(surf)
 {
 }
 
 ULONG WINAPI jkgm::vidmem_texture::AddRef()
 {
-    // Direct3DTexture_vidmem_impl is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("Direct3DTexture(vidmem)::AddRef");
-    return 1000;
+    return surf->AddRef();
 }
 
 ULONG WINAPI jkgm::vidmem_texture::Release()
 {
-    // Direct3DTexture_vidmem_impl is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("Direct3DTexture(vidmem)::Release");
-    return 1000;
+    return surf->Release();
 }
 
 HRESULT WINAPI jkgm::vidmem_texture::GetHandle(LPDIRECT3DDEVICE a, LPD3DTEXTUREHANDLE b)
 {
-    LOG_DEBUG("Direct3DTexture(vidmem)::GetHandle");
-    LOG_DEBUG("Self: ", (D3DTEXTUREHANDLE)(surf->texture_index));
     *b = (D3DTEXTUREHANDLE)(surf->texture_index);
     return D3D_OK;
 }
 
 HRESULT WINAPI jkgm::vidmem_texture::Load(LPDIRECT3DTEXTURE a)
 {
-    LOG_DEBUG("Direct3DTexture(vidmem)::Load");
-
     // Copy the input texture to the OpenGL surface
     auto *cast_tex = dynamic_cast<sysmem_texture *>(a);
     if(!cast_tex) {
-        LOG_ERROR("Tried to load from a non-sysmem texture");
+        LOG_ERROR("Direct3DTexture(vidmem)::Load passed a non-sysmem texture");
         abort();
     }
 
-    uint16_t const *in_em = (uint16_t const *)cast_tex->surf->buffer.data();
+    auto *src = cast_tex->surf;
 
-    for(auto &out_em : surf->buffer) {
+    uint16_t const *in_em = (uint16_t const *)src->buffer.data();
+
+    for(auto &out_em : src->conv_buffer) {
         // Convert from indexed to RGB888
         float r, g, b, a;
-        if(surf->desc.ddpfPixelFormat.dwRGBAlphaBitMask) {
+        if(src->desc.ddpfPixelFormat.dwRGBAlphaBitMask) {
             // Convert from RGBA5551 to RGBA8888
             a = float((*in_em >> 15) & 0x1) / float(0x1);
             r = float((*in_em >> 10) & 0x1F) / float(0x1F);
@@ -68,34 +61,45 @@ HRESULT WINAPI jkgm::vidmem_texture::Load(LPDIRECT3DTEXTURE a)
         ++in_em;
     }
 
-    surf->regenerate_texture();
+    gl::bind_texture(gl::texture_bind_target::texture_2d, surf->ogl_texture);
+    gl::tex_image_2d(gl::texture_bind_target::texture_2d,
+                     /*level*/ 0,
+                     gl::texture_internal_format::rgba,
+                     make_size((int)src->desc.dwWidth, (int)src->desc.dwHeight),
+                     gl::texture_pixel_format::rgba,
+                     gl::texture_pixel_type::uint8,
+                     make_span(src->conv_buffer).as_const_bytes());
+    gl::generate_mipmap(gl::texture_bind_target::texture_2d);
+    gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
+    gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
+                               gl::min_filter::linear_mipmap_linear);
 
     return D3D_OK;
 }
 
-jkgm::vidmem_texture_surface::vidmem_texture_surface(renderer *r,
-                                                     DDSURFACEDESC desc,
-                                                     size_t texture_index)
+jkgm::vidmem_texture_surface::vidmem_texture_surface(size_t texture_index)
     : DirectDrawSurface_impl("vidmem texture")
-    , r(r)
-    , d3dtexture(r, this)
-    , desc(desc)
+    , d3dtexture(this)
     , texture_index(texture_index)
 {
+}
+
+void jkgm::vidmem_texture_surface::set_surface_desc(DDSURFACEDESC const &desc)
+{
+    // Basic sanity checking
     if(desc.lpSurface != nullptr) {
-        LOG_ERROR("JK IS PASSING A BUFFER TO A VIDMEM TEXTURE");
+        LOG_ERROR("DirectDraw::CreateSurface(vidmem texture) call passes a buffer, which is not "
+                  "implemented");
         abort();
     }
 
-    // Construct some pessimistic backbuffer size
-    buffer.resize(desc.dwWidth * desc.dwHeight, solid(color_rgb8::zero()));
+    this->desc = desc;
 }
 
 HRESULT WINAPI jkgm::vidmem_texture_surface::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
-    LOG_DEBUG("DirectDraw vidmem texture surface::QueryInterface(", to_string(riid), ")");
-
     if(riid == IID_IDirect3DTexture) {
+        d3dtexture.AddRef();
         *ppvObj = &d3dtexture;
         return S_OK;
     }
@@ -105,37 +109,16 @@ HRESULT WINAPI jkgm::vidmem_texture_surface::QueryInterface(REFIID riid, LPVOID 
 
 ULONG WINAPI jkgm::vidmem_texture_surface::AddRef()
 {
-    // Primary surface is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("DirectDraw vidmem texture surface::AddRef");
-    return 1000;
+    return ++refct;
 }
 
 ULONG WINAPI jkgm::vidmem_texture_surface::Release()
 {
-    // Primary surface is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("DirectDraw vidmem texture surface::Release");
-    return 1000;
+    return --refct;
 }
 
 HRESULT WINAPI jkgm::vidmem_texture_surface::GetSurfaceDesc(LPDDSURFACEDESC a)
 {
-    LOG_DEBUG("DirectDraw vidmem texture surface::GetSurfaceDesc(", a->dwFlags, ")");
     *a = desc;
     return DD_OK;
-}
-
-void jkgm::vidmem_texture_surface::regenerate_texture()
-{
-    gl::bind_texture(gl::texture_bind_target::texture_2d, ogl_texture);
-    gl::tex_image_2d(gl::texture_bind_target::texture_2d,
-                     /*level*/ 0,
-                     gl::texture_internal_format::rgba,
-                     make_size((int)desc.dwWidth, (int)desc.dwHeight),
-                     gl::texture_pixel_format::rgba,
-                     gl::texture_pixel_type::uint8,
-                     make_span(buffer).as_const_bytes());
-    gl::generate_mipmap(gl::texture_bind_target::texture_2d);
-    gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
-    gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
-                               gl::min_filter::linear_mipmap_linear);
 }

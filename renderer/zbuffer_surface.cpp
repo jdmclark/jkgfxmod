@@ -2,30 +2,29 @@
 #include "base/log.hpp"
 #include "dxguids.hpp"
 
-jkgm::zbuffer_surface::zbuffer_surface()
+jkgm::zbuffer_surface::zbuffer_surface(renderer *r)
     : DirectDrawSurface_impl("zbuffer")
+    , r(r)
 {
 }
 
 ULONG WINAPI jkgm::zbuffer_surface::AddRef()
 {
     // Primary surface is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("DirectDrawSurface(zbuffer)::AddRef");
     return 1000;
 }
 
 ULONG WINAPI jkgm::zbuffer_surface::Release()
 {
     // Primary surface is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("DirectDrawSurface(zbuffer)::Release");
     return 1000;
 }
 
 HRESULT WINAPI
     jkgm::zbuffer_surface::Blt(LPRECT a, LPDIRECTDRAWSURFACE b, LPRECT c, DWORD d, LPDDBLTFX e)
 {
-    LOG_DEBUG("DirectDrawSurface(zbuffer)::Blt call ignored");
-    // Hack: This is most likely a hack used to clear the zbuffer. Ignore for now.
+    // This is most likely an old hack used to clear the z-buffer.
+    r->depth_clear_game();
     return DD_OK;
 }
 

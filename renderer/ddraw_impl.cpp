@@ -11,8 +11,6 @@ jkgm::DirectDraw_impl::DirectDraw_impl(renderer *r)
 
 HRESULT WINAPI jkgm::DirectDraw_impl::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
-    LOG_DEBUG("DirectDraw::QueryInterface(", to_string(riid), ")");
-
     if(riid == IID_IDirect3D) {
         *ppvObj = r->get_direct3d();
         return S_OK;
@@ -29,14 +27,12 @@ HRESULT WINAPI jkgm::DirectDraw_impl::QueryInterface(REFIID riid, LPVOID *ppvObj
 ULONG WINAPI jkgm::DirectDraw_impl::AddRef()
 {
     // DirectDraw is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("DirectDraw::AddRef");
     return 1000;
 }
 
 ULONG WINAPI jkgm::DirectDraw_impl::Release()
 {
     // DirectDraw is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("DirectDraw::Release");
     return 1000;
 }
 
@@ -73,28 +69,23 @@ HRESULT WINAPI jkgm::DirectDraw_impl::CreateSurface(LPDDSURFACEDESC a,
                                                     IUnknown *c)
 {
     if(a->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) {
-        LOG_DEBUG("DirectDraw::CreateSurface(primary surface)");
         *b = r->get_directdraw_primary_surface();
         return DD_OK;
     }
     else if(a->ddsCaps.dwCaps & DDSCAPS_OFFSCREENPLAIN) {
-        LOG_DEBUG("DirectDraw::CreateSurface(offscreen plain)");
         *b = r->get_directdraw_offscreen_surface(*a);
         return DD_OK;
     }
     else if(a->ddsCaps.dwCaps & DDSCAPS_ZBUFFER) {
-        LOG_DEBUG("DirectDraw::CreateSurface(zbuffer)");
         *b = r->get_directdraw_zbuffer_surface(*a);
         return DD_OK;
     }
     else if(a->ddsCaps.dwCaps & DDSCAPS_TEXTURE) {
         if(a->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY) {
-            LOG_DEBUG("DirectDraw::CreateSurface(sysmem texture)");
             *b = r->get_directdraw_sysmem_texture_surface(*a);
             return DD_OK;
         }
         else if(a->ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY) {
-            LOG_DEBUG("DirectDraw::CreateSurface(vidmem texture)");
             *b = r->get_directdraw_vidmem_texture_surface(*a);
             return DD_OK;
         }
@@ -116,8 +107,6 @@ HRESULT WINAPI jkgm::DirectDraw_impl::EnumDisplayModes(DWORD a,
                                                        LPVOID c,
                                                        LPDDENUMMODESCALLBACK d)
 {
-    LOG_DEBUG("DirectDraw::EnumDisplayModes(", a, ")");
-
     // Hack: Return just two display modes, the default 640x480 menu resolution and the desired game
     // resolution
 
@@ -163,8 +152,6 @@ HRESULT WINAPI jkgm::DirectDraw_impl::FlipToGDISurface()
 
 HRESULT WINAPI jkgm::DirectDraw_impl::GetCaps(LPDDCAPS a, LPDDCAPS b)
 {
-    LOG_DEBUG("DirectDraw::GetCaps");
-
     // Hack: Return just the Direct3D hardware caps JK is looking for
     if(a) {
         a->dwCaps = DDCAPS_3D;

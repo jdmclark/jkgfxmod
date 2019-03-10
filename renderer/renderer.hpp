@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base/span.hpp"
+#include "math/size.hpp"
 #include <Windows.h>
 #include <d3d.h>
 #include <ddraw.h>
@@ -10,6 +11,8 @@ namespace jkgm {
     class renderer {
     public:
         virtual ~renderer() = default;
+
+        virtual size<2, int> get_configured_screen_resolution() = 0;
 
         virtual void initialize(HWND parentWnd) = 0;
 
@@ -44,5 +47,5 @@ namespace jkgm {
         virtual IDirectDrawPalette *get_directdraw_palette(span<PALETTEENTRY const> entries) = 0;
     };
 
-    std::unique_ptr<renderer> create_renderer(HINSTANCE dll_instance);
+    std::unique_ptr<renderer> create_renderer(HINSTANCE dll_instance, size<2, int> configured_screen_resolution);
 }

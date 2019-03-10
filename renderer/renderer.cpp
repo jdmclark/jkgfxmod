@@ -31,12 +31,16 @@
 
 namespace jkgm {
     static WNDPROC original_wkernel_wndproc = nullptr;
+    static size<2, int> original_configured_screen_res = make_size(0, 0);
 
     LRESULT CALLBACK renderer_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         switch(uMsg) {
         case WM_GETMINMAXINFO: {
-            RECT r{0, 0, 1920, 1440};
+            RECT r{0,
+                   0,
+                   get<x>(original_configured_screen_res),
+                   get<y>(original_configured_screen_res)};
             AdjustWindowRectEx(&r,
                                GetWindowLongPtr(hWnd, GWL_STYLE),
                                /*bMenu*/ FALSE,
@@ -49,7 +53,10 @@ namespace jkgm {
         }
 
         case WM_WINDOWPOSCHANGING: {
-            RECT r{0, 0, 1920, 1440};
+            RECT r{0,
+                   0,
+                   get<x>(original_configured_screen_res),
+                   get<y>(original_configured_screen_res)};
             AdjustWindowRectEx(&r,
                                GetWindowLongPtr(hWnd, GWL_STYLE),
                                /*bMenu*/ FALSE,
@@ -66,8 +73,10 @@ namespace jkgm {
             auto xPos = (int16_t)lParam;
             auto yPos = (int16_t)(lParam >> 16);
 
-            xPos = (int16_t)((float)xPos * (640.0f / 1920.0f));
-            yPos = (int16_t)((float)yPos * (480.0f / 1440.0f));
+            xPos =
+                (int16_t)((float)xPos * (640.0f / (float)get<x>(original_configured_screen_res)));
+            yPos =
+                (int16_t)((float)yPos * (480.0f / (float)get<y>(original_configured_screen_res)));
 
             lParam = (((LPARAM)yPos << 16) | (LPARAM)xPos);
 
@@ -287,16 +296,19 @@ namespace jkgm {
         gl::texture menu_texture;
         std::vector<color_rgba8> menu_texture_data;
 
+        gl::texture hud_texture;
+        std::vector<color_rgba8> hud_texture_data;
+
         render_buffer screen_renderbuffer;
         post_buffer screen_postbuffer1;
         post_buffer screen_postbuffer2;
 
         hdr_stack bloom_layers;
 
-        opengl_state()
-            : screen_renderbuffer(make_size(1920, 1440))
-            , screen_postbuffer1(make_size(1920, 1440))
-            , screen_postbuffer2(make_size(1920, 1440))
+        explicit opengl_state(size<2, int> screen_res)
+            : screen_renderbuffer(screen_res)
+            , screen_postbuffer1(screen_res)
+            , screen_postbuffer2(screen_res)
         {
             LOG_DEBUG("Loading OpenGL assets");
 
@@ -321,7 +333,7 @@ namespace jkgm {
             gl::tex_image_2d(gl::texture_bind_target::texture_2d,
                              0,
                              gl::texture_internal_format::rgba,
-                             make_size(1024, 1024),
+                             make_size(640, 480),
                              gl::texture_pixel_format::bgra,
                              gl::texture_pixel_type::uint8,
                              make_span<char const>(nullptr, 0U));
@@ -329,11 +341,26 @@ namespace jkgm {
             gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
 
             menu_texture_data.resize(640 * 480, color_rgba8::zero());
+
+            gl::bind_texture(gl::texture_bind_target::texture_2d, hud_texture);
+            gl::tex_image_2d(gl::texture_bind_target::texture_2d,
+                             0,
+                             gl::texture_internal_format::rgba,
+                             make_size(get<x>(screen_res), get<y>(screen_res)),
+                             gl::texture_pixel_format::bgra,
+                             gl::texture_pixel_type::uint8,
+                             make_span<char const>(nullptr, 0U));
+            gl::set_texture_max_level(gl::texture_bind_target::texture_2d, 0U);
+            gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
+
+            hud_texture_data.resize(volume(screen_res), color_rgba8::zero());
         }
     };
 
     class renderer_impl : public renderer {
     private:
+        size<2, int> conf_scr_res;
+
         DirectDraw_impl ddraw1;
         DirectDraw2_impl ddraw2;
         Direct3D_impl d3d1;
@@ -362,18 +389,24 @@ namespace jkgm {
         std::vector<color_rgba8> indexed_bitmap_colors;
 
     public:
-        explicit renderer_impl(HINSTANCE dll_instance)
-            : ddraw1(this)
+        explicit renderer_impl(HINSTANCE dll_instance, size<2, int> configured_screen_resolution)
+            : conf_scr_res(configured_screen_resolution)
+            , ddraw1(this)
             , ddraw2(this)
             , d3d1(this)
             , d3ddevice1(this)
             , d3dviewport1(this)
             , ddraw1_primary_surface(this)
-            , ddraw1_backbuffer_surface(this, make_size(640, 480))
+            , ddraw1_backbuffer_surface(this, configured_screen_resolution)
             , ddraw1_zbuffer_surface(this)
             , dll_instance(dll_instance)
         {
             indexed_bitmap_colors.resize(256, color_rgba8::zero());
+        }
+
+        size<2, int> get_configured_screen_resolution()
+        {
+            return conf_scr_res;
         }
 
         void initialize(HWND parentWnd) override
@@ -382,6 +415,8 @@ namespace jkgm {
 
             original_wkernel_wndproc = (WNDPROC)GetWindowLongPtr(hWnd, GWLP_WNDPROC);
             SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG)&renderer_wndproc);
+
+            original_configured_screen_res = get_configured_screen_resolution();
 
             hDC = GetDC(hWnd);
 
@@ -418,7 +453,7 @@ namespace jkgm {
 
             SwapBuffers(hDC);
 
-            ogs = std::make_unique<opengl_state>();
+            ogs = std::make_unique<opengl_state>(conf_scr_res);
             begin_frame();
         }
 
@@ -433,7 +468,7 @@ namespace jkgm {
         void end_frame()
         {
             // Compose renderbuffer onto window:
-            auto current_wnd_sz = make_size(1920, 1440);
+            auto current_wnd_sz = get_configured_screen_resolution();
 
             // Copy into post buffer
             gl::bind_framebuffer(gl::framebuffer_bind_target::read, ogs->screen_renderbuffer.fbo);
@@ -625,7 +660,7 @@ namespace jkgm {
         {
             gl::disable(gl::capability::depth_test);
 
-            ZeroMemory(ogs->menu_texture_data.data(), ogs->menu_texture_data.size());
+            ZeroMemory(ogs->hud_texture_data.data(), ogs->hud_texture_data.size());
 
             // Copy as much data from the backbuffer as possible:
             for(size_t i = 0; i < ddraw1_backbuffer_surface.buffer.size(); ++i) {
@@ -637,19 +672,20 @@ namespace jkgm {
                 float g = float((in_em >> 5) & 0x3F) / float(0x3F);
                 float b = float((in_em >> 0) & 0x1F) / float(0x1F);
 
-                ogs->menu_texture_data[i] =
+                ogs->hud_texture_data[i] =
                     to_discrete_color(srgb_to_linear(color(r * a, g * a, b * a, a)));
             }
 
             // Blit texture data into texture
             gl::set_active_texture_unit(0);
-            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->menu_texture);
+            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->hud_texture);
             gl::tex_sub_image_2d(gl::texture_bind_target::texture_2d,
                                  0,
-                                 make_box(make_point(0, 0), make_point(640, 480)),
+                                 make_box(make_point(0, 0),
+                                          make_point(get<x>(conf_scr_res), get<y>(conf_scr_res))),
                                  gl::texture_pixel_format::rgba,
                                  gl::texture_pixel_type::uint8,
-                                 make_span(ogs->menu_texture_data).as_const_bytes());
+                                 make_span(ogs->hud_texture_data).as_const_bytes());
 
             // Render
             gl::use_program(ogs->menu_program);
@@ -672,7 +708,9 @@ namespace jkgm {
                                    gl::blend_function::one_minus_source_alpha);
             gl::set_depth_function(gl::comparison_function::less);
             gl::use_program(ogs->game_program);
-            gl::set_uniform_integer(gl::uniform_location_id(0), 0);
+            gl::set_uniform_vector(gl::uniform_location_id(0),
+                                   static_cast<size<2, float>>(conf_scr_res));
+            gl::set_uniform_integer(gl::uniform_location_id(1), 0);
 
             D3DEXECUTEDATA ed;
             cmdbuf->GetExecuteData(&ed);
@@ -949,7 +987,8 @@ namespace jkgm {
     };
 }
 
-std::unique_ptr<jkgm::renderer> jkgm::create_renderer(HINSTANCE dll_instance)
+std::unique_ptr<jkgm::renderer> jkgm::create_renderer(HINSTANCE dll_instance,
+                                                      size<2, int> configured_screen_resolution)
 {
-    return std::make_unique<jkgm::renderer_impl>(dll_instance);
+    return std::make_unique<jkgm::renderer_impl>(dll_instance, configured_screen_resolution);
 }

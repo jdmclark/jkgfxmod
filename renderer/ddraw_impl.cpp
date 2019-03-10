@@ -110,6 +110,8 @@ HRESULT WINAPI jkgm::DirectDraw_impl::EnumDisplayModes(DWORD a,
     // Hack: Return just two display modes, the default 640x480 menu resolution and the desired game
     // resolution
 
+    LOG_DEBUG("Called with surface desc: ", (DWORD)b);
+
     _DDSURFACEDESC ddsd;
     ZeroMemory(&ddsd, sizeof(ddsd));
 
@@ -128,8 +130,10 @@ HRESULT WINAPI jkgm::DirectDraw_impl::EnumDisplayModes(DWORD a,
 
     d(&ddsd, c);
 
-    ddsd.dwWidth = 1920;
-    ddsd.dwHeight = 1440;
+    auto conf_scr_res = r->get_configured_screen_resolution();
+
+    ddsd.dwWidth = get<x>(conf_scr_res);
+    ddsd.dwHeight = get<y>(conf_scr_res);
     d(&ddsd, c);
 
     return DD_OK;

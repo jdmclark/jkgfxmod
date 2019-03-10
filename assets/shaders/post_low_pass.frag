@@ -13,7 +13,7 @@ void main()
 
     vec3 col = samp.rgb;
 
-    float lum = dot(vec3(0.2125, 0.7154, 0.0721) * 5.0, col);
+    float lum = dot(vec3(0.2125, 0.7154, 0.0721), col);
     lum = max(0.0, lum * 0.5);
 
     float x = lum * lum * lum;

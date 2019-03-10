@@ -99,6 +99,8 @@ HRESULT WINAPI jkgm::backbuffer_surface::GetSurfaceDesc(LPDDSURFACEDESC a)
     a->ddpfPixelFormat.dwRBitMask = 0x0000F800;
     a->ddpfPixelFormat.dwRGBAlphaBitMask = 0;
     a->lPitch = get<x>(dims) * 2;
+    a->dwWidth = get<x>(dims);
+    a->dwHeight = get<y>(dims);
 
     return DD_OK;
 }

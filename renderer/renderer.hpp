@@ -11,7 +11,7 @@ namespace jkgm {
     public:
         virtual ~renderer() = default;
 
-        virtual void initialize() = 0;
+        virtual void initialize(HWND parentWnd) = 0;
 
         virtual HRESULT enumerate_devices(LPDDENUMCALLBACKA cb, LPVOID lpContext) = 0;
 

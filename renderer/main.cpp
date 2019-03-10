@@ -83,7 +83,8 @@ HWND WINAPI HookedCreateWindowExA(DWORD dwExStyle,
     if(!main_window_seen && jk_window_class_name == lpClassName) {
         LOG_DEBUG("Detected main window creation");
         main_window_seen = true;
-        the_renderer->initialize();
+
+        the_renderer->initialize(rv);
     }
 
     return rv;
@@ -124,8 +125,9 @@ using GdiFlush_type = BOOL(WINAPI *)();
 static GdiFlush_type TrueGdiFlush = nullptr;
 BOOL WINAPI HookedGdiFlush()
 {
+    bool rv = TrueGdiFlush();
     the_renderer->present_menu();
-    return TrueGdiFlush();
+    return rv;
 }
 
 using DeleteObject_type = BOOL(WINAPI *)(HGDIOBJ ho);

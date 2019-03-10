@@ -30,24 +30,53 @@
 #include <chrono>
 
 namespace jkgm {
+    static WNDPROC original_wkernel_wndproc = nullptr;
+
     LRESULT CALLBACK renderer_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
-        return DefWindowProc(hWnd, uMsg, wParam, lParam);
-    }
+        switch(uMsg) {
+        case WM_GETMINMAXINFO: {
+            RECT r{0, 0, 1920, 1440};
+            AdjustWindowRectEx(&r,
+                               GetWindowLongPtr(hWnd, GWL_STYLE),
+                               /*bMenu*/ FALSE,
+                               GetWindowLongPtr(hWnd, GWL_EXSTYLE));
 
-    ATOM register_renderer_wndclass(HINSTANCE dll_instance)
-    {
-        WNDCLASSEX wc;
-        ZeroMemory(&wc, sizeof(wc));
+            LPMINMAXINFO mmi = (LPMINMAXINFO)lParam;
+            mmi->ptMaxSize.x = r.right - r.left;
+            mmi->ptMaxSize.y = r.bottom - r.top;
+            return 0;
+        }
 
-        wc.cbSize = sizeof(wc);
-        wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-        wc.lpfnWndProc = renderer_wndproc;
-        wc.hInstance = dll_instance;
-        wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-        wc.lpszClassName = L"wKernelAdvRenderer";
+        case WM_WINDOWPOSCHANGING: {
+            RECT r{0, 0, 1920, 1440};
+            AdjustWindowRectEx(&r,
+                               GetWindowLongPtr(hWnd, GWL_STYLE),
+                               /*bMenu*/ FALSE,
+                               GetWindowLongPtr(hWnd, GWL_EXSTYLE));
 
-        return RegisterClassEx(&wc);
+            LPWINDOWPOS wp = (LPWINDOWPOS)lParam;
+            wp->cx = r.right - r.left;
+            wp->cy = r.bottom - r.top;
+            return 0;
+        }
+
+        case WM_MOUSEMOVE: {
+            // Scale the mouse position so JK thinks it's over the menu
+            auto xPos = (int16_t)lParam;
+            auto yPos = (int16_t)(lParam >> 16);
+
+            xPos = (int16_t)((float)xPos * (640.0f / 1920.0f));
+            yPos = (int16_t)((float)yPos * (480.0f / 1440.0f));
+
+            lParam = (((LPARAM)yPos << 16) | (LPARAM)xPos);
+
+            // Pass this message back to the original wndproc
+            break;
+        }
+        }
+
+        return CallWindowProc(original_wkernel_wndproc, hWnd, uMsg, wParam, lParam);
     }
 
     gl::shader compile_shader_from_file(fs::path const &filename, gl::shader_type type)
@@ -345,22 +374,14 @@ namespace jkgm {
             , dll_instance(dll_instance)
         {
             indexed_bitmap_colors.resize(256, color_rgba8::zero());
-            register_renderer_wndclass(dll_instance);
         }
 
-        void initialize() override
+        void initialize(HWND parentWnd) override
         {
-            hWnd = CreateWindow(L"wKernelAdvRenderer",
-                                L"JkGfxMod",
-                                WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
-                                700,
-                                300,
-                                1920,
-                                1440,
-                                /*parent*/ NULL,
-                                /*menu*/ NULL,
-                                dll_instance,
-                                /*param*/ NULL);
+            hWnd = parentWnd;
+
+            original_wkernel_wndproc = (WNDPROC)GetWindowLongPtr(hWnd, GWLP_WNDPROC);
+            SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG)&renderer_wndproc);
 
             hDC = GetDC(hWnd);
 

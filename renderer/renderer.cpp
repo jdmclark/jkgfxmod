@@ -456,6 +456,15 @@ namespace jkgm {
 
             original_configured_screen_res = get_configured_screen_resolution();
 
+            DEVMODE dm;
+            ZeroMemory(&dm, sizeof(dm));
+            dm.dmSize = sizeof(dm);
+            dm.dmPelsWidth = get<x>(original_configured_screen_res);
+            dm.dmPelsHeight = get<y>(original_configured_screen_res);
+            dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+
+            ChangeDisplaySettings(&dm, CDS_FULLSCREEN);
+
             hDC = GetDC(hWnd);
 
             PIXELFORMATDESCRIPTOR pfd;

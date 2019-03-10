@@ -233,7 +233,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID /*lpRese
         if(!the_renderer) {
             // HACK: The screen resolution should come from a config file
             the_renderer =
-                jkgm::create_renderer(hModule, /*conf scr res*/ jkgm::make_size(3840, 2160));
+                jkgm::create_renderer(hModule, /*conf scr res*/ jkgm::make_size(1920, 1440));
         }
 
         LOG_DEBUG("Attaching renderer to process");

@@ -74,8 +74,6 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::Execute(LPDIRECT3DEXECUTEBUFFER a,
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::AddViewport(LPDIRECT3DVIEWPORT a)
 {
-    LOG_DEBUG("Direct3DDevice::AddViewport call ignored");
-    // TODO: Implement
     return D3D_OK;
 }
 

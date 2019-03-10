@@ -16,7 +16,6 @@ static DirectDrawCreate_type TrueDirectDrawCreate = nullptr;
 HRESULT WINAPI HookedDirectDrawCreate(GUID *lpGUID, LPDIRECTDRAW *lplpDD, IUnknown *pUnkOuter)
 {
     LOG_DEBUG("DirectDrawCreate hook called");
-
     *lplpDD = the_renderer->get_directdraw();
     return DD_OK;
 }
@@ -110,6 +109,23 @@ HBITMAP WINAPI HookedCreateDIBSection(HDC hDC,
     return rv;
 }
 
+using GetCursorPos_type = BOOL(WINAPI *)(LPPOINT lpPoint);
+static GetCursorPos_type TrueGetCursorPos = nullptr;
+BOOL WINAPI HookedGetCursorPos(LPPOINT lpPoint)
+{
+    POINT real_pos;
+    auto rv = TrueGetCursorPos(&real_pos);
+
+    if(rv != FALSE) {
+        auto conv_pos =
+            the_renderer->get_cursor_pos(jkgm::make_point((int)real_pos.x, (int)real_pos.y));
+        lpPoint->x = (LONG)jkgm::get<0>(conv_pos);
+        lpPoint->y = (LONG)jkgm::get<1>(conv_pos);
+    }
+
+    return rv;
+}
+
 using SetDIBColorTable_type = UINT(WINAPI *)(HDC hDC,
                                              UINT iStart,
                                              UINT cEntries,
@@ -126,7 +142,7 @@ static GdiFlush_type TrueGdiFlush = nullptr;
 BOOL WINAPI HookedGdiFlush()
 {
     bool rv = TrueGdiFlush();
-    the_renderer->present_menu();
+    the_renderer->present_menu_gdi();
     return rv;
 }
 
@@ -164,6 +180,9 @@ bool attach_hooks()
     // Win32 API
     TrueCreateWindowExA = (CreateWindowExA_type)DetourFindFunction("user32.dll", "CreateWindowExA");
     DetourAttach(&(PVOID &)TrueCreateWindowExA, HookedCreateWindowExA);
+
+    TrueGetCursorPos = (GetCursorPos_type)DetourFindFunction("user32.dll", "GetCursorPos");
+    DetourAttach(&(PVOID &)TrueGetCursorPos, HookedGetCursorPos);
 
     TrueCreateDIBSection =
         (CreateDIBSection_type)DetourFindFunction("gdi32.dll", "CreateDIBSection");
@@ -214,7 +233,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID /*lpRese
         if(!the_renderer) {
             // HACK: The screen resolution should come from a config file
             the_renderer =
-                jkgm::create_renderer(hModule, /*conf scr res*/ jkgm::make_size(1920, 1440));
+                jkgm::create_renderer(hModule, /*conf scr res*/ jkgm::make_size(3840, 2160));
         }
 
         LOG_DEBUG("Attaching renderer to process");

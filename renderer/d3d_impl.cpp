@@ -9,22 +9,19 @@ jkgm::Direct3D_impl::Direct3D_impl(renderer *r)
 
 HRESULT WINAPI jkgm::Direct3D_impl::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
-    LOG_DEBUG("Direct3D::QueryInterface(", to_string(riid), ")");
-    LOG_ERROR("Called unimplemented Direct3D::QueryInterface");
+    LOG_ERROR("Direct3D::QueryInterface(", to_string(riid), ") unimplemented");
     abort();
 }
 
 ULONG WINAPI jkgm::Direct3D_impl::AddRef()
 {
     // Direct3D is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("Direct3D::AddRef");
     return 1000;
 }
 
 ULONG WINAPI jkgm::Direct3D_impl::Release()
 {
     // Direct3D is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("Direct3D::Release");
     return 1000;
 }
 
@@ -36,8 +33,6 @@ HRESULT WINAPI jkgm::Direct3D_impl::Initialize(REFCLSID a)
 
 HRESULT WINAPI jkgm::Direct3D_impl::EnumDevices(LPD3DENUMDEVICESCALLBACK a, LPVOID b)
 {
-    LOG_DEBUG("Direct3D::EnumDevices");
-
     // Construct a single virtual device, supporting HAL but not software
     _D3DDeviceDesc hal_dev;
     ZeroMemory(&hal_dev, sizeof(hal_dev));
@@ -134,7 +129,6 @@ HRESULT WINAPI jkgm::Direct3D_impl::CreateMaterial(LPDIRECT3DMATERIAL *a, IUnkno
 
 HRESULT WINAPI jkgm::Direct3D_impl::CreateViewport(LPDIRECT3DVIEWPORT *a, IUnknown *b)
 {
-    LOG_DEBUG("Direct3D::CreateViewport");
     *a = r->get_direct3dviewport();
     return D3D_OK;
 }

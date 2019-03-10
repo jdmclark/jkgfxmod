@@ -1,4 +1,5 @@
 #include "renderer.hpp"
+#include "backbuffer_menu_surface.hpp"
 #include "backbuffer_surface.hpp"
 #include "base/file_stream.hpp"
 #include "base/log.hpp"
@@ -21,7 +22,9 @@
 #include "glutil/vertex_array.hpp"
 #include "math/color_conv.hpp"
 #include "math/colors.hpp"
+#include "offscreen_menu_surface.hpp"
 #include "offscreen_surface.hpp"
+#include "primary_menu_surface.hpp"
 #include "primary_surface.hpp"
 #include "sysmem_texture.hpp"
 #include "vidmem_texture.hpp"
@@ -359,6 +362,7 @@ namespace jkgm {
 
     class renderer_impl : public renderer {
     private:
+        renderer_mode mode = renderer_mode::menu;
         size<2, int> conf_scr_res;
 
         DirectDraw_impl ddraw1;
@@ -367,12 +371,16 @@ namespace jkgm {
         Direct3DDevice_impl d3ddevice1;
         Direct3DViewport_impl d3dviewport1;
 
+        primary_menu_surface ddraw1_primary_menu_surface;
+        backbuffer_menu_surface ddraw1_backbuffer_menu_surface;
         primary_surface ddraw1_primary_surface;
         backbuffer_surface ddraw1_backbuffer_surface;
         zbuffer_surface ddraw1_zbuffer_surface;
         offscreen_surface ddraw1_offscreen_surface;
+        offscreen_menu_surface ddraw1_offscreen_menu_surface;
 
-        std::vector<std::unique_ptr<DirectDrawPalette_impl>> ddraw1_palettes;
+        DirectDrawPalette_impl ddraw1_palette;
+
         std::vector<std::unique_ptr<sysmem_texture_surface>> sysmem_texture_surfaces;
         std::vector<std::unique_ptr<vidmem_texture_surface>> vidmem_texture_surfaces;
         std::vector<std::unique_ptr<execute_buffer>> execute_buffers;
@@ -388,6 +396,12 @@ namespace jkgm {
         char const *indexed_bitmap_source = nullptr;
         std::vector<color_rgba8> indexed_bitmap_colors;
 
+        double menu_accumulator = 0.0;
+
+        using timestamp_t = std::chrono::high_resolution_clock::time_point;
+        timestamp_t menu_prev_ticks;
+        timestamp_t menu_curr_ticks;
+
     public:
         explicit renderer_impl(HINSTANCE dll_instance, size<2, int> configured_screen_resolution)
             : conf_scr_res(configured_screen_resolution)
@@ -396,17 +410,41 @@ namespace jkgm {
             , d3d1(this)
             , d3ddevice1(this)
             , d3dviewport1(this)
+            , ddraw1_primary_menu_surface(this)
+            , ddraw1_backbuffer_menu_surface(this, &ddraw1_primary_menu_surface)
             , ddraw1_primary_surface(this)
             , ddraw1_backbuffer_surface(this, configured_screen_resolution)
             , ddraw1_zbuffer_surface(this)
+            , ddraw1_palette(this)
             , dll_instance(dll_instance)
         {
             indexed_bitmap_colors.resize(256, color_rgba8::zero());
+
+            menu_prev_ticks = std::chrono::high_resolution_clock::now();
+            menu_curr_ticks = menu_prev_ticks;
         }
 
-        size<2, int> get_configured_screen_resolution()
+        void set_renderer_mode(renderer_mode mode) override
+        {
+            this->mode = mode;
+        }
+
+        size<2, int> get_configured_screen_resolution() override
         {
             return conf_scr_res;
+        }
+
+        point<2, int> get_cursor_pos(point<2, int> real_pos) override
+        {
+            if(mode == renderer_mode::menu) {
+                // Stretch the point into 640x480
+                return make_point((int)((float)get<x>(real_pos) *
+                                        (640.0f / (float)get<x>(original_configured_screen_res))),
+                                  (int)((float)get<y>(real_pos) *
+                                        (480.0f / (float)get<y>(original_configured_screen_res))));
+            }
+
+            return real_pos;
         }
 
         void initialize(HWND parentWnd) override
@@ -620,7 +658,7 @@ namespace jkgm {
             }
         }
 
-        void present_menu() override
+        void present_menu_gdi() override
         {
             if(!indexed_bitmap_source) {
                 end_frame();
@@ -654,6 +692,60 @@ namespace jkgm {
                 gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
 
             end_frame();
+        }
+
+        void present_menu_surface_body()
+        {
+            // Copy new data from menu source
+            for(size_t idx = 0U; idx < ogs->menu_texture_data.size(); ++idx) {
+                uint8_t index = ddraw1_primary_menu_surface.buffer[idx];
+                auto &palent = ddraw1_palette.entries[index];
+                ogs->menu_texture_data[idx] = ddraw1_palette.linear_entries[index];
+            }
+
+            // Blit texture data into texture
+            gl::set_active_texture_unit(0);
+            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->menu_texture);
+            gl::tex_sub_image_2d(gl::texture_bind_target::texture_2d,
+                                 0,
+                                 make_box(make_point(0, 0), make_point(640, 480)),
+                                 gl::texture_pixel_format::rgba,
+                                 gl::texture_pixel_type::uint8,
+                                 make_span(ogs->menu_texture_data).as_const_bytes());
+
+            // Render
+            gl::use_program(ogs->menu_program);
+            gl::set_uniform_integer(gl::uniform_location_id(0), 0);
+
+            gl::bind_vertex_array(ogs->postmdl.vao);
+            gl::draw_elements(
+                gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
+
+            end_frame();
+        }
+
+        void present_menu_surface_immediate() override
+        {
+            menu_prev_ticks = std::chrono::high_resolution_clock::now();
+            menu_curr_ticks = menu_prev_ticks;
+            menu_accumulator = 0.0;
+
+            present_menu_surface_body();
+        }
+
+        void present_menu_surface_delayed() override
+        {
+            // Present menu, emulating a 60 Hz monitor
+            menu_prev_ticks = menu_curr_ticks;
+            menu_curr_ticks = std::chrono::high_resolution_clock::now();
+            auto elapsed_ticks = menu_curr_ticks - menu_prev_ticks;
+            double elapsed = std::chrono::duration<double>(elapsed_ticks).count();
+
+            menu_accumulator += elapsed;
+            if(menu_accumulator >= (1.0 / 60.0)) {
+                menu_accumulator = 0.0;
+                present_menu_surface_body();
+            }
         }
 
         void update_hud_texture()
@@ -887,12 +979,21 @@ namespace jkgm {
 
         IDirectDrawSurface *get_directdraw_primary_surface() override
         {
+            if(mode == renderer_mode::menu) {
+                return &ddraw1_primary_menu_surface;
+            }
+
             return &ddraw1_primary_surface;
         }
 
         IDirectDrawSurface *get_directdraw_backbuffer_surface() override
         {
             return &ddraw1_backbuffer_surface;
+        }
+
+        IDirectDrawSurface *get_directdraw_backbuffer_menu_surface() override
+        {
+            return &ddraw1_backbuffer_menu_surface;
         }
 
         IDirectDrawSurface *get_directdraw_zbuffer_surface(DDSURFACEDESC const &desc) override
@@ -903,6 +1004,11 @@ namespace jkgm {
 
         IDirectDrawSurface *get_directdraw_offscreen_surface(DDSURFACEDESC const &desc) override
         {
+            if(mode == renderer_mode::menu) {
+                ddraw1_offscreen_menu_surface.set_surface_desc(desc);
+                return &ddraw1_offscreen_menu_surface;
+            }
+
             ddraw1_offscreen_surface.set_surface_desc(desc);
             return &ddraw1_offscreen_surface;
         }
@@ -952,12 +1058,9 @@ namespace jkgm {
 
         IDirectDrawPalette *get_directdraw_palette(span<PALETTEENTRY const> entries) override
         {
-            ddraw1_palettes.push_back(std::make_unique<DirectDrawPalette_impl>(this));
-
-            auto *rv = ddraw1_palettes.back().get();
-            std::copy(entries.begin(), entries.end(), rv->entries.begin());
-
-            return rv;
+            std::copy(entries.begin(), entries.end(), ddraw1_palette.entries.begin());
+            ddraw1_palette.recompute_palette();
+            return &ddraw1_palette;
         }
 
         IDirect3DExecuteBuffer *create_direct3dexecutebuffer(size_t bufsz) override

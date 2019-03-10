@@ -1,8 +1,10 @@
 #pragma once
 
+#include "math/color.hpp"
 #include "renderer.hpp"
-#include <ddraw.h>
 #include <array>
+#include <ddraw.h>
+#include <vector>
 
 namespace jkgm {
     class DirectDrawPalette_impl : public IDirectDrawPalette {
@@ -10,9 +12,12 @@ namespace jkgm {
         renderer *r;
 
     public:
-        std::array<PALETTEENTRY, 256> entries;
-
         explicit DirectDrawPalette_impl(renderer *r);
+
+        std::vector<color_rgba8> linear_entries;
+        std::vector<PALETTEENTRY> entries;
+
+        void recompute_palette();
 
         HRESULT WINAPI QueryInterface(REFIID riid, LPVOID *ppvObj) override;
         ULONG WINAPI AddRef() override;

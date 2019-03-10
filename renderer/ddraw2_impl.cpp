@@ -11,8 +11,6 @@ jkgm::DirectDraw2_impl::DirectDraw2_impl(renderer *r)
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
-    LOG_DEBUG("DirectDraw2::QueryInterface(", to_string(riid), ")");
-
     if(riid == IID_IDirect3D) {
         *ppvObj = r->get_direct3d();
         return S_OK;
@@ -25,14 +23,12 @@ HRESULT WINAPI jkgm::DirectDraw2_impl::QueryInterface(REFIID riid, LPVOID *ppvOb
 ULONG WINAPI jkgm::DirectDraw2_impl::AddRef()
 {
     // DirectDraw2 is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("DirectDraw2::AddRef");
     return 1000;
 }
 
 ULONG WINAPI jkgm::DirectDraw2_impl::Release()
 {
     // DirectDraw2 is managed by the renderer. Refcount is intentionally not used.
-    LOG_DEBUG("DirectDraw2::Release");
     return 1000;
 }
 
@@ -181,8 +177,6 @@ HRESULT WINAPI jkgm::DirectDraw2_impl::WaitForVerticalBlank(DWORD a, HANDLE b)
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::GetAvailableVidMem(LPDDSCAPS a, LPDWORD b, LPDWORD c)
 {
-    LOG_DEBUG("DirectDraw2::GetAvailableVidMem");
-
     constexpr DWORD one_gb = 1 * 1024 * 1024 * 1024;
     *b = 1073741824;
     *c = 1073741824;

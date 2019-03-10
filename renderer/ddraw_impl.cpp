@@ -110,17 +110,18 @@ HRESULT WINAPI jkgm::DirectDraw_impl::EnumDisplayModes(DWORD a,
     // Hack: Return just two display modes, the default 640x480 menu resolution and the desired game
     // resolution
 
-    LOG_DEBUG("Called with surface desc: ", (DWORD)b);
-
     _DDSURFACEDESC ddsd;
     ZeroMemory(&ddsd, sizeof(ddsd));
 
     ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
     ddsd.dwWidth = 640;
     ddsd.dwHeight = 480;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 8;
+
     d(&ddsd, c);
 
-    ddsd.dwFlags = DDSD_PIXELFORMAT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_3DDEVICE;
     ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
     ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
     ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
@@ -128,12 +129,11 @@ HRESULT WINAPI jkgm::DirectDraw_impl::EnumDisplayModes(DWORD a,
     ddsd.ddpfPixelFormat.dwGBitMask = 0x7E0;
     ddsd.ddpfPixelFormat.dwBBitMask = 0x1F;
 
-    d(&ddsd, c);
-
     auto conf_scr_res = r->get_configured_screen_resolution();
 
     ddsd.dwWidth = get<x>(conf_scr_res);
     ddsd.dwHeight = get<y>(conf_scr_res);
+
     d(&ddsd, c);
 
     return DD_OK;
@@ -221,7 +221,7 @@ HRESULT WINAPI jkgm::DirectDraw_impl::SetCooperativeLevel(HWND a, DWORD b)
         LOG_DEBUG("DirectDraw::SetCooperativeLevel(Normal)");
     }
     else {
-        LOG_DEBUG("DirectDraw::SetCooperativeLevel(Unknown ", b, ")");
+        LOG_ERROR("DirectDraw::SetCooperativeLevel(Unknown ", b, ")");
         abort();
     }
 
@@ -230,14 +230,18 @@ HRESULT WINAPI jkgm::DirectDraw_impl::SetCooperativeLevel(HWND a, DWORD b)
 
 HRESULT WINAPI jkgm::DirectDraw_impl::SetDisplayMode(DWORD a, DWORD b, DWORD c)
 {
-    LOG_DEBUG("DirectDraw::SetDisplayMode(", a, ", ", b, ", ", c, ")");
+    if(a == 640 && b == 480 && c == 8) {
+        r->set_renderer_mode(renderer_mode::menu);
+    }
+    else {
+        r->set_renderer_mode(renderer_mode::ingame);
+    }
 
-    // Hack: ignore display mode change request
     return DD_OK;
 }
 
 HRESULT WINAPI jkgm::DirectDraw_impl::WaitForVerticalBlank(DWORD a, HANDLE b)
 {
-    LOG_ERROR("DirectDraw::WaitForVerticalBlank unimplemented");
-    abort();
+    r->present_menu_surface_immediate();
+    return DD_OK;
 }

@@ -22,6 +22,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="backbuffer_menu_surface.cpp" />
     <ClCompile Include="d3ddevice_impl.cpp" />
     <ClCompile Include="d3dtexture_impl.cpp" />
     <ClCompile Include="ddrawsurface_impl.cpp" />
@@ -32,7 +33,9 @@
     <ClCompile Include="backbuffer_surface.cpp" />
     <ClCompile Include="ddraw_impl.cpp" />
     <ClCompile Include="ddrawpalette_impl.cpp" />
+    <ClCompile Include="offscreen_menu_surface.cpp" />
     <ClCompile Include="offscreen_surface.cpp" />
+    <ClCompile Include="primary_menu_surface.cpp" />
     <ClCompile Include="primary_surface.cpp" />
     <ClCompile Include="dxguids.cpp" />
     <ClCompile Include="main.cpp" />
@@ -42,6 +45,7 @@
     <ClCompile Include="zbuffer_surface.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="backbuffer_menu_surface.hpp" />
     <ClInclude Include="d3ddevice_impl.hpp" />
     <ClInclude Include="d3dtexture_impl.hpp" />
     <ClInclude Include="ddrawsurface_impl.hpp" />
@@ -52,7 +56,9 @@
     <ClInclude Include="backbuffer_surface.hpp" />
     <ClInclude Include="ddraw_impl.hpp" />
     <ClInclude Include="ddrawpalette_impl.hpp" />
+    <ClInclude Include="offscreen_menu_surface.hpp" />
     <ClInclude Include="offscreen_surface.hpp" />
+    <ClInclude Include="primary_menu_surface.hpp" />
     <ClInclude Include="primary_surface.hpp" />
     <ClInclude Include="dxguids.hpp" />
     <ClInclude Include="renderer.hpp" />

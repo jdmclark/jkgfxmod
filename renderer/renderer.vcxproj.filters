@@ -69,6 +69,15 @@
     <ClCompile Include="offscreen_surface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="primary_menu_surface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="backbuffer_menu_surface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="offscreen_menu_surface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ddraw_impl.hpp">
@@ -120,6 +129,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="offscreen_surface.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="primary_menu_surface.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="backbuffer_menu_surface.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="offscreen_menu_surface.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

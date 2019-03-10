@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base/span.hpp"
+#include "math/point.hpp"
 #include "math/size.hpp"
 #include <Windows.h>
 #include <d3d.h>
@@ -8,11 +9,15 @@
 #include <memory>
 
 namespace jkgm {
+    enum class renderer_mode { menu, ingame };
+
     class renderer {
     public:
         virtual ~renderer() = default;
 
+        virtual void set_renderer_mode(renderer_mode mode) = 0;
         virtual size<2, int> get_configured_screen_resolution() = 0;
+        virtual point<2, int> get_cursor_pos(point<2, int> real_pos) = 0;
 
         virtual void initialize(HWND parentWnd) = 0;
 
@@ -21,7 +26,9 @@ namespace jkgm {
         virtual void set_menu_palette(UINT start, span<RGBQUAD const> entries) = 0;
         virtual void set_menu_source(HGDIOBJ ho, char const *indexed_bitmap) = 0;
         virtual void maybe_clear_menu_source(HGDIOBJ ho) = 0;
-        virtual void present_menu() = 0;
+        virtual void present_menu_gdi() = 0;
+        virtual void present_menu_surface_immediate() = 0;
+        virtual void present_menu_surface_delayed() = 0;
 
         virtual void depth_clear_game() = 0;
         virtual void execute_game(IDirect3DExecuteBuffer *cmdbuf, IDirect3DViewport *vp) = 0;
@@ -37,6 +44,7 @@ namespace jkgm {
 
         virtual IDirectDrawSurface *get_directdraw_primary_surface() = 0;
         virtual IDirectDrawSurface *get_directdraw_backbuffer_surface() = 0;
+        virtual IDirectDrawSurface *get_directdraw_backbuffer_menu_surface() = 0;
         virtual IDirectDrawSurface *get_directdraw_offscreen_surface(DDSURFACEDESC const &desc) = 0;
         virtual IDirectDrawSurface *get_directdraw_zbuffer_surface(DDSURFACEDESC const &desc) = 0;
         virtual IDirectDrawSurface *
@@ -47,5 +55,6 @@ namespace jkgm {
         virtual IDirectDrawPalette *get_directdraw_palette(span<PALETTEENTRY const> entries) = 0;
     };
 
-    std::unique_ptr<renderer> create_renderer(HINSTANCE dll_instance, size<2, int> configured_screen_resolution);
+    std::unique_ptr<renderer> create_renderer(HINSTANCE dll_instance,
+                                              size<2, int> configured_screen_resolution);
 }

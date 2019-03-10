@@ -8,7 +8,6 @@ namespace jkgm {
     public:
         DDSURFACEDESC sd;
         std::vector<uint16_t> buffer;
-        std::vector<uint16_t> dblbuffer;
         uint16_t color_key;
 
         offscreen_surface();

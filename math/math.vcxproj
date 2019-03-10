@@ -14,9 +14,7 @@
     <ClInclude Include="abstract_matrix.hpp" />
     <ClInclude Include="abstract_scalar.hpp" />
     <ClInclude Include="abstract_vector.hpp" />
-    <ClInclude Include="affine_transformation.hpp" />
     <ClInclude Include="almost_equal.hpp" />
-    <ClInclude Include="angle.hpp" />
     <ClInclude Include="box.hpp" />
     <ClInclude Include="clamp.hpp" />
     <ClInclude Include="color.hpp" />
@@ -25,10 +23,7 @@
     <ClInclude Include="constants.hpp" />
     <ClInclude Include="direction.hpp" />
     <ClInclude Include="lerp.hpp" />
-    <ClInclude Include="linear_transformation.hpp" />
     <ClInclude Include="point.hpp" />
-    <ClInclude Include="projective_transformation.hpp" />
-    <ClInclude Include="quaternion.hpp" />
     <ClInclude Include="size.hpp" />
     <ClInclude Include="to_opengl.hpp" />
   </ItemGroup>

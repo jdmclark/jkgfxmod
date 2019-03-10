@@ -2,6 +2,7 @@
 #include "base/log.hpp"
 #include "base/system_string.hpp"
 #include "base/win32.hpp"
+#include "common/config.hpp"
 #include <Windows.h>
 #include <detours/detours.h>
 #include <string>
@@ -22,9 +23,14 @@ int APIENTRY wWinMain(HINSTANCE /*hInstance*/,
 {
     try {
         jkgm::setup_default_logging();
+        auto cfg = jkgm::load_config_file();
 
         std::wstring cmdbuf = L"jk ";
         cmdbuf.append(lpCmdLine);
+
+        if(!cfg->fullscreen) {
+            cmdbuf.append(L" -windowgui");
+        }
 
         STARTUPINFO si;
         ZeroMemory(&si, sizeof(si));
@@ -35,7 +41,7 @@ int APIENTRY wWinMain(HINSTANCE /*hInstance*/,
 
         PROCESS_INFORMATION pi;
 
-        BOOL res = DetourCreateProcessWithDllW(L"jk.exe",
+        BOOL res = DetourCreateProcessWithDllW(jkgm::utf8_to_native(cfg->command).c_str(),
                                                &cmdbuf[0],
                                                /*security attributes*/ NULL,
                                                /*thread attributes*/ NULL,

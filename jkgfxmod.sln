@@ -17,6 +17,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glutil", "glutil\glutil.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "math", "math\math.vcxproj", "{042BFC1F-0B4F-4B7B-BBBC-7660D120079E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "common", "common\common.vcxproj", "{C6E800D6-4643-4719-B8CB-3365D226C42D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -51,6 +53,10 @@ Global
 		{042BFC1F-0B4F-4B7B-BBBC-7660D120079E}.Debug|x86.Build.0 = Debug|Win32
 		{042BFC1F-0B4F-4B7B-BBBC-7660D120079E}.Release|x86.ActiveCfg = Release|Win32
 		{042BFC1F-0B4F-4B7B-BBBC-7660D120079E}.Release|x86.Build.0 = Release|Win32
+		{C6E800D6-4643-4719-B8CB-3365D226C42D}.Debug|x86.ActiveCfg = Debug|Win32
+		{C6E800D6-4643-4719-B8CB-3365D226C42D}.Debug|x86.Build.0 = Debug|Win32
+		{C6E800D6-4643-4719-B8CB-3365D226C42D}.Release|x86.ActiveCfg = Release|Win32
+		{C6E800D6-4643-4719-B8CB-3365D226C42D}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

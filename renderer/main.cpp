@@ -1,11 +1,13 @@
 #include "base/default_logger.hpp"
 #include "base/log.hpp"
 #include "base/span.hpp"
+#include "common/config.hpp"
 #include "renderer.hpp"
 #include <Windows.h>
 #include <detours/detours.h>
 
 static std::unique_ptr<jkgm::renderer> the_renderer;
+static std::unique_ptr<jkgm::config> the_config;
 
 // DirectX hooks
 
@@ -229,12 +231,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID /*lpRese
 
     if(ul_reason_for_call == DLL_PROCESS_ATTACH) {
         jkgm::setup_default_logging();
-
-        if(!the_renderer) {
-            // HACK: The screen resolution should come from a config file
-            the_renderer =
-                jkgm::create_renderer(hModule, /*conf scr res*/ jkgm::make_size(1920, 1440));
-        }
+        the_config = jkgm::load_config_file();
+        the_renderer = jkgm::create_renderer(hModule, the_config.get());
 
         LOG_DEBUG("Attaching renderer to process");
 

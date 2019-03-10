@@ -125,7 +125,18 @@ HRESULT WINAPI jkgm::offscreen_menu_surface::Lock(LPRECT a, LPDDSURFACEDESC b, D
     *b = sd;
     b->lpSurface = buffer.data();
     b->dwFlags = b->dwFlags | DDSD_LPSURFACE;
+    b->ddckCKSrcBlt.dwColorSpaceHighValue = color_key;
+    b->ddckCKSrcBlt.dwColorSpaceLowValue = color_key;
 
+    return DD_OK;
+}
+
+HRESULT WINAPI jkgm::offscreen_menu_surface::SetColorKey(DWORD a, LPDDCOLORKEY b)
+{
+    color_key = (uint8_t)b->dwColorSpaceLowValue;
+    for(auto &em : buffer) {
+        em = color_key;
+    }
     return DD_OK;
 }
 

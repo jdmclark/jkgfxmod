@@ -1,0 +1,5 @@
+{
+    "resolution": [ 1024, 768 ],
+    "fullscreen": true,
+    "command": "jk.exe"
+}

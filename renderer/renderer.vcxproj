@@ -14,6 +14,9 @@
     <ProjectReference Include="..\base\base.vcxproj">
       <Project>{0fe8f927-740c-443c-8548-87edb23f9374}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\common\common.vcxproj">
+      <Project>{c6e800d6-4643-4719-b8cb-3365d226c42d}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\detours\detours.vcxproj">
       <Project>{e00f966e-ff4a-4451-98a0-f193fd23336e}</Project>
     </ProjectReference>

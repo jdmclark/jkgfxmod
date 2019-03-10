@@ -94,19 +94,40 @@ void jkgm::primary_menu_surface::no_present_blt(LPRECT a,
             real_c.bottom = std::min(real_c.bottom, c->bottom);
         }
 
+        std::optional<uint8_t> colorkey;
+        if(d & DDBLT_KEYSRC) {
+            osd_sd.ddckCKSrcBlt.dwColorSpaceLowValue;
+        }
+
         auto width_to_copy = std::min(a->right - a->left, c->right - c->left);
         auto height_to_copy = std::min(a->bottom - a->top, c->bottom - c->top);
 
         auto dest_start = (640 * a->top) + a->left;
         auto src_start = (osd_sd.dwWidth * c->top) + c->left;
-        for(int y = 0; y < height_to_copy; ++y) {
-            for(int x = 0; x < width_to_copy; ++x) {
-                uint8_t src_col = ((uint8_t const*)osd_sd.lpSurface)[src_start + x];
-                buffer[dest_start + x] = src_col;
-            }
 
-            dest_start += 640;
-            src_start += osd_sd.dwWidth;
+        if(colorkey.has_value()) {
+            for(int y = 0; y < height_to_copy; ++y) {
+                for(int x = 0; x < width_to_copy; ++x) {
+                    uint8_t src_col = ((uint8_t const *)osd_sd.lpSurface)[src_start + x];
+                    if(src_col != *colorkey) {
+                        buffer[dest_start + x] = src_col;
+                    }
+                }
+
+                dest_start += 640;
+                src_start += osd_sd.dwWidth;
+            }
+        }
+        else {
+            for(int y = 0; y < height_to_copy; ++y) {
+                for(int x = 0; x < width_to_copy; ++x) {
+                    uint8_t src_col = ((uint8_t const *)osd_sd.lpSurface)[src_start + x];
+                    buffer[dest_start + x] = src_col;
+                }
+
+                dest_start += 640;
+                src_start += osd_sd.dwWidth;
+            }
         }
 
         b->Unlock(NULL);

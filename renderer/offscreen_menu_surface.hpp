@@ -8,6 +8,7 @@ namespace jkgm {
     public:
         DDSURFACEDESC sd;
         std::vector<uint8_t> buffer;
+        uint8_t color_key;
 
         offscreen_menu_surface();
 
@@ -20,6 +21,7 @@ namespace jkgm {
             Blt(LPRECT a, LPDIRECTDRAWSURFACE b, LPRECT c, DWORD d, LPDDBLTFX e) override;
         HRESULT WINAPI GetSurfaceDesc(LPDDSURFACEDESC a) override;
         HRESULT WINAPI Lock(LPRECT a, LPDDSURFACEDESC b, DWORD c, HANDLE d) override;
+        HRESULT WINAPI SetColorKey(DWORD a, LPDDCOLORKEY b) override;
         HRESULT WINAPI Unlock(LPVOID a) override;
     };
 }

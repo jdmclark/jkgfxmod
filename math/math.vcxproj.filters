@@ -15,13 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="affine_transformation.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="almost_equal.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="angle.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="box.hpp">
@@ -45,16 +39,7 @@
     <ClInclude Include="lerp.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="linear_transformation.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="point.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="projective_transformation.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="quaternion.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="size.hpp">

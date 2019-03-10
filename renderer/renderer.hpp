@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base/span.hpp"
+#include "common/config.hpp"
 #include "math/point.hpp"
 #include "math/size.hpp"
 #include <Windows.h>
@@ -55,6 +56,5 @@ namespace jkgm {
         virtual IDirectDrawPalette *get_directdraw_palette(span<PALETTEENTRY const> entries) = 0;
     };
 
-    std::unique_ptr<renderer> create_renderer(HINSTANCE dll_instance,
-                                              size<2, int> configured_screen_resolution);
+    std::unique_ptr<renderer> create_renderer(HINSTANCE dll_instance, config const *the_config);
 }

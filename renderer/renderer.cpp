@@ -362,6 +362,8 @@ namespace jkgm {
 
     class renderer_impl : public renderer {
     private:
+        config const *the_config;
+
         renderer_mode mode = renderer_mode::menu;
         size<2, int> conf_scr_res;
 
@@ -403,8 +405,9 @@ namespace jkgm {
         timestamp_t menu_curr_ticks;
 
     public:
-        explicit renderer_impl(HINSTANCE dll_instance, size<2, int> configured_screen_resolution)
-            : conf_scr_res(configured_screen_resolution)
+        explicit renderer_impl(HINSTANCE dll_instance, config const *the_config)
+            : the_config(the_config)
+            , conf_scr_res(std::get<0>(the_config->resolution), std::get<1>(the_config->resolution))
             , ddraw1(this)
             , ddraw2(this)
             , d3d1(this)
@@ -413,7 +416,7 @@ namespace jkgm {
             , ddraw1_primary_menu_surface(this)
             , ddraw1_backbuffer_menu_surface(this, &ddraw1_primary_menu_surface)
             , ddraw1_primary_surface(this)
-            , ddraw1_backbuffer_surface(this, configured_screen_resolution)
+            , ddraw1_backbuffer_surface(this, conf_scr_res)
             , ddraw1_zbuffer_surface(this)
             , ddraw1_palette(this)
             , dll_instance(dll_instance)
@@ -438,10 +441,9 @@ namespace jkgm {
         {
             if(mode == renderer_mode::menu) {
                 // Stretch the point into 640x480
-                return make_point((int)((float)get<x>(real_pos) *
-                                        (640.0f / (float)get<x>(original_configured_screen_res))),
-                                  (int)((float)get<y>(real_pos) *
-                                        (480.0f / (float)get<y>(original_configured_screen_res))));
+                return make_point(
+                    (int)((float)get<x>(real_pos) * (640.0f / (float)get<x>(conf_scr_res))),
+                    (int)((float)get<y>(real_pos) * (480.0f / (float)get<y>(conf_scr_res))));
             }
 
             return real_pos;
@@ -456,14 +458,18 @@ namespace jkgm {
 
             original_configured_screen_res = get_configured_screen_resolution();
 
-            DEVMODE dm;
-            ZeroMemory(&dm, sizeof(dm));
-            dm.dmSize = sizeof(dm);
-            dm.dmPelsWidth = get<x>(original_configured_screen_res);
-            dm.dmPelsHeight = get<y>(original_configured_screen_res);
-            dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+            if(the_config->fullscreen) {
+                DEVMODE dm;
+                ZeroMemory(&dm, sizeof(dm));
+                dm.dmSize = sizeof(dm);
+                dm.dmPelsWidth = get<x>(conf_scr_res);
+                dm.dmPelsHeight = get<y>(conf_scr_res);
+                dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
 
-            ChangeDisplaySettings(&dm, CDS_FULLSCREEN);
+                ChangeDisplaySettings(&dm, CDS_FULLSCREEN);
+
+                MoveWindow(hWnd, 0, 0, get<x>(conf_scr_res), get<y>(conf_scr_res), /*repaint*/ TRUE);
+            }
 
             hDC = GetDC(hWnd);
 
@@ -1094,7 +1100,7 @@ namespace jkgm {
 }
 
 std::unique_ptr<jkgm::renderer> jkgm::create_renderer(HINSTANCE dll_instance,
-                                                      size<2, int> configured_screen_resolution)
+                                                      config const *the_config)
 {
-    return std::make_unique<jkgm::renderer_impl>(dll_instance, configured_screen_resolution);
+    return std::make_unique<jkgm::renderer_impl>(dll_instance, the_config);
 }

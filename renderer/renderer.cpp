@@ -365,6 +365,130 @@ namespace jkgm {
         }
     };
 
+    struct triangle_vertex {
+        point<4, float> pos;
+        point<2, float> texcoords;
+        jkgm::color color;
+
+        triangle_vertex()
+            : pos(point<4, float>::zero())
+            , texcoords(point<2, float>::zero())
+            , color(jkgm::color::zero())
+        {
+        }
+
+        triangle_vertex(point<4, float> pos, point<2, float> texcoords, jkgm::color color)
+            : pos(pos)
+            , texcoords(texcoords)
+            , color(color)
+        {
+        }
+    };
+
+    struct triangle {
+        triangle_vertex v0, v1, v2;
+        size_t material_index = 0U;
+        float distance = 0.0f;
+
+        triangle() = default;
+
+        triangle(triangle_vertex v0, triangle_vertex v1, triangle_vertex v2, size_t material_index)
+            : v0(v0)
+            , v1(v1)
+            , v2(v2)
+            , material_index(material_index)
+        {
+        }
+    };
+
+    class triangle_batch {
+    protected:
+        std::vector<triangle> buffer;
+        size_t num_triangles = 0U;
+
+    public:
+        triangle_batch()
+        {
+            expand();
+        }
+
+        virtual ~triangle_batch() = default;
+
+        void expand()
+        {
+            buffer.resize(buffer.size() + 10000U);
+        }
+
+        size_t size() const
+        {
+            return num_triangles;
+        }
+
+        void clear()
+        {
+            num_triangles = 0U;
+        }
+
+        void insert(triangle const &tri)
+        {
+            if(num_triangles == buffer.size()) {
+                expand();
+            }
+
+            buffer[num_triangles++] = tri;
+        }
+
+        auto begin() const
+        {
+            return buffer.begin();
+        }
+
+        auto end() const
+        {
+            return buffer.begin() + num_triangles;
+        }
+
+        auto begin()
+        {
+            return buffer.begin();
+        }
+
+        auto end()
+        {
+            return buffer.begin() + num_triangles;
+        }
+
+        virtual void sort(point<3, float> screen_origin)
+        {
+            std::sort(begin(), end(), [](auto const &a, auto const &b) {
+                return a.material_index < b.material_index;
+            });
+        }
+    };
+
+    class sorted_triangle_batch : public triangle_batch {
+    protected:
+        std::vector<triangle> buffer;
+        size_t num_triangles = 0U;
+
+    public:
+        void sort(point<3, float> screen_origin) override
+        {
+            for(auto &em : *this) {
+                auto p0 = get<xyz>(em.v0.pos);
+                auto p1 = get<xyz>(em.v1.pos);
+                auto p2 = get<xyz>(em.v2.pos);
+
+                auto n = normalize(cross(p1 - p0, p2 - p0));
+                em.distance = dot(n, screen_origin - p0);
+            }
+
+            std::sort(begin(), end(), [](auto const &a, auto const &b) {
+                return a.distance > b.distance;
+            });
+        }
+    };
+
     class renderer_impl : public renderer {
     private:
         config const *the_config;
@@ -408,6 +532,17 @@ namespace jkgm {
         using timestamp_t = std::chrono::high_resolution_clock::time_point;
         timestamp_t menu_prev_ticks;
         timestamp_t menu_curr_ticks;
+
+        triangle_batch world_batch;
+        sorted_triangle_batch world_transparent_batch;
+        triangle_batch gun_batch;
+        sorted_triangle_batch gun_transparent_batch;
+
+        bool is_gun = false;
+        bool is_transparent = false;
+        triangle_batch *current_triangle_batch = &world_batch;
+
+        size_t current_material_index = 0U;
 
     public:
         explicit renderer_impl(HINSTANCE dll_instance, config const *the_config)
@@ -705,6 +840,8 @@ namespace jkgm {
                                  make_span(ogs->menu_texture_data).as_const_bytes());
 
             // Render
+            gl::enable(gl::capability::blend);
+            gl::disable(gl::capability::depth_test);
             gl::use_program(ogs->menu_program);
             gl::set_uniform_integer(gl::uniform_location_id(0), 0);
 
@@ -735,6 +872,8 @@ namespace jkgm {
                                  make_span(ogs->menu_texture_data).as_const_bytes());
 
             // Render
+            gl::enable(gl::capability::blend);
+            gl::disable(gl::capability::depth_test);
             gl::use_program(ogs->menu_program);
             gl::set_uniform_integer(gl::uniform_location_id(0), 0);
 
@@ -771,6 +910,7 @@ namespace jkgm {
 
         void update_hud_texture()
         {
+            gl::enable(gl::capability::blend);
             gl::disable(gl::capability::depth_test);
 
             ZeroMemory(ogs->hud_texture_data.data(), ogs->hud_texture_data.size());
@@ -809,21 +949,87 @@ namespace jkgm {
 
         void begin_game() override
         {
-            LOG_DEBUG("BEGIN GAME");
+            is_gun = false;
+            is_transparent = false;
+            current_triangle_batch = &world_batch;
+            current_material_index = 0U;
+
+            world_batch.clear();
+            world_transparent_batch.clear();
+            gun_batch.clear();
+            gun_transparent_batch.clear();
+        }
+
+        void update_current_batch()
+        {
+            if(is_gun && is_transparent) {
+                current_triangle_batch = &gun_transparent_batch;
+            }
+            else if(is_gun) {
+                current_triangle_batch = &gun_batch;
+            }
+            else if(is_transparent) {
+                current_triangle_batch = &world_transparent_batch;
+            }
+            else {
+                current_triangle_batch = &world_batch;
+            }
+        }
+
+        inline void draw_batch_vertex(triangle_vertex const &tv)
+        {
+            ::glColor4f(get<r>(tv.color), get<g>(tv.color), get<b>(tv.color), get<a>(tv.color));
+            ::glTexCoord2f(get<x>(tv.texcoords), get<y>(tv.texcoords));
+            ::glVertex4f(get<x>(tv.pos), get<y>(tv.pos), get<z>(tv.pos), get<w>(tv.pos));
+        }
+
+        void draw_batch(triangle_batch const &tb)
+        {
+            for(auto const &tri : tb) {
+                if(current_material_index != tri.material_index) {
+                    if(current_material_index == 0U) {
+                        // Switching from untextured program
+                        gl::use_program(ogs->game_program);
+                    }
+                    else if(tri.material_index == 0U) {
+                        // Switching to untextured program
+                        gl::use_program(ogs->game_untextured_program);
+                    }
+
+                    if(tri.material_index != 0U) {
+                        gl::set_active_texture_unit(0);
+                        gl::bind_texture(
+                            gl::texture_bind_target::texture_2d,
+                            vidmem_texture_surfaces.at(tri.material_index - 1)->ogl_texture);
+                    }
+
+                    current_material_index = tri.material_index;
+                }
+
+                ::glBegin(GL_TRIANGLES);
+                draw_batch_vertex(tri.v0);
+                draw_batch_vertex(tri.v1);
+                draw_batch_vertex(tri.v2);
+                ::glEnd();
+            }
         }
 
         void end_game() override
         {
-            LOG_DEBUG("END GAME");
-        }
+            auto screen_origin = make_point(
+                (float)get<x>(conf_scr_res) * 0.5f, (float)get<y>(conf_scr_res) * 0.5f, 0.0f);
 
-        void execute_game(IDirect3DExecuteBuffer *cmdbuf, IDirect3DViewport *vp) override
-        {
+            world_batch.sort(screen_origin);
+            world_transparent_batch.sort(screen_origin);
+            gun_batch.sort(screen_origin);
+            gun_transparent_batch.sort(screen_origin);
+
+            // Draw batches
             gl::enable(gl::capability::depth_test);
-            gl::enable(gl::capability::blend);
             gl::set_blend_function(gl::blend_function::one,
                                    gl::blend_function::one_minus_source_alpha);
             gl::set_depth_function(gl::comparison_function::less);
+
             gl::use_program(ogs->game_program);
             gl::set_uniform_vector(gl::uniform_location_id(0),
                                    static_cast<size<2, float>>(conf_scr_res));
@@ -832,8 +1038,25 @@ namespace jkgm {
             gl::set_uniform_vector(gl::uniform_location_id(0),
                                    static_cast<size<2, float>>(conf_scr_res));
 
-            bool using_texture_program = false;
+            current_material_index = 0U;
 
+            gl::disable(gl::capability::blend);
+            draw_batch(world_batch);
+
+            gl::enable(gl::capability::blend);
+            draw_batch(world_transparent_batch);
+
+            gl::clear({gl::clear_flag::depth});
+
+            gl::disable(gl::capability::blend);
+            draw_batch(gun_batch);
+
+            gl::enable(gl::capability::blend);
+            draw_batch(gun_transparent_batch);
+        }
+
+        void execute_game(IDirect3DExecuteBuffer *cmdbuf, IDirect3DViewport *vp) override
+        {
             D3DEXECUTEDATA ed;
             cmdbuf->GetExecuteData(&ed);
 
@@ -879,23 +1102,7 @@ namespace jkgm {
                         auto const *payload = (D3DSTATE const *)cmd_span.data();
                         switch(payload->drstRenderStateType) {
                         case D3DRENDERSTATE_TEXTUREHANDLE:
-                            if(payload->dwArg[0] == 0) {
-                                // Texture mapping is disabled:
-                                if(using_texture_program) {
-                                    gl::use_program(ogs->game_untextured_program);
-                                    using_texture_program = false;
-                                }
-                            }
-                            else {
-                                gl::bind_texture(
-                                    gl::texture_bind_target::texture_2d,
-                                    vidmem_texture_surfaces.at(payload->dwArg[0] - 1)->ogl_texture);
-
-                                if(!using_texture_program) {
-                                    gl::use_program(ogs->game_program);
-                                    using_texture_program = true;
-                                }
-                            }
+                            current_material_index = (size_t)payload->dwArg[0];
                             break;
 
                         // Silently ignore some useless commands
@@ -903,7 +1110,6 @@ namespace jkgm {
                         case D3DRENDERSTATE_TEXTUREPERSPECTIVE:
                         case D3DRENDERSTATE_FILLMODE:
                         case D3DRENDERSTATE_MONOENABLE:
-                        case D3DRENDERSTATE_ALPHATESTENABLE:
                         case D3DRENDERSTATE_TEXTUREMAG:
                         case D3DRENDERSTATE_TEXTUREMIN:
                         case D3DRENDERSTATE_SRCBLEND:
@@ -914,21 +1120,26 @@ namespace jkgm {
                         case D3DRENDERSTATE_ZFUNC:
                         case D3DRENDERSTATE_ALPHAFUNC:
                         case D3DRENDERSTATE_DITHERENABLE:
-                        case D3DRENDERSTATE_ALPHABLENDENABLE:
                         case D3DRENDERSTATE_FOGENABLE:
                         case D3DRENDERSTATE_SUBPIXEL:
                         case D3DRENDERSTATE_SUBPIXELX:
                         case D3DRENDERSTATE_STIPPLEDALPHA:
                         case D3DRENDERSTATE_SHADEMODE:
                         case D3DRENDERSTATE_ZENABLE:
-                        case D3DRENDERSTATE_TEXTUREMAPBLEND:
                         case D3DRENDERSTATE_SPECULARENABLE:
+                        case D3DRENDERSTATE_ALPHATESTENABLE:
+                            break;
+
+                        case D3DRENDERSTATE_ALPHABLENDENABLE:
+                            is_transparent = (payload->dwArg[0] != 0);
+                            update_current_batch();
                             break;
 
                         case D3DRENDERSTATE_ZWRITEENABLE:
                             if(!payload->dwArg[0]) {
-                                // ACTUALLY means drawing the weapon overlay. Clear the zbuffer.
-                                gl::clear({gl::clear_flag::depth});
+                                // ACTUALLY means drawing the weapon overlay.
+                                is_gun = true;
+                                update_current_batch();
                             }
                             break;
 
@@ -946,48 +1157,33 @@ namespace jkgm {
                         auto const &v2 = vertex_span.data()[payload->v2];
                         auto const &v3 = vertex_span.data()[payload->v3];
 
-                        // HACK:
-                        ::glBegin(GL_TRIANGLES);
-
                         auto c1 = srgb_to_linear(
                             to_float_color(color_rgba8((uint8_t)RGBA_GETRED(v1.color),
                                                        (uint8_t)RGBA_GETGREEN(v1.color),
                                                        (uint8_t)RGBA_GETBLUE(v1.color),
                                                        (uint8_t)RGBA_GETALPHA(v1.color))));
-
-                        ::glColor4f(get<r>(c1) * get<a>(c1),
-                                    get<g>(c1) * get<a>(c1),
-                                    get<b>(c1) * get<a>(c1),
-                                    get<a>(c1));
-                        ::glTexCoord2f(v1.tu, v1.tv);
-                        ::glVertex4f(v1.sx, v1.sy, v1.sz, v1.rhw);
-
                         auto c2 = srgb_to_linear(
                             to_float_color(color_rgba8((uint8_t)RGBA_GETRED(v2.color),
                                                        (uint8_t)RGBA_GETGREEN(v2.color),
                                                        (uint8_t)RGBA_GETBLUE(v2.color),
                                                        (uint8_t)RGBA_GETALPHA(v2.color))));
-
-                        ::glColor4f(get<r>(c2) * get<a>(c2),
-                                    get<g>(c2) * get<a>(c2),
-                                    get<b>(c2) * get<a>(c2),
-                                    get<a>(c2));
-                        ::glTexCoord2f(v2.tu, v2.tv);
-                        ::glVertex4f(v2.sx, v2.sy, v2.sz, v2.rhw);
-
                         auto c3 = srgb_to_linear(
                             to_float_color(color_rgba8((uint8_t)RGBA_GETRED(v3.color),
                                                        (uint8_t)RGBA_GETGREEN(v3.color),
                                                        (uint8_t)RGBA_GETBLUE(v3.color),
                                                        (uint8_t)RGBA_GETALPHA(v3.color))));
 
-                        ::glColor4f(get<r>(c3) * get<a>(c3),
-                                    get<g>(c3) * get<a>(c3),
-                                    get<b>(c3) * get<a>(c3),
-                                    get<a>(c3));
-                        ::glTexCoord2f(v3.tu, v3.tv);
-                        ::glVertex4f(v3.sx, v3.sy, v3.sz, v3.rhw);
-                        ::glEnd();
+                        current_triangle_batch->insert(
+                            triangle(triangle_vertex(make_point(v1.sx, v1.sy, v1.sz, v1.rhw),
+                                                     make_point(v1.tu, v1.tv),
+                                                     extend(get<rgb>(c1) * get<a>(c1), get<a>(c1))),
+                                     triangle_vertex(make_point(v2.sx, v2.sy, v2.sz, v2.rhw),
+                                                     make_point(v2.tu, v2.tv),
+                                                     extend(get<rgb>(c2) * get<a>(c2), get<a>(c2))),
+                                     triangle_vertex(make_point(v3.sx, v3.sy, v3.sz, v3.rhw),
+                                                     make_point(v3.tu, v3.tv),
+                                                     extend(get<rgb>(c3) * get<a>(c3), get<a>(c3))),
+                                     current_material_index));
                     } break;
 
                     default:

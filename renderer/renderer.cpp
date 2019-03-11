@@ -24,9 +24,11 @@
 #include "math/colors.hpp"
 #include "offscreen_menu_surface.hpp"
 #include "offscreen_surface.hpp"
+#include "opengl_state.hpp"
 #include "primary_menu_surface.hpp"
 #include "primary_surface.hpp"
 #include "sysmem_texture.hpp"
+#include "triangle_batch.hpp"
 #include "vidmem_texture.hpp"
 #include "zbuffer_surface.hpp"
 #include <Windows.h>
@@ -90,505 +92,6 @@ namespace jkgm {
 
         return CallWindowProc(original_wkernel_wndproc, hWnd, uMsg, wParam, lParam);
     }
-
-    gl::shader compile_shader_from_file(fs::path const &filename, gl::shader_type type)
-    {
-        gl::shader rv(type);
-
-        auto fs = make_file_input_stream(filename);
-        memory_block mb;
-        memory_output_block mob(&mb);
-        fs->copy_to(&mob);
-
-        gl::shader_source(rv, make_string_span(""), make_span(mb.str()));
-        gl::compile_shader(rv);
-        if(!gl::get_shader_compile_status(rv)) {
-            LOG_ERROR(
-                "Failed to compile ", filename.generic_string(), ": ", gl::get_shader_info_log(rv));
-        }
-
-        return rv;
-    }
-
-    void link_program_from_files(std::string const &name,
-                                 gl::program *prog,
-                                 fs::path const &vx,
-                                 fs::path const &fg)
-    {
-        auto vx_shader = compile_shader_from_file(vx, gl::shader_type::vertex);
-        auto fg_shader = compile_shader_from_file(fg, gl::shader_type::fragment);
-
-        gl::attach_shader(*prog, vx_shader);
-        gl::attach_shader(*prog, fg_shader);
-
-        gl::link_program(*prog);
-
-        if(!gl::get_program_link_status(*prog)) {
-            LOG_ERROR("Failed to link program ", name, ": ", gl::get_program_info_log(*prog));
-        }
-    }
-
-    class post_model {
-    public:
-        gl::vertex_array vao;
-        gl::buffer vb;
-        gl::buffer ib;
-        unsigned int num_indices = 6U;
-
-        post_model()
-        {
-            gl::bind_vertex_array(vao);
-
-            std::array<point<2, float>, 4> post_points{make_point(-1.0f, -1.0f),
-                                                       make_point(1.0f, -1.0f),
-                                                       make_point(-1.0f, 1.0f),
-                                                       make_point(1.0f, 1.0f)};
-            std::array<uint32_t, 6> post_indices{0, 1, 2, 2, 1, 3};
-
-            gl::enable_vertex_attrib_array(0U);
-            gl::bind_buffer(gl::buffer_bind_target::array, vb);
-            gl::buffer_data(gl::buffer_bind_target::array,
-                            make_span(post_points).as_const_bytes(),
-                            gl::buffer_usage::static_draw);
-            gl::vertex_attrib_pointer(
-                /*index*/ 0,
-                /*elements*/ 2,
-                gl::vertex_element_type::float32,
-                /*normalized*/ false);
-
-            gl::bind_buffer(gl::buffer_bind_target::element_array, ib);
-            gl::buffer_data(gl::buffer_bind_target::element_array,
-                            make_span(post_indices).as_const_bytes(),
-                            gl::buffer_usage::static_draw);
-        }
-    };
-
-    class render_buffer {
-    public:
-        gl::framebuffer fbo;
-        gl::texture tex;
-        gl::renderbuffer rbo;
-        box<2, int> viewport;
-
-        explicit render_buffer(size<2, int> dims, int num_samples)
-            : viewport(make_point(0, 0), dims)
-        {
-            gl::bind_framebuffer(gl::framebuffer_bind_target::any, fbo);
-
-            gl::bind_renderbuffer(rbo);
-            gl::renderbuffer_storage_multisample(num_samples, gl::renderbuffer_format::depth, dims);
-
-            gl::bind_texture(gl::texture_bind_target::texture_2d_multisample, tex);
-            gl::tex_image_2d_multisample(gl::texture_bind_target::texture_2d_multisample,
-                                         num_samples,
-                                         gl::texture_internal_format::rgba32f,
-                                         dims,
-                                         /*fixed sample locations*/ true);
-            gl::set_texture_max_level(gl::texture_bind_target::texture_2d_multisample, 0U);
-
-            gl::framebuffer_renderbuffer(
-                gl::framebuffer_bind_target::any, gl::framebuffer_attachment::depth, rbo);
-            gl::framebuffer_texture(
-                gl::framebuffer_bind_target::any, gl::framebuffer_attachment::color0, tex, 0);
-
-            gl::draw_buffers(gl::draw_buffer::color0);
-
-            auto fbs = gl::check_framebuffer_status(gl::framebuffer_bind_target::any);
-            if(gl::check_framebuffer_status(gl::framebuffer_bind_target::any) !=
-               gl::framebuffer_status::complete) {
-                gl::log_errors();
-                LOG_ERROR("Failed to create render framebuffer: ", static_cast<int>(fbs));
-            }
-
-            gl::bind_framebuffer(gl::framebuffer_bind_target::any, gl::default_framebuffer);
-        }
-    };
-
-    class post_buffer {
-    public:
-        gl::framebuffer fbo;
-        gl::texture tex;
-        gl::renderbuffer rbo;
-        box<2, int> viewport;
-
-        explicit post_buffer(size<2, int> dims)
-            : viewport(make_point(0, 0), dims)
-        {
-            gl::bind_framebuffer(gl::framebuffer_bind_target::any, fbo);
-
-            gl::bind_renderbuffer(rbo);
-            gl::renderbuffer_storage(gl::renderbuffer_format::depth, dims);
-
-            gl::bind_texture(gl::texture_bind_target::texture_2d, tex);
-            gl::tex_image_2d(gl::texture_bind_target::texture_2d,
-                             /*level*/ 0,
-                             gl::texture_internal_format::rgba32f,
-                             dims,
-                             gl::texture_pixel_format::rgba,
-                             gl::texture_pixel_type::float32,
-                             span<char const>(nullptr, 0U));
-            gl::set_texture_max_level(gl::texture_bind_target::texture_2d, 0U);
-            gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
-            gl::set_texture_min_filter(gl::texture_bind_target::texture_2d, gl::min_filter::linear);
-            gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
-                                      gl::texture_direction::s,
-                                      gl::texture_wrap_mode::clamp_to_edge);
-            gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
-                                      gl::texture_direction::t,
-                                      gl::texture_wrap_mode::clamp_to_edge);
-
-            gl::framebuffer_renderbuffer(
-                gl::framebuffer_bind_target::any, gl::framebuffer_attachment::depth, rbo);
-            gl::framebuffer_texture(
-                gl::framebuffer_bind_target::any, gl::framebuffer_attachment::color0, tex, 0);
-
-            gl::draw_buffers(gl::draw_buffer::color0);
-
-            auto fbs = gl::check_framebuffer_status(gl::framebuffer_bind_target::any);
-            if(gl::check_framebuffer_status(gl::framebuffer_bind_target::any) !=
-               gl::framebuffer_status::complete) {
-                gl::log_errors();
-                LOG_ERROR("Failed to create render framebuffer: ", static_cast<int>(fbs));
-            }
-
-            gl::bind_framebuffer(gl::framebuffer_bind_target::any, gl::default_framebuffer);
-        }
-    };
-
-    class hdr_stack_em {
-    public:
-        post_buffer a;
-        post_buffer b;
-        int num_passes;
-        float weight;
-
-        hdr_stack_em(size<2, int> dims, int num_passes, float weight)
-            : a(dims)
-            , b(dims)
-            , num_passes(num_passes)
-            , weight(weight)
-        {
-        }
-    };
-
-    class hdr_stack {
-    public:
-        std::vector<hdr_stack_em> elements;
-
-        hdr_stack()
-        {
-            elements.emplace_back(make_size(1024, 1024), /*passes*/ 2, /*weight*/ 1.0f);
-            elements.emplace_back(make_size(512, 512), /*passes*/ 4, /*weight*/ 0.5f);
-            elements.emplace_back(make_size(256, 256), /*passes*/ 8, /*weight*/ 0.25f);
-            elements.emplace_back(make_size(128, 128), /*passes*/ 8, /*weight*/ 0.125f);
-        }
-    };
-
-    class triangle_buffer_model {
-    private:
-        gl::buffer pos_buffer;
-        gl::buffer texcoord_buffer;
-        gl::buffer color_buffer;
-        unsigned int vb_capacity = 10U;
-
-    public:
-        gl::vertex_array vao;
-
-        std::vector<point<4, float>> pos;
-        std::vector<point<2, float>> texcoords;
-        std::vector<jkgm::color> color;
-        int num_vertices = 0;
-
-        triangle_buffer_model()
-        {
-            gl::bind_vertex_array(vao);
-            gl::enable_vertex_attrib_array(0U);
-            gl::bind_buffer(gl::buffer_bind_target::array, pos_buffer);
-            gl::buffer_reserve(gl::buffer_bind_target::array,
-                               vb_capacity * sizeof(point<4, float>),
-                               gl::buffer_usage::stream_draw);
-            gl::vertex_attrib_pointer(/*index*/ 0,
-                                      /*elements*/ 4,
-                                      gl::vertex_element_type::float32,
-                                      /*normalized*/ false);
-
-            gl::enable_vertex_attrib_array(1U);
-            gl::bind_buffer(gl::buffer_bind_target::array, texcoord_buffer);
-            gl::buffer_reserve(gl::buffer_bind_target::array,
-                               vb_capacity * sizeof(point<2, float>),
-                               gl::buffer_usage::stream_draw);
-            gl::vertex_attrib_pointer(/*index*/ 1,
-                                      /*elements*/ 2,
-                                      gl::vertex_element_type::float32,
-                                      /*normalized*/ false);
-
-            gl::enable_vertex_attrib_array(2U);
-            gl::bind_buffer(gl::buffer_bind_target::array, color_buffer);
-            gl::buffer_reserve(gl::buffer_bind_target::array,
-                               vb_capacity * sizeof(color),
-                               gl::buffer_usage::stream_draw);
-            gl::vertex_attrib_pointer(/*index*/ 2,
-                                      /*elements*/ 4,
-                                      gl::vertex_element_type::float32,
-                                      /*normalized*/ false);
-        }
-
-        void maybe_grow_buffers(unsigned int new_capacity)
-        {
-            if(vb_capacity < new_capacity) {
-                vb_capacity = new_capacity;
-
-                pos.resize(vb_capacity, point<4, float>::zero());
-                texcoords.resize(vb_capacity, point<2, float>::zero());
-                color.resize(vb_capacity, color::zero());
-
-                gl::bind_buffer(gl::buffer_bind_target::array, pos_buffer);
-                gl::buffer_reserve(gl::buffer_bind_target::array,
-                                   vb_capacity * sizeof(point<4, float>),
-                                   gl::buffer_usage::stream_draw);
-
-                gl::bind_buffer(gl::buffer_bind_target::array, texcoord_buffer);
-                gl::buffer_reserve(gl::buffer_bind_target::array,
-                                   vb_capacity * sizeof(point<2, float>),
-                                   gl::buffer_usage::stream_draw);
-
-                gl::bind_buffer(gl::buffer_bind_target::array, color_buffer);
-                gl::buffer_reserve(gl::buffer_bind_target::array,
-                                   vb_capacity * sizeof(color),
-                                   gl::buffer_usage::stream_draw);
-            }
-        }
-
-        void update_buffers()
-        {
-            gl::bind_buffer(gl::buffer_bind_target::array, pos_buffer);
-            gl::buffer_sub_data(gl::buffer_bind_target::array,
-                                /*offset*/ 0U,
-                                make_span(pos).subspan(0, num_vertices).as_const_bytes());
-
-            gl::bind_buffer(gl::buffer_bind_target::array, texcoord_buffer);
-            gl::buffer_sub_data(gl::buffer_bind_target::array,
-                                /*offset*/ 0U,
-                                make_span(texcoords).subspan(0, num_vertices).as_const_bytes());
-
-            gl::bind_buffer(gl::buffer_bind_target::array, color_buffer);
-            gl::buffer_sub_data(gl::buffer_bind_target::array,
-                                /*offset*/ 0U,
-                                make_span(color).subspan(0, num_vertices).as_const_bytes());
-        }
-    };
-
-    struct opengl_state {
-        gl::program menu_program;
-        gl::program game_program;
-        gl::program game_untextured_program;
-
-        gl::program post_gauss7;
-        gl::program post_low_pass;
-        gl::program post_to_srgb;
-
-        post_model postmdl;
-        triangle_buffer_model world_trimdl;
-        triangle_buffer_model world_transparent_trimdl;
-        triangle_buffer_model gun_trimdl;
-        triangle_buffer_model gun_transparent_trimdl;
-
-        gl::texture menu_texture;
-        std::vector<color_rgba8> menu_texture_data;
-
-        gl::texture hud_texture;
-        std::vector<color_rgba8> hud_texture_data;
-
-        render_buffer screen_renderbuffer;
-        post_buffer screen_postbuffer1;
-        post_buffer screen_postbuffer2;
-
-        hdr_stack bloom_layers;
-
-        opengl_state(size<2, int> screen_res, config const *the_config)
-            : screen_renderbuffer(screen_res, the_config->msaa_samples)
-            , screen_postbuffer1(screen_res)
-            , screen_postbuffer2(screen_res)
-        {
-            LOG_DEBUG("Loading OpenGL assets");
-
-            link_program_from_files(
-                "menu", &menu_program, "jkgm/shaders/menu.vert", "jkgm/shaders/menu.frag");
-            link_program_from_files(
-                "game", &game_program, "jkgm/shaders/game.vert", "jkgm/shaders/game.frag");
-            link_program_from_files("game untextured",
-                                    &game_untextured_program,
-                                    "jkgm/shaders/game.vert",
-                                    "jkgm/shaders/game_untextured.frag");
-            link_program_from_files("post_gauss7",
-                                    &post_gauss7,
-                                    "jkgm/shaders/postprocess.vert",
-                                    "jkgm/shaders/post_gauss7.frag");
-            link_program_from_files("post_low_pass",
-                                    &post_low_pass,
-                                    "jkgm/shaders/postprocess.vert",
-                                    "jkgm/shaders/post_low_pass.frag");
-            link_program_from_files("post_to_srgb",
-                                    &post_to_srgb,
-                                    "jkgm/shaders/postprocess.vert",
-                                    "jkgm/shaders/post_to_srgb.frag");
-
-            gl::bind_texture(gl::texture_bind_target::texture_2d, menu_texture);
-            gl::tex_image_2d(gl::texture_bind_target::texture_2d,
-                             0,
-                             gl::texture_internal_format::rgba,
-                             make_size(640, 480),
-                             gl::texture_pixel_format::bgra,
-                             gl::texture_pixel_type::uint8,
-                             make_span<char const>(nullptr, 0U));
-            gl::set_texture_max_level(gl::texture_bind_target::texture_2d, 0U);
-            gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
-
-            menu_texture_data.resize(640 * 480, color_rgba8::zero());
-
-            gl::bind_texture(gl::texture_bind_target::texture_2d, hud_texture);
-            gl::tex_image_2d(gl::texture_bind_target::texture_2d,
-                             0,
-                             gl::texture_internal_format::rgba,
-                             make_size(get<x>(screen_res), get<y>(screen_res)),
-                             gl::texture_pixel_format::bgra,
-                             gl::texture_pixel_type::uint8,
-                             make_span<char const>(nullptr, 0U));
-            gl::set_texture_max_level(gl::texture_bind_target::texture_2d, 0U);
-            gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
-
-            hud_texture_data.resize(volume(screen_res), color_rgba8::zero());
-        }
-    };
-
-    struct triangle_vertex {
-        point<4, float> pos;
-        point<2, float> texcoords;
-        jkgm::color color;
-
-        triangle_vertex()
-            : pos(point<4, float>::zero())
-            , texcoords(point<2, float>::zero())
-            , color(jkgm::color::zero())
-        {
-        }
-
-        triangle_vertex(point<4, float> pos, point<2, float> texcoords, jkgm::color color)
-            : pos(pos)
-            , texcoords(texcoords)
-            , color(color)
-        {
-        }
-    };
-
-    struct triangle {
-        triangle_vertex v0, v1, v2;
-        size_t material_index = 0U;
-        float distance = 0.0f;
-
-        triangle() = default;
-
-        triangle(triangle_vertex v0, triangle_vertex v1, triangle_vertex v2, size_t material_index)
-            : v0(v0)
-            , v1(v1)
-            , v2(v2)
-            , material_index(material_index)
-        {
-        }
-    };
-
-    class triangle_batch {
-    protected:
-        std::vector<triangle> buffer;
-        size_t num_triangles = 0U;
-
-    public:
-        triangle_batch()
-        {
-            expand();
-        }
-
-        virtual ~triangle_batch() = default;
-
-        void expand()
-        {
-            buffer.resize(buffer.size() + 10000U);
-        }
-
-        size_t size() const
-        {
-            return num_triangles;
-        }
-
-        size_t capacity() const
-        {
-            return buffer.size();
-        }
-
-        void clear()
-        {
-            num_triangles = 0U;
-        }
-
-        void insert(triangle const &tri)
-        {
-            if(num_triangles == buffer.size()) {
-                expand();
-            }
-
-            buffer[num_triangles++] = tri;
-        }
-
-        auto begin() const
-        {
-            return buffer.begin();
-        }
-
-        auto end() const
-        {
-            return buffer.begin() + num_triangles;
-        }
-
-        auto begin()
-        {
-            return buffer.begin();
-        }
-
-        auto end()
-        {
-            return buffer.begin() + num_triangles;
-        }
-
-        virtual void sort(point<3, float> screen_origin)
-        {
-            std::sort(begin(), end(), [](auto const &a, auto const &b) {
-                return a.material_index < b.material_index;
-            });
-        }
-    };
-
-    class sorted_triangle_batch : public triangle_batch {
-    protected:
-        std::vector<triangle> buffer;
-        size_t num_triangles = 0U;
-
-    public:
-        void sort(point<3, float> screen_origin) override
-        {
-            for(auto &em : *this) {
-                auto p0 = get<xyz>(em.v0.pos);
-                auto p1 = get<xyz>(em.v1.pos);
-                auto p2 = get<xyz>(em.v2.pos);
-
-                auto n = normalize(cross(p1 - p0, p2 - p0));
-                em.distance = dot(n, screen_origin - p0);
-            }
-
-            std::sort(begin(), end(), [](auto const &a, auto const &b) {
-                return a.distance > b.distance;
-            });
-        }
-    };
 
     class renderer_impl : public renderer {
     private:
@@ -1154,13 +657,10 @@ namespace jkgm {
 
         void end_game() override
         {
-            auto screen_origin = make_point(
-                (float)get<x>(conf_scr_res) * 0.5f, (float)get<y>(conf_scr_res) * 0.5f, 0.0f);
-
-            world_batch.sort(screen_origin);
-            world_transparent_batch.sort(screen_origin);
-            gun_batch.sort(screen_origin);
-            gun_transparent_batch.sort(screen_origin);
+            world_batch.sort();
+            world_transparent_batch.sort();
+            gun_batch.sort();
+            gun_transparent_batch.sort();
 
             fill_buffer(world_batch, &ogs->world_trimdl);
             fill_buffer(world_transparent_batch, &ogs->world_transparent_trimdl);
@@ -1184,18 +684,25 @@ namespace jkgm {
             current_material_index = 0U;
 
             gl::disable(gl::capability::blend);
+            gl::set_depth_mask(true);
             draw_batch(world_batch, &ogs->world_trimdl);
 
             gl::enable(gl::capability::blend);
+            gl::set_depth_mask(false);
             draw_batch(world_transparent_batch, &ogs->world_transparent_trimdl);
+
+            gl::disable(gl::capability::blend);
+            gl::set_depth_mask(true);
 
             gl::clear({gl::clear_flag::depth});
 
-            gl::disable(gl::capability::blend);
             draw_batch(gun_batch, &ogs->gun_trimdl);
 
             gl::enable(gl::capability::blend);
+            gl::set_depth_mask(false);
             draw_batch(gun_transparent_batch, &ogs->gun_transparent_trimdl);
+
+            gl::set_depth_mask(true);
         }
 
         void execute_game(IDirect3DExecuteBuffer *cmdbuf, IDirect3DViewport *vp) override
@@ -1266,6 +773,7 @@ namespace jkgm {
                         case D3DRENDERSTATE_FOGENABLE:
                         case D3DRENDERSTATE_SUBPIXEL:
                         case D3DRENDERSTATE_SUBPIXELX:
+                        case D3DRENDERSTATE_TEXTUREMAPBLEND:
                         case D3DRENDERSTATE_STIPPLEDALPHA:
                         case D3DRENDERSTATE_SHADEMODE:
                         case D3DRENDERSTATE_ZENABLE:

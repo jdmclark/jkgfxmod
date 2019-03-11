@@ -38,12 +38,14 @@
     <ClCompile Include="ddrawpalette_impl.cpp" />
     <ClCompile Include="offscreen_menu_surface.cpp" />
     <ClCompile Include="offscreen_surface.cpp" />
+    <ClCompile Include="opengl_state.cpp" />
     <ClCompile Include="primary_menu_surface.cpp" />
     <ClCompile Include="primary_surface.cpp" />
     <ClCompile Include="dxguids.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="renderer.cpp" />
     <ClCompile Include="sysmem_texture.cpp" />
+    <ClCompile Include="triangle_batch.cpp" />
     <ClCompile Include="vidmem_texture.cpp" />
     <ClCompile Include="zbuffer_surface.cpp" />
   </ItemGroup>
@@ -61,11 +63,13 @@
     <ClInclude Include="ddrawpalette_impl.hpp" />
     <ClInclude Include="offscreen_menu_surface.hpp" />
     <ClInclude Include="offscreen_surface.hpp" />
+    <ClInclude Include="opengl_state.hpp" />
     <ClInclude Include="primary_menu_surface.hpp" />
     <ClInclude Include="primary_surface.hpp" />
     <ClInclude Include="dxguids.hpp" />
     <ClInclude Include="renderer.hpp" />
     <ClInclude Include="sysmem_texture.hpp" />
+    <ClInclude Include="triangle_batch.hpp" />
     <ClInclude Include="vidmem_texture.hpp" />
     <ClInclude Include="zbuffer_surface.hpp" />
   </ItemGroup>

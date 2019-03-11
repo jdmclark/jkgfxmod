@@ -78,6 +78,12 @@
     <ClCompile Include="offscreen_menu_surface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="opengl_state.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="triangle_batch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ddraw_impl.hpp">
@@ -138,6 +144,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="offscreen_menu_surface.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="opengl_state.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="triangle_batch.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

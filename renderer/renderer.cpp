@@ -170,11 +170,9 @@ namespace jkgm {
         gl::renderbuffer rbo;
         box<2, int> viewport;
 
-        explicit render_buffer(size<2, int> dims)
+        explicit render_buffer(size<2, int> dims, int num_samples)
             : viewport(make_point(0, 0), dims)
         {
-            constexpr int num_samples = 16;
-
             gl::bind_framebuffer(gl::framebuffer_bind_target::any, fbo);
 
             gl::bind_renderbuffer(rbo);
@@ -309,8 +307,8 @@ namespace jkgm {
 
         hdr_stack bloom_layers;
 
-        explicit opengl_state(size<2, int> screen_res)
-            : screen_renderbuffer(screen_res)
+        opengl_state(size<2, int> screen_res, config const *the_config)
+            : screen_renderbuffer(screen_res, the_config->msaa_samples)
             , screen_postbuffer1(screen_res)
             , screen_postbuffer2(screen_res)
         {
@@ -647,7 +645,7 @@ namespace jkgm {
 
             SwapBuffers(hDC);
 
-            ogs = std::make_unique<opengl_state>(conf_scr_res);
+            ogs = std::make_unique<opengl_state>(conf_scr_res, the_config);
             begin_frame();
         }
 

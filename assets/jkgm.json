@@ -1,5 +1,6 @@
 {
     "resolution": [ 1024, 768 ],
     "fullscreen": true,
+    "msaa_samples": 4,
     "command": "jk.exe"
 }

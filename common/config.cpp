@@ -1,8 +1,8 @@
 #include "config.hpp"
-#include "json.hpp"
-#include "base/memory_block.hpp"
 #include "base/file_stream.hpp"
 #include "base/log.hpp"
+#include "base/memory_block.hpp"
+#include "json.hpp"
 
 using namespace nlohmann;
 
@@ -20,6 +20,7 @@ std::unique_ptr<jkgm::config> jkgm::load_config_file()
         auto j = json::parse(mb.str());
         j.at("resolution").get_to(rv->resolution);
         j.at("fullscreen").get_to(rv->fullscreen);
+        j.at("msaa_samples").get_to(rv->msaa_samples);
         j.at("command").get_to(rv->command);
     }
     catch(std::exception const &e) {

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "gl.hpp"
 #include "base/unique_handle.hpp"
+#include "gl.hpp"
 #include <optional>
 
 namespace jkgm::gl {
@@ -41,4 +41,6 @@ namespace jkgm::gl {
                        size_t num_indices,
                        index_type itype,
                        ptrdiff_t offset = 0);
+
+    void draw_arrays(element_type type, size_t offset, size_t count);
 }

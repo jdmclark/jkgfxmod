@@ -39,4 +39,5 @@ namespace jkgm::gl {
 
     static_assert(buffer_usage::static_draw == buffer_usage(GL_STATIC_DRAW));
     static_assert(buffer_usage::dynamic_draw == buffer_usage(GL_DYNAMIC_DRAW));
+    static_assert(buffer_usage::stream_draw == buffer_usage(GL_STREAM_DRAW));
 }

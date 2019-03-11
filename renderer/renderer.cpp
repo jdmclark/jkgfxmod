@@ -284,6 +284,100 @@ namespace jkgm {
         }
     };
 
+    class triangle_buffer_model {
+    private:
+        gl::buffer pos_buffer;
+        gl::buffer texcoord_buffer;
+        gl::buffer color_buffer;
+        unsigned int vb_capacity = 10U;
+
+    public:
+        gl::vertex_array vao;
+
+        std::vector<point<4, float>> pos;
+        std::vector<point<2, float>> texcoords;
+        std::vector<jkgm::color> color;
+        int num_vertices = 0;
+
+        triangle_buffer_model()
+        {
+            gl::bind_vertex_array(vao);
+            gl::enable_vertex_attrib_array(0U);
+            gl::bind_buffer(gl::buffer_bind_target::array, pos_buffer);
+            gl::buffer_reserve(gl::buffer_bind_target::array,
+                               vb_capacity * sizeof(point<4, float>),
+                               gl::buffer_usage::stream_draw);
+            gl::vertex_attrib_pointer(/*index*/ 0,
+                                      /*elements*/ 4,
+                                      gl::vertex_element_type::float32,
+                                      /*normalized*/ false);
+
+            gl::enable_vertex_attrib_array(1U);
+            gl::bind_buffer(gl::buffer_bind_target::array, texcoord_buffer);
+            gl::buffer_reserve(gl::buffer_bind_target::array,
+                               vb_capacity * sizeof(point<2, float>),
+                               gl::buffer_usage::stream_draw);
+            gl::vertex_attrib_pointer(/*index*/ 1,
+                                      /*elements*/ 2,
+                                      gl::vertex_element_type::float32,
+                                      /*normalized*/ false);
+
+            gl::enable_vertex_attrib_array(2U);
+            gl::bind_buffer(gl::buffer_bind_target::array, color_buffer);
+            gl::buffer_reserve(gl::buffer_bind_target::array,
+                               vb_capacity * sizeof(color),
+                               gl::buffer_usage::stream_draw);
+            gl::vertex_attrib_pointer(/*index*/ 2,
+                                      /*elements*/ 4,
+                                      gl::vertex_element_type::float32,
+                                      /*normalized*/ false);
+        }
+
+        void maybe_grow_buffers(unsigned int new_capacity)
+        {
+            if(vb_capacity < new_capacity) {
+                vb_capacity = new_capacity;
+
+                pos.resize(vb_capacity, point<4, float>::zero());
+                texcoords.resize(vb_capacity, point<2, float>::zero());
+                color.resize(vb_capacity, color::zero());
+
+                gl::bind_buffer(gl::buffer_bind_target::array, pos_buffer);
+                gl::buffer_reserve(gl::buffer_bind_target::array,
+                                   vb_capacity * sizeof(point<4, float>),
+                                   gl::buffer_usage::stream_draw);
+
+                gl::bind_buffer(gl::buffer_bind_target::array, texcoord_buffer);
+                gl::buffer_reserve(gl::buffer_bind_target::array,
+                                   vb_capacity * sizeof(point<2, float>),
+                                   gl::buffer_usage::stream_draw);
+
+                gl::bind_buffer(gl::buffer_bind_target::array, color_buffer);
+                gl::buffer_reserve(gl::buffer_bind_target::array,
+                                   vb_capacity * sizeof(color),
+                                   gl::buffer_usage::stream_draw);
+            }
+        }
+
+        void update_buffers()
+        {
+            gl::bind_buffer(gl::buffer_bind_target::array, pos_buffer);
+            gl::buffer_sub_data(gl::buffer_bind_target::array,
+                                /*offset*/ 0U,
+                                make_span(pos).subspan(0, num_vertices).as_const_bytes());
+
+            gl::bind_buffer(gl::buffer_bind_target::array, texcoord_buffer);
+            gl::buffer_sub_data(gl::buffer_bind_target::array,
+                                /*offset*/ 0U,
+                                make_span(texcoords).subspan(0, num_vertices).as_const_bytes());
+
+            gl::bind_buffer(gl::buffer_bind_target::array, color_buffer);
+            gl::buffer_sub_data(gl::buffer_bind_target::array,
+                                /*offset*/ 0U,
+                                make_span(color).subspan(0, num_vertices).as_const_bytes());
+        }
+    };
+
     struct opengl_state {
         gl::program menu_program;
         gl::program game_program;
@@ -294,6 +388,10 @@ namespace jkgm {
         gl::program post_to_srgb;
 
         post_model postmdl;
+        triangle_buffer_model world_trimdl;
+        triangle_buffer_model world_transparent_trimdl;
+        triangle_buffer_model gun_trimdl;
+        triangle_buffer_model gun_transparent_trimdl;
 
         gl::texture menu_texture;
         std::vector<color_rgba8> menu_texture_data;
@@ -420,6 +518,11 @@ namespace jkgm {
         size_t size() const
         {
             return num_triangles;
+        }
+
+        size_t capacity() const
+        {
+            return buffer.size();
         }
 
         void clear()
@@ -974,17 +1077,22 @@ namespace jkgm {
             }
         }
 
-        inline void draw_batch_vertex(triangle_vertex const &tv)
+        void draw_batch(triangle_batch const &tb, triangle_buffer_model *trimdl)
         {
-            ::glColor4f(get<r>(tv.color), get<g>(tv.color), get<b>(tv.color), get<a>(tv.color));
-            ::glTexCoord2f(get<x>(tv.texcoords), get<y>(tv.texcoords));
-            ::glVertex4f(get<x>(tv.pos), get<y>(tv.pos), get<z>(tv.pos), get<w>(tv.pos));
-        }
+            gl::bind_vertex_array(trimdl->vao);
 
-        void draw_batch(triangle_batch const &tb)
-        {
+            size_t curr_offset = 0U;
+            size_t num_verts = 0U;
+
             for(auto const &tri : tb) {
                 if(current_material_index != tri.material_index) {
+                    if(num_verts > 0) {
+                        gl::draw_arrays(gl::element_type::triangles, curr_offset, num_verts);
+
+                        curr_offset += num_verts;
+                        num_verts = 0U;
+                    }
+
                     if(current_material_index == 0U) {
                         // Switching from untextured program
                         gl::use_program(ogs->game_program);
@@ -1004,12 +1112,44 @@ namespace jkgm {
                     current_material_index = tri.material_index;
                 }
 
-                ::glBegin(GL_TRIANGLES);
-                draw_batch_vertex(tri.v0);
-                draw_batch_vertex(tri.v1);
-                draw_batch_vertex(tri.v2);
-                ::glEnd();
+                num_verts += 3;
             }
+
+            if(num_verts > 0) {
+                gl::draw_arrays(gl::element_type::triangles, curr_offset, num_verts);
+
+                curr_offset += num_verts;
+                num_verts = 0U;
+            }
+        }
+
+        void fill_buffer(triangle_batch const &tb, triangle_buffer_model *mdl)
+        {
+            mdl->maybe_grow_buffers(tb.capacity() * 3);
+
+            int curr_vert = 0;
+            for(auto const &tri : tb) {
+                mdl->pos[curr_vert] = tri.v0.pos;
+                mdl->texcoords[curr_vert] = tri.v0.texcoords;
+                mdl->color[curr_vert] = tri.v0.color;
+
+                ++curr_vert;
+
+                mdl->pos[curr_vert] = tri.v1.pos;
+                mdl->texcoords[curr_vert] = tri.v1.texcoords;
+                mdl->color[curr_vert] = tri.v1.color;
+
+                ++curr_vert;
+
+                mdl->pos[curr_vert] = tri.v2.pos;
+                mdl->texcoords[curr_vert] = tri.v2.texcoords;
+                mdl->color[curr_vert] = tri.v2.color;
+
+                ++curr_vert;
+            }
+
+            mdl->num_vertices = curr_vert;
+            mdl->update_buffers();
         }
 
         void end_game() override
@@ -1021,6 +1161,11 @@ namespace jkgm {
             world_transparent_batch.sort(screen_origin);
             gun_batch.sort(screen_origin);
             gun_transparent_batch.sort(screen_origin);
+
+            fill_buffer(world_batch, &ogs->world_trimdl);
+            fill_buffer(world_transparent_batch, &ogs->world_transparent_trimdl);
+            fill_buffer(gun_batch, &ogs->gun_trimdl);
+            fill_buffer(gun_transparent_batch, &ogs->gun_transparent_trimdl);
 
             // Draw batches
             gl::enable(gl::capability::depth_test);
@@ -1039,18 +1184,18 @@ namespace jkgm {
             current_material_index = 0U;
 
             gl::disable(gl::capability::blend);
-            draw_batch(world_batch);
+            draw_batch(world_batch, &ogs->world_trimdl);
 
             gl::enable(gl::capability::blend);
-            draw_batch(world_transparent_batch);
+            draw_batch(world_transparent_batch, &ogs->world_transparent_trimdl);
 
             gl::clear({gl::clear_flag::depth});
 
             gl::disable(gl::capability::blend);
-            draw_batch(gun_batch);
+            draw_batch(gun_batch, &ogs->gun_trimdl);
 
             gl::enable(gl::capability::blend);
-            draw_batch(gun_transparent_batch);
+            draw_batch(gun_transparent_batch, &ogs->gun_transparent_trimdl);
         }
 
         void execute_game(IDirect3DExecuteBuffer *cmdbuf, IDirect3DViewport *vp) override

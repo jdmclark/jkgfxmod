@@ -49,6 +49,11 @@ void jkgm::gl::draw_elements(element_type type,
                    reinterpret_cast<GLvoid const *>(offset));
 }
 
+void jkgm::gl::draw_arrays(element_type type, size_t offset, size_t count)
+{
+    glDrawArrays(static_cast<GLenum>(type), offset, count);
+}
+
 namespace jkgm::gl {
     static_assert(vertex_element_type::int8 == vertex_element_type(GL_BYTE));
     static_assert(vertex_element_type::uint8 == vertex_element_type(GL_UNSIGNED_BYTE));

@@ -18,7 +18,7 @@ namespace jkgm::gl {
 
     enum class buffer_bind_target : enum_type { array = 0x8892, element_array = 0x8893 };
 
-    enum class buffer_usage : enum_type { static_draw = 0x88E4, dynamic_draw = 0x88E8 };
+    enum class buffer_usage : enum_type { static_draw = 0x88E4, dynamic_draw = 0x88E8, stream_draw = 0x88E0 };
 
     void bind_buffer(buffer_bind_target target, buffer_view buf);
     void buffer_reserve(buffer_bind_target target, size_t size, buffer_usage usage);

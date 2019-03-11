@@ -194,11 +194,13 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::DeleteMatrix(D3DMATRIXHANDLE a)
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::BeginScene()
 {
+    r->begin_game();
     return D3D_OK;
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::EndScene()
 {
+    r->end_game();
     return D3D_OK;
 }
 

@@ -32,7 +32,9 @@ namespace jkgm {
         virtual void present_menu_surface_delayed() = 0;
 
         virtual void depth_clear_game() = 0;
+        virtual void begin_game() = 0;
         virtual void execute_game(IDirect3DExecuteBuffer *cmdbuf, IDirect3DViewport *vp) = 0;
+        virtual void end_game() = 0;
         virtual void present_game() = 0;
 
         virtual IDirectDraw *get_directdraw() = 0;

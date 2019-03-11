@@ -289,6 +289,7 @@ namespace jkgm {
     struct opengl_state {
         gl::program menu_program;
         gl::program game_program;
+        gl::program game_untextured_program;
 
         gl::program post_gauss7;
         gl::program post_low_pass;
@@ -319,6 +320,10 @@ namespace jkgm {
                 "menu", &menu_program, "jkgm/shaders/menu.vert", "jkgm/shaders/menu.frag");
             link_program_from_files(
                 "game", &game_program, "jkgm/shaders/game.vert", "jkgm/shaders/game.frag");
+            link_program_from_files("game untextured",
+                                    &game_untextured_program,
+                                    "jkgm/shaders/game.vert",
+                                    "jkgm/shaders/game_untextured.frag");
             link_program_from_files("post_gauss7",
                                     &post_gauss7,
                                     "jkgm/shaders/postprocess.vert",
@@ -468,7 +473,8 @@ namespace jkgm {
 
                 ChangeDisplaySettings(&dm, CDS_FULLSCREEN);
 
-                MoveWindow(hWnd, 0, 0, get<x>(conf_scr_res), get<y>(conf_scr_res), /*repaint*/ TRUE);
+                MoveWindow(
+                    hWnd, 0, 0, get<x>(conf_scr_res), get<y>(conf_scr_res), /*repaint*/ TRUE);
             }
 
             hDC = GetDC(hWnd);
@@ -801,6 +807,16 @@ namespace jkgm {
             }
         }
 
+        void begin_game() override
+        {
+            LOG_DEBUG("BEGIN GAME");
+        }
+
+        void end_game() override
+        {
+            LOG_DEBUG("END GAME");
+        }
+
         void execute_game(IDirect3DExecuteBuffer *cmdbuf, IDirect3DViewport *vp) override
         {
             gl::enable(gl::capability::depth_test);
@@ -812,6 +828,11 @@ namespace jkgm {
             gl::set_uniform_vector(gl::uniform_location_id(0),
                                    static_cast<size<2, float>>(conf_scr_res));
             gl::set_uniform_integer(gl::uniform_location_id(1), 0);
+            gl::use_program(ogs->game_untextured_program);
+            gl::set_uniform_vector(gl::uniform_location_id(0),
+                                   static_cast<size<2, float>>(conf_scr_res));
+
+            bool using_texture_program = false;
 
             D3DEXECUTEDATA ed;
             cmdbuf->GetExecuteData(&ed);
@@ -858,21 +879,36 @@ namespace jkgm {
                         auto const *payload = (D3DSTATE const *)cmd_span.data();
                         switch(payload->drstRenderStateType) {
                         case D3DRENDERSTATE_TEXTUREHANDLE:
-                            gl::bind_texture(
-                                gl::texture_bind_target::texture_2d,
-                                vidmem_texture_surfaces.at(payload->dwArg[0])->ogl_texture);
+                            if(payload->dwArg[0] == 0) {
+                                // Texture mapping is disabled:
+                                if(using_texture_program) {
+                                    gl::use_program(ogs->game_untextured_program);
+                                    using_texture_program = false;
+                                }
+                            }
+                            else {
+                                gl::bind_texture(
+                                    gl::texture_bind_target::texture_2d,
+                                    vidmem_texture_surfaces.at(payload->dwArg[0] - 1)->ogl_texture);
+
+                                if(!using_texture_program) {
+                                    gl::use_program(ogs->game_program);
+                                    using_texture_program = true;
+                                }
+                            }
                             break;
 
                         // Silently ignore some useless commands
                         case D3DRENDERSTATE_ANTIALIAS:
                         case D3DRENDERSTATE_TEXTUREPERSPECTIVE:
                         case D3DRENDERSTATE_FILLMODE:
-                        case D3DRENDERSTATE_SHADEMODE:
                         case D3DRENDERSTATE_MONOENABLE:
-                        case D3DRENDERSTATE_TEXTUREMAPBLEND:
+                        case D3DRENDERSTATE_ALPHATESTENABLE:
                         case D3DRENDERSTATE_TEXTUREMAG:
                         case D3DRENDERSTATE_TEXTUREMIN:
                         case D3DRENDERSTATE_SRCBLEND:
+                        case D3DRENDERSTATE_WRAPU:
+                        case D3DRENDERSTATE_WRAPV:
                         case D3DRENDERSTATE_DESTBLEND:
                         case D3DRENDERSTATE_CULLMODE:
                         case D3DRENDERSTATE_ZFUNC:
@@ -880,10 +916,20 @@ namespace jkgm {
                         case D3DRENDERSTATE_DITHERENABLE:
                         case D3DRENDERSTATE_ALPHABLENDENABLE:
                         case D3DRENDERSTATE_FOGENABLE:
-                        case D3DRENDERSTATE_SPECULARENABLE:
                         case D3DRENDERSTATE_SUBPIXEL:
                         case D3DRENDERSTATE_SUBPIXELX:
                         case D3DRENDERSTATE_STIPPLEDALPHA:
+                        case D3DRENDERSTATE_SHADEMODE:
+                        case D3DRENDERSTATE_ZENABLE:
+                        case D3DRENDERSTATE_TEXTUREMAPBLEND:
+                        case D3DRENDERSTATE_SPECULARENABLE:
+                            break;
+
+                        case D3DRENDERSTATE_ZWRITEENABLE:
+                            if(!payload->dwArg[0]) {
+                                // ACTUALLY means drawing the weapon overlay. Clear the zbuffer.
+                                gl::clear({gl::clear_flag::depth});
+                            }
                             break;
 
                         default:
@@ -903,42 +949,42 @@ namespace jkgm {
                         // HACK:
                         ::glBegin(GL_TRIANGLES);
 
-                        auto r1 = float(RGBA_GETRED(v1.color)) / 255.0f;
-                        auto g1 = float(RGBA_GETGREEN(v1.color)) / 255.0f;
-                        auto b1 = float(RGBA_GETBLUE(v1.color)) / 255.0f;
-                        auto a1 = float(RGBA_GETALPHA(v1.color)) / 255.0f;
-                        auto sr1 = float(RGB_GETRED(v1.specular)) / 255.0f;
-                        auto sg1 = float(RGB_GETGREEN(v1.specular)) / 255.0f;
-                        auto sb1 = float(RGB_GETBLUE(v1.specular)) / 255.0f;
+                        auto c1 = srgb_to_linear(
+                            to_float_color(color_rgba8((uint8_t)RGBA_GETRED(v1.color),
+                                                       (uint8_t)RGBA_GETGREEN(v1.color),
+                                                       (uint8_t)RGBA_GETBLUE(v1.color),
+                                                       (uint8_t)RGBA_GETALPHA(v1.color))));
 
-                        ::glSecondaryColor3f(sr1, sg1, sb1);
-                        ::glColor4f(r1 * a1, g1 * a1, b1 * a1, a1);
+                        ::glColor4f(get<r>(c1) * get<a>(c1),
+                                    get<g>(c1) * get<a>(c1),
+                                    get<b>(c1) * get<a>(c1),
+                                    get<a>(c1));
                         ::glTexCoord2f(v1.tu, v1.tv);
                         ::glVertex4f(v1.sx, v1.sy, v1.sz, v1.rhw);
 
-                        auto r2 = float(RGBA_GETRED(v2.color)) / 255.0f;
-                        auto g2 = float(RGBA_GETGREEN(v2.color)) / 255.0f;
-                        auto b2 = float(RGBA_GETBLUE(v2.color)) / 255.0f;
-                        auto a2 = float(RGBA_GETALPHA(v2.color)) / 255.0f;
-                        auto sr2 = float(RGB_GETRED(v2.specular)) / 255.0f;
-                        auto sg2 = float(RGB_GETGREEN(v2.specular)) / 255.0f;
-                        auto sb2 = float(RGB_GETBLUE(v2.specular)) / 255.0f;
+                        auto c2 = srgb_to_linear(
+                            to_float_color(color_rgba8((uint8_t)RGBA_GETRED(v2.color),
+                                                       (uint8_t)RGBA_GETGREEN(v2.color),
+                                                       (uint8_t)RGBA_GETBLUE(v2.color),
+                                                       (uint8_t)RGBA_GETALPHA(v2.color))));
 
-                        ::glSecondaryColor3f(sr2, sg2, sb2);
-                        ::glColor4f(r2 * a2, g2 * a2, b2 * a2, a2);
+                        ::glColor4f(get<r>(c2) * get<a>(c2),
+                                    get<g>(c2) * get<a>(c2),
+                                    get<b>(c2) * get<a>(c2),
+                                    get<a>(c2));
                         ::glTexCoord2f(v2.tu, v2.tv);
                         ::glVertex4f(v2.sx, v2.sy, v2.sz, v2.rhw);
 
-                        auto r3 = float(RGBA_GETRED(v3.color)) / 255.0f;
-                        auto g3 = float(RGBA_GETGREEN(v3.color)) / 255.0f;
-                        auto b3 = float(RGBA_GETBLUE(v3.color)) / 255.0f;
-                        auto a3 = float(RGBA_GETALPHA(v3.color)) / 255.0f;
-                        auto sr3 = float(RGB_GETRED(v3.specular)) / 255.0f;
-                        auto sg3 = float(RGB_GETGREEN(v3.specular)) / 255.0f;
-                        auto sb3 = float(RGB_GETBLUE(v3.specular)) / 255.0f;
+                        auto c3 = srgb_to_linear(
+                            to_float_color(color_rgba8((uint8_t)RGBA_GETRED(v3.color),
+                                                       (uint8_t)RGBA_GETGREEN(v3.color),
+                                                       (uint8_t)RGBA_GETBLUE(v3.color),
+                                                       (uint8_t)RGBA_GETALPHA(v3.color))));
 
-                        ::glSecondaryColor3f(sr3, sg3, sb3);
-                        ::glColor4f(r3 * a3, g3 * a3, b3 * a3, a3);
+                        ::glColor4f(get<r>(c3) * get<a>(c3),
+                                    get<g>(c3) * get<a>(c3),
+                                    get<b>(c3) * get<a>(c3),
+                                    get<a>(c3));
                         ::glTexCoord2f(v3.tu, v3.tv);
                         ::glVertex4f(v3.sx, v3.sy, v3.sz, v3.rhw);
                         ::glEnd();
@@ -964,7 +1010,8 @@ namespace jkgm {
 
         void depth_clear_game() override
         {
-            gl::clear({gl::clear_flag::depth});
+            // JK calls this once per frame, immediately after present.
+            // Ignore: the framebuffer is already cleared elsewhere.
         }
 
         IDirectDraw *get_directdraw() override
@@ -1061,7 +1108,7 @@ namespace jkgm {
                 }
 
                 vidmem_texture_surfaces.push_back(
-                    std::make_unique<vidmem_texture_surface>(vidmem_texture_surfaces.size()));
+                    std::make_unique<vidmem_texture_surface>(vidmem_texture_surfaces.size() + 1));
                 return vidmem_texture_surfaces.back().get();
             };
 

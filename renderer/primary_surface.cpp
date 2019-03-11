@@ -20,6 +20,13 @@ ULONG WINAPI jkgm::primary_surface::Release()
     return 1000;
 }
 
+HRESULT WINAPI
+    jkgm::primary_surface::Blt(LPRECT a, LPDIRECTDRAWSURFACE b, LPRECT c, DWORD d, LPDDBLTFX e)
+{
+    // Intentionally ignored
+    return DD_OK;
+}
+
 HRESULT WINAPI jkgm::primary_surface::Flip(LPDIRECTDRAWSURFACE a, DWORD b)
 {
     r->present_game();
@@ -33,8 +40,14 @@ HRESULT WINAPI jkgm::primary_surface::GetAttachedSurface(LPDDSCAPS a, LPDIRECTDR
         return DD_OK;
     }
 
-    LOG_ERROR("DirectDrawSurface(primary)::GetAttachedSurface unimplemented surface type ", a->dwCaps);
+    LOG_ERROR("DirectDrawSurface(primary)::GetAttachedSurface unimplemented surface type ",
+              a->dwCaps);
     abort();
+}
+
+HRESULT WINAPI jkgm::primary_surface::GetBltStatus(DWORD a)
+{
+    return DD_OK;
 }
 
 HRESULT WINAPI jkgm::primary_surface::GetFlipStatus(DWORD a)

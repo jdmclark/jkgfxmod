@@ -6,7 +6,7 @@
 jkgm::DirectDrawPalette_impl::DirectDrawPalette_impl(renderer *r)
     : r(r)
 {
-    linear_entries.resize(256, color_rgba8::zero());
+    srgb_entries.resize(256, color_rgba8::zero());
     entries.resize(256);
 }
 
@@ -14,8 +14,7 @@ void jkgm::DirectDrawPalette_impl::recompute_palette()
 {
     for(size_t i = 0; i < 256; ++i) {
         auto src_col = entries[i];
-        linear_entries[i] = to_discrete_color(srgb_to_linear(to_float_color(
-            color_rgba8(src_col.peRed, src_col.peGreen, src_col.peBlue, uint8_t(255)))));
+        srgb_entries[i] = color_rgba8(src_col.peRed, src_col.peGreen, src_col.peBlue, uint8_t(255));
     }
 }
 

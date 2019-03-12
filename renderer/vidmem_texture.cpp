@@ -43,11 +43,11 @@ HRESULT WINAPI jkgm::vidmem_texture::Load(LPDIRECT3DTEXTURE a)
         // Convert from indexed to RGB888
         if(src->desc.ddpfPixelFormat.dwRGBAlphaBitMask) {
             // Convert from RGBA5551 to RGBA8888
-            out_em = rgba5551_to_linear(*in_em);
+            out_em = rgba5551_to_srgb_a8(*in_em);
         }
         else {
             // Convert from RGB565 to RGBA8888
-            out_em = rgb565_to_linear(*in_em);
+            out_em = rgb565_to_srgb_a8(*in_em);
         }
 
         ++in_em;
@@ -56,7 +56,7 @@ HRESULT WINAPI jkgm::vidmem_texture::Load(LPDIRECT3DTEXTURE a)
     gl::bind_texture(gl::texture_bind_target::texture_2d, surf->ogl_texture);
     gl::tex_image_2d(gl::texture_bind_target::texture_2d,
                      /*level*/ 0,
-                     gl::texture_internal_format::rgba,
+                     gl::texture_internal_format::srgb_a8,
                      make_size((int)src->desc.dwWidth, (int)src->desc.dwHeight),
                      gl::texture_pixel_format::rgba,
                      gl::texture_pixel_type::uint8,

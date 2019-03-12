@@ -268,7 +268,7 @@ jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res, config c
     gl::bind_texture(gl::texture_bind_target::texture_2d, menu_texture);
     gl::tex_image_2d(gl::texture_bind_target::texture_2d,
                      0,
-                     gl::texture_internal_format::rgba,
+                     gl::texture_internal_format::srgb_a8,
                      make_size(640, 480),
                      gl::texture_pixel_format::bgra,
                      gl::texture_pixel_type::uint8,
@@ -281,7 +281,7 @@ jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res, config c
     gl::bind_texture(gl::texture_bind_target::texture_2d, hud_texture);
     gl::tex_image_2d(gl::texture_bind_target::texture_2d,
                      0,
-                     gl::texture_internal_format::rgba,
+                     gl::texture_internal_format::srgb_a8,
                      make_size(get<x>(screen_res), get<y>(screen_res)),
                      gl::texture_pixel_format::bgra,
                      gl::texture_pixel_type::uint8,

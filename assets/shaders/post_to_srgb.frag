@@ -13,7 +13,8 @@ layout(location = 0) out vec4 out_color;
 
 void main()
 {
-    vec4 samp = texture(fbuf_image, vp_texcoords);
+    ivec2 sc = ivec2(gl_FragCoord.xy);
+    vec4 samp = texelFetch(fbuf_image, sc, 0);
 
     vec4 bloom_samp = vec4(0.0);
     float bloom_sum = 0.0;

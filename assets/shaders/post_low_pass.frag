@@ -9,7 +9,8 @@ layout(location = 0) out vec4 out_color;
 
 void main()
 {
-    vec4 samp = texture(fbuf_image, vp_texcoords);
+    ivec2 sc = ivec2(gl_FragCoord.xy);
+    vec4 samp = texelFetch(fbuf_image, sc, 0);
 
     vec3 col = samp.rgb;
 

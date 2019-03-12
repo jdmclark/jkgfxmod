@@ -151,6 +151,8 @@ namespace jkgm::gl {
 
     static_assert(texture_internal_format::rgb == texture_internal_format(GL_RGB));
     static_assert(texture_internal_format::rgba == texture_internal_format(GL_RGBA));
+    static_assert(texture_internal_format::srgb == texture_internal_format(GL_SRGB8));
+    static_assert(texture_internal_format::srgb_a8 == texture_internal_format(GL_SRGB8_ALPHA8));
     static_assert(texture_internal_format::rgba16f == texture_internal_format(GL_RGBA16F));
     static_assert(texture_internal_format::rgba32f == texture_internal_format(GL_RGBA32F));
     static_assert(texture_internal_format::r16f == texture_internal_format(GL_R16F));

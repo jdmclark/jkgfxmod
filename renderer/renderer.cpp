@@ -413,8 +413,8 @@ namespace jkgm {
                     break;
                 }
 
-                indexed_bitmap_colors[curr++] = to_discrete_color(srgb_to_linear(to_float_color(
-                    color_rgba8(em.rgbRed, em.rgbGreen, em.rgbBlue, uint8_t(255U)))));
+                indexed_bitmap_colors[curr++] =
+                    color_rgba8(em.rgbRed, em.rgbGreen, em.rgbBlue, uint8_t(255U));
             }
         }
 
@@ -462,7 +462,7 @@ namespace jkgm {
             for(size_t idx = 0U; idx < ogs->menu_texture_data.size(); ++idx) {
                 uint8_t index = ddraw1_primary_menu_surface.buffer[idx];
                 auto &palent = ddraw1_palette.entries[index];
-                ogs->menu_texture_data[idx] = ddraw1_palette.linear_entries[index];
+                ogs->menu_texture_data[idx] = ddraw1_palette.srgb_entries[index];
             }
 
             // Blit texture data into texture
@@ -523,7 +523,7 @@ namespace jkgm {
                 auto const &in_em = ddraw1_backbuffer_surface.buffer[i];
 
                 // Convert from RGB565 to RGBA8888
-                ogs->hud_texture_data[i] = rgb565_key_to_linear(
+                ogs->hud_texture_data[i] = rgb565_key_to_srgb_a8(
                     in_em, /*transparent?*/ in_em == ddraw1_backbuffer_surface.color_key);
             }
 

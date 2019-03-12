@@ -14,7 +14,7 @@ namespace jkgm {
     public:
         explicit DirectDrawPalette_impl(renderer *r);
 
-        std::vector<color_rgba8> linear_entries;
+        std::vector<color_rgba8> srgb_entries;
         std::vector<PALETTEENTRY> entries;
 
         void recompute_palette();

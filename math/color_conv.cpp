@@ -12,15 +12,25 @@ namespace {
         return std::pow((em + 0.055f) / 1.055f, 2.4f);
     }
 
-    // Precalculated lookup tables for converting sRGB565 to linear RGB888
-    std::array<uint8_t, 32> linear_5bit_lut{{0,   0,   1,   2,   3,   5,   7,   10,  13,  17, 21,
-                                             26,  31,  37,  43,  50,  58,  66,  75,  85,  95, 106,
-                                             117, 130, 143, 156, 171, 186, 202, 219, 236, 255}};
-    std::array<uint8_t, 64> linear_6bit_lut{
-        {0,   0,   0,   0,   1,   1,   2,   3,   3,   4,   5,   6,   7,   8,   10,  11,
-         13,  15,  16,  18,  20,  23,  25,  27,  30,  33,  36,  39,  42,  45,  49,  52,
-         56,  60,  64,  68,  72,  77,  82,  87,  92,  97,  102, 107, 113, 119, 125, 131,
-         138, 144, 151, 158, 165, 172, 179, 187, 195, 203, 211, 219, 228, 236, 245, 255}};
+    float linear_to_srgb_em(float em)
+    {
+        if(em > 0.0031308f) {
+            return 1.055f * (pow(em, (1.0f / 2.4f))) - 0.055f;
+        }
+
+        return 12.92f * em;
+    }
+
+    // Precalculated lookup tables for converting sRGB565 to sRGB888
+    std::array<uint8_t, 32> srgb_5bit_lut{{0,   8,   16,  25,  33,  41,  49,  58,  66,  74,  82,
+                                           90,  99,  107, 115, 123, 132, 140, 148, 156, 165, 173,
+                                           181, 189, 197, 206, 214, 222, 230, 239, 247, 255}};
+
+    std::array<uint8_t, 64> srgb_6bit_lut{
+        {0,   4,   8,   12,  16,  20,  24,  28,  32,  36,  40,  45,  49,  53,  57,  61,
+         65,  69,  73,  77,  81,  85,  89,  93,  97,  101, 105, 109, 113, 117, 121, 125,
+         130, 134, 138, 142, 146, 150, 154, 158, 162, 166, 170, 174, 178, 182, 186, 190,
+         194, 198, 202, 206, 210, 215, 219, 223, 227, 231, 235, 239, 243, 247, 251, 255}};
 }
 
 jkgm::color jkgm::srgb_to_linear(color input)
@@ -31,33 +41,43 @@ jkgm::color jkgm::srgb_to_linear(color input)
                  get<a>(input));
 }
 
-jkgm::color_rgba8 jkgm::rgb565_key_to_linear(uint16_t input, bool transparent)
+jkgm::color jkgm::linear_to_srgb(color input)
+{
+    return color(linear_to_srgb_em(get<r>(input)),
+                 linear_to_srgb_em(get<g>(input)),
+                 linear_to_srgb_em(get<b>(input)),
+                 get<a>(input));
+}
+
+jkgm::color_rgba8 jkgm::rgb565_key_to_srgb_a8(uint16_t input, bool transparent)
 {
     if(transparent) {
         return color_rgba8::zero();
     }
 
-    return color_rgba8(linear_5bit_lut[(input >> 11) & 0x1F],
-                       linear_6bit_lut[(input >> 5) & 0x3F],
-                       linear_5bit_lut[input & 0x1F],
-                       (transparent ? uint8_t(0) : uint8_t(255)));
+    return color_rgba8(srgb_5bit_lut[(input >> 11) & 0x1F],
+                       srgb_6bit_lut[(input >> 5) & 0x3F],
+                       srgb_5bit_lut[input & 0x1F],
+                       uint8_t(255));
 }
 
-jkgm::color_rgba8 jkgm::rgb565_to_linear(uint16_t input)
+jkgm::color_rgba8 jkgm::rgb565_to_srgb_a8(uint16_t input)
 {
     float r = float((input >> 11) & 0x1F) / float(0x1F);
     float g = float((input >> 5) & 0x3F) / float(0x3F);
     float b = float((input >> 0) & 0x1F) / float(0x1F);
 
-    return to_discrete_color(srgb_to_linear(color(r, g, b, 1.0f)));
+    return to_discrete_color(color(r, g, b, 1.0f));
 }
 
-jkgm::color_rgba8 jkgm::rgba5551_to_linear(uint16_t input)
+jkgm::color_rgba8 jkgm::rgba5551_to_srgb_a8(uint16_t input)
 {
     float a = float((input >> 15) & 0x1) / float(0x1);
     float r = float((input >> 10) & 0x1F) / float(0x1F);
     float g = float((input >> 5) & 0x1F) / float(0x1F);
     float b = float((input >> 0) & 0x1F) / float(0x1F);
 
-    return to_discrete_color(srgb_to_linear(color(r * a, g * a, b * a, a)));
+    auto s_col = srgb_to_linear(color(r, g, b, a));
+    auto pm_col = extend(get<rgb>(s_col) * a, a);
+    return to_discrete_color(linear_to_srgb(pm_col));
 }

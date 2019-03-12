@@ -1,10 +1,10 @@
 #pragma once
 
+#include "base/span.hpp"
+#include "base/unique_handle.hpp"
 #include "gl.hpp"
 #include "renderbuffer.hpp"
 #include "texture.hpp"
-#include "base/span.hpp"
-#include "base/unique_handle.hpp"
 
 namespace jkgm::gl {
     struct framebuffer_traits {

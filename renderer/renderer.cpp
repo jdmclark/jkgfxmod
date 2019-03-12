@@ -668,7 +668,13 @@ namespace jkgm {
             fill_buffer(gun_transparent_batch, &ogs->gun_transparent_trimdl);
 
             // Draw batches
+            gl::disable(gl::capability::alpha_test);
+            gl::disable(gl::capability::blend);
             gl::enable(gl::capability::depth_test);
+            gl::set_depth_mask(true);
+            gl::disable(gl::capability::cull_face);
+            gl::set_face_cull_mode(gl::face_mode::front_and_back);
+            gl::set_alpha_function(gl::comparison_function::greater_equal, 0.99999f);
             gl::set_blend_function(gl::blend_function::one,
                                    gl::blend_function::one_minus_source_alpha);
             gl::set_depth_function(gl::comparison_function::less);
@@ -683,21 +689,33 @@ namespace jkgm {
 
             current_material_index = 0U;
 
-            gl::disable(gl::capability::blend);
-            gl::set_depth_mask(true);
+            // Draw first pass (opaque world geometry)
             draw_batch(world_batch, &ogs->world_trimdl);
 
+            // Draw second pass (transparent world geometry with alpha testing)
+            gl::enable(gl::capability::alpha_test);
+            draw_batch(world_transparent_batch, &ogs->world_transparent_trimdl);
+
+            // Draw third pass (transparent world geometry with alpha blending)
+            gl::disable(gl::capability::alpha_test);
             gl::enable(gl::capability::blend);
             gl::set_depth_mask(false);
             draw_batch(world_transparent_batch, &ogs->world_transparent_trimdl);
 
-            gl::disable(gl::capability::blend);
+            // Perform z-clear before drawing gun overlay
             gl::set_depth_mask(true);
-
             gl::clear({gl::clear_flag::depth});
 
+            // Draw fourth pass (opaque gun geometry)
+            gl::disable(gl::capability::blend);
             draw_batch(gun_batch, &ogs->gun_trimdl);
 
+            // Draw fifth pass (transparent gun geometry with alpha testing)
+            gl::enable(gl::capability::alpha_test);
+            draw_batch(gun_transparent_batch, &ogs->gun_transparent_trimdl);
+
+            // Draw sixth pass (transparent gun geometry with alpha blending)
+            gl::disable(gl::capability::alpha_test);
             gl::enable(gl::capability::blend);
             gl::set_depth_mask(false);
             draw_batch(gun_transparent_batch, &ogs->gun_transparent_trimdl);
@@ -766,7 +784,6 @@ namespace jkgm {
                         case D3DRENDERSTATE_WRAPU:
                         case D3DRENDERSTATE_WRAPV:
                         case D3DRENDERSTATE_DESTBLEND:
-                        case D3DRENDERSTATE_CULLMODE:
                         case D3DRENDERSTATE_ZFUNC:
                         case D3DRENDERSTATE_ALPHAFUNC:
                         case D3DRENDERSTATE_DITHERENABLE:
@@ -779,6 +796,7 @@ namespace jkgm {
                         case D3DRENDERSTATE_ZENABLE:
                         case D3DRENDERSTATE_SPECULARENABLE:
                         case D3DRENDERSTATE_ALPHATESTENABLE:
+                        case D3DRENDERSTATE_CULLMODE:
                             break;
 
                         case D3DRENDERSTATE_ALPHABLENDENABLE:

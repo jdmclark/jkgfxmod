@@ -33,6 +33,7 @@ namespace jkgm {
         gl::framebuffer fbo;
         gl::texture tex;
         gl::renderbuffer rbo;
+
         box<2, int> viewport;
 
         explicit render_buffer(size<2, int> dims, int num_samples);

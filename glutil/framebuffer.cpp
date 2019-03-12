@@ -19,9 +19,9 @@ void jkgm::gl::bind_framebuffer(framebuffer_bind_target target, framebuffer_view
 }
 
 void jkgm::gl::blit_framebuffer(box<2, int> src,
-                               box<2, int> dest,
-                               framebuffer_blit_mask mask,
-                               framebuffer_blit_filter filter)
+                                box<2, int> dest,
+                                framebuffer_blit_mask mask,
+                                framebuffer_blit_filter filter)
 {
     glBlitFramebuffer(get<x>(src.start),
                       get<y>(src.start),
@@ -46,18 +46,18 @@ void jkgm::gl::detail::draw_buffers_span(span<enum_type const> bufs)
 }
 
 void jkgm::gl::framebuffer_texture(framebuffer_bind_target target,
-                                  framebuffer_attachment attachment,
-                                  texture_view tex,
-                                  int level)
+                                   framebuffer_attachment attachment,
+                                   texture_view tex,
+                                   int level)
 {
     glFramebufferTexture(static_cast<GLenum>(target), static_cast<GLenum>(attachment), *tex, level);
 }
 
 void jkgm::gl::framebuffer_texture_2d(framebuffer_bind_target target,
-                                     framebuffer_attachment attachment,
-                                     texture_bind_target textarget,
-                                     texture_view tex,
-                                     int level)
+                                      framebuffer_attachment attachment,
+                                      texture_bind_target textarget,
+                                      texture_view tex,
+                                      int level)
 {
     glFramebufferTexture2D(static_cast<GLenum>(target),
                            static_cast<GLenum>(attachment),
@@ -67,8 +67,8 @@ void jkgm::gl::framebuffer_texture_2d(framebuffer_bind_target target,
 }
 
 void jkgm::gl::framebuffer_renderbuffer(framebuffer_bind_target target,
-                                       framebuffer_attachment attachment,
-                                       renderbuffer_view buf)
+                                        framebuffer_attachment attachment,
+                                        renderbuffer_view buf)
 {
     glFramebufferRenderbuffer(
         static_cast<GLenum>(target), static_cast<GLenum>(attachment), GL_RENDERBUFFER, *buf);

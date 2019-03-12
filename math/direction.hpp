@@ -34,6 +34,8 @@ namespace jkgm {
     struct w {
         static constexpr bool can_return_reference = true;
     };
+    struct xy {
+    };
     struct xyz {
     };
 
@@ -112,7 +114,16 @@ namespace jkgm {
     template <size_t N,
               class F,
               class Tag,
-              class = std::enable_if_t<N >= 4 && Tag::has_dimension_swizzle>>
+              class = std::enable_if_t<N >= 2 && Tag::has_dimension_swizzle>>
+    auto swizzle(xy /*swiz*/, abstract_vector<N, F, Tag> const &v)
+    {
+        return abstract_vector<2, F, Tag>(get<0>(v), get<1>(v));
+    }
+
+    template <size_t N,
+              class F,
+              class Tag,
+              class = std::enable_if_t<N >= 3 && Tag::has_dimension_swizzle>>
     auto swizzle(xyz /*swiz*/, abstract_vector<N, F, Tag> const &v)
     {
         return abstract_vector<3, F, Tag>(get<0>(v), get<1>(v), get<2>(v));

@@ -17,6 +17,11 @@ void jkgm::gl::clear(clear_flags cf)
     glClear(static_cast<GLbitfield>(cf));
 }
 
+void jkgm::gl::set_alpha_function(comparison_function func, float ref)
+{
+    glAlphaFunc(static_cast<GLenum>(func), ref);
+}
+
 void jkgm::gl::set_blend_function(blend_function sfactor, blend_function dfactor)
 {
     glBlendFunc(static_cast<GLenum>(sfactor), static_cast<GLenum>(dfactor));
@@ -70,6 +75,7 @@ namespace jkgm::gl {
     static_assert(blend_function::one == blend_function(GL_ONE));
     static_assert(blend_function::one_minus_source_alpha == blend_function(GL_ONE_MINUS_SRC_ALPHA));
 
+    static_assert(capability::alpha_test == capability(GL_ALPHA_TEST));
     static_assert(capability::blend == capability(GL_BLEND));
     static_assert(capability::cull_face == capability(GL_CULL_FACE));
     static_assert(capability::depth_test == capability(GL_DEPTH_TEST));

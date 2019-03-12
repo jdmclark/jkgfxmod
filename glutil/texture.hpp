@@ -47,7 +47,9 @@ namespace jkgm::gl {
     enum class texture_internal_format : int_type {
         rgb = 0x1907,
         rgba = 0x1908,
+        rgba16f = 0x881A,
         rgba32f = 0x8814,
+        r16f = 0x822D,
         rg32f = 0x8230,
         depth_component_16 = 0x81A5
     };

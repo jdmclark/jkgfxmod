@@ -19,6 +19,7 @@ namespace jkgm {
         triangle_vertex v0, v1, v2;
         size_t material_index = 0U;
         direction<3, float> normal;
+        int num_sup = 0;
 
         triangle();
         triangle(triangle_vertex v0, triangle_vertex v1, triangle_vertex v2, size_t material_index);

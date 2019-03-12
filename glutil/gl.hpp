@@ -1,9 +1,9 @@
 #pragma once
 
+#include "base/flag_set.hpp"
 #include "gl_types.hpp"
 #include "math/box.hpp"
 #include "math/color.hpp"
-#include "base/flag_set.hpp"
 
 namespace jkgm::gl {
     enum class blend_function : enum_type {
@@ -13,6 +13,7 @@ namespace jkgm::gl {
     };
 
     enum class capability : enum_type {
+        alpha_test = 0x0BC0,
         blend = 0x0BE2,
         cull_face = 0x0B44,
         depth_test = 0x0B71,
@@ -42,6 +43,7 @@ namespace jkgm::gl {
 
     void clear(clear_flags cf);
 
+    void set_alpha_function(comparison_function func, float ref);
     void set_blend_function(blend_function sfactor, blend_function dfactor);
     void set_clear_color(color c);
     void set_depth_function(comparison_function func);

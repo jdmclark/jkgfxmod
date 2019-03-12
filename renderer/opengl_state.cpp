@@ -1,7 +1,7 @@
 #include "opengl_state.hpp"
 #include "base/file_stream.hpp"
-#include "base/memory_block.hpp"
 #include "base/log.hpp"
+#include "base/memory_block.hpp"
 
 jkgm::gl::shader jkgm::compile_shader_from_file(fs::path const &filename, gl::shader_type type)
 {
@@ -70,10 +70,14 @@ jkgm::post_model::post_model()
 jkgm::render_buffer::render_buffer(size<2, int> dims, int num_samples)
     : viewport(make_point(0, 0), dims)
 {
-    gl::bind_framebuffer(gl::framebuffer_bind_target::any, fbo);
-
     gl::bind_renderbuffer(rbo);
     gl::renderbuffer_storage_multisample(num_samples, gl::renderbuffer_format::depth, dims);
+
+    // Set up opaque framebuffer:
+    gl::bind_framebuffer(gl::framebuffer_bind_target::any, fbo);
+
+    gl::framebuffer_renderbuffer(
+        gl::framebuffer_bind_target::any, gl::framebuffer_attachment::depth, rbo);
 
     gl::bind_texture(gl::texture_bind_target::texture_2d_multisample, tex);
     gl::tex_image_2d_multisample(gl::texture_bind_target::texture_2d_multisample,
@@ -82,9 +86,6 @@ jkgm::render_buffer::render_buffer(size<2, int> dims, int num_samples)
                                  dims,
                                  /*fixed sample locations*/ true);
     gl::set_texture_max_level(gl::texture_bind_target::texture_2d_multisample, 0U);
-
-    gl::framebuffer_renderbuffer(
-        gl::framebuffer_bind_target::any, gl::framebuffer_attachment::depth, rbo);
     gl::framebuffer_texture(
         gl::framebuffer_bind_target::any, gl::framebuffer_attachment::color0, tex, 0);
 
@@ -247,7 +248,7 @@ jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res, config c
         "menu", &menu_program, "jkgm/shaders/menu.vert", "jkgm/shaders/menu.frag");
     link_program_from_files(
         "game", &game_program, "jkgm/shaders/game.vert", "jkgm/shaders/game.frag");
-    link_program_from_files("game untextured",
+    link_program_from_files("game_untextured",
                             &game_untextured_program,
                             "jkgm/shaders/game.vert",
                             "jkgm/shaders/game_untextured.frag");

@@ -2,9 +2,7 @@
 #include "base/file_stream.hpp"
 #include "base/log.hpp"
 #include "base/memory_block.hpp"
-#include "json.hpp"
-
-using namespace nlohmann;
+#include "json_incl.hpp"
 
 std::unique_ptr<jkgm::config> jkgm::load_config_file()
 {
@@ -17,7 +15,7 @@ std::unique_ptr<jkgm::config> jkgm::load_config_file()
         memory_output_block mob(&mb);
         fs->copy_to(&mob);
 
-        auto j = json::parse(mb.str());
+        auto j = json::json::parse(mb.str());
         j.at("resolution").get_to(rv->resolution);
         j.at("fullscreen").get_to(rv->fullscreen);
         j.at("msaa_samples").get_to(rv->msaa_samples);

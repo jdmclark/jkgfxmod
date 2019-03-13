@@ -5,6 +5,7 @@
 #include "base/log.hpp"
 #include "base/memory_block.hpp"
 #include "base/win32.hpp"
+#include "common/material_map.hpp"
 #include "d3d_impl.hpp"
 #include "d3ddevice_impl.hpp"
 #include "d3dviewport_impl.hpp"
@@ -96,6 +97,7 @@ namespace jkgm {
     class renderer_impl : public renderer {
     private:
         config const *the_config;
+        material_map materials;
 
         renderer_mode mode = renderer_mode::menu;
         size<2, int> conf_scr_res;
@@ -195,6 +197,8 @@ namespace jkgm {
 
         void initialize(HWND parentWnd) override
         {
+            materials.create_map("jkgm/materials");
+
             hWnd = parentWnd;
 
             original_wkernel_wndproc = (WNDPROC)GetWindowLongPtr(hWnd, GWLP_WNDPROC);
@@ -603,13 +607,35 @@ namespace jkgm {
                     else if(tri.material_index == 0U) {
                         // Switching to untextured program
                         gl::use_program(ogs->game_untextured_program);
+                        gl::set_active_texture_unit(1);
+                        gl::bind_texture(gl::texture_bind_target::texture_2d, gl::default_texture);
+                        gl::set_active_texture_unit(0);
+                        gl::bind_texture(gl::texture_bind_target::texture_2d, gl::default_texture);
+                        // Albedo factor
+                        gl::set_uniform_vector(gl::uniform_location_id(2), color::fill(1.0f));
+                        // Emissive factor
+                        gl::set_uniform_vector(gl::uniform_location_id(4), color_rgb::zero());
                     }
 
                     if(tri.material_index != 0U) {
+                        auto &material = vidmem_texture_surfaces.at(tri.material_index - 1);
+                        gl::set_active_texture_unit(1);
+                        if(material->emissive_texture.has_value()) {
+                            gl::bind_texture(gl::texture_bind_target::texture_2d,
+                                             *material->emissive_texture);
+                        }
+                        else {
+                            gl::bind_texture(gl::texture_bind_target::texture_2d,
+                                             gl::default_texture);
+                        }
+
                         gl::set_active_texture_unit(0);
                         gl::bind_texture(
                             gl::texture_bind_target::texture_2d,
-                            vidmem_texture_surfaces.at(tri.material_index - 1)->ogl_texture);
+                            vidmem_texture_surfaces.at(tri.material_index - 1)->albedo_texture);
+                        gl::set_uniform_vector(gl::uniform_location_id(2), material->albedo_factor);
+                        gl::set_uniform_vector(gl::uniform_location_id(4),
+                                               material->emissive_factor);
                     }
 
                     current_material_index = tri.material_index;
@@ -683,9 +709,25 @@ namespace jkgm {
             gl::set_uniform_vector(gl::uniform_location_id(0),
                                    static_cast<size<2, float>>(conf_scr_res));
             gl::set_uniform_integer(gl::uniform_location_id(1), 0);
+            // Albedo factor
+            gl::set_uniform_vector(gl::uniform_location_id(2), color::fill(1.0f));
+            gl::set_uniform_integer(gl::uniform_location_id(3), 1);
+            // Emissive factor
+            gl::set_uniform_vector(gl::uniform_location_id(4), color_rgb::zero());
             gl::use_program(ogs->game_untextured_program);
             gl::set_uniform_vector(gl::uniform_location_id(0),
                                    static_cast<size<2, float>>(conf_scr_res));
+            gl::set_uniform_integer(gl::uniform_location_id(1), 0);
+            // Albedo factor
+            gl::set_uniform_vector(gl::uniform_location_id(2), color::fill(1.0f));
+            gl::set_uniform_integer(gl::uniform_location_id(3), 1);
+            // Emissive factor
+            gl::set_uniform_vector(gl::uniform_location_id(4), color_rgb::zero());
+
+            gl::set_active_texture_unit(1);
+            gl::bind_texture(gl::texture_bind_target::texture_2d, gl::default_texture);
+            gl::set_active_texture_unit(0);
+            gl::bind_texture(gl::texture_bind_target::texture_2d, gl::default_texture);
 
             current_material_index = 0U;
 
@@ -972,8 +1014,8 @@ namespace jkgm {
                     }
                 }
 
-                vidmem_texture_surfaces.push_back(
-                    std::make_unique<vidmem_texture_surface>(vidmem_texture_surfaces.size() + 1));
+                vidmem_texture_surfaces.push_back(std::make_unique<vidmem_texture_surface>(
+                    this, vidmem_texture_surfaces.size() + 1));
                 return vidmem_texture_surfaces.back().get();
             };
 
@@ -1007,6 +1049,11 @@ namespace jkgm {
             auto *rv = get_matching_buffer();
             rv->AddRef();
             return rv;
+        }
+
+        std::optional<material const *> get_replacement_material(md5 const &sig) override
+        {
+            return materials.get_material(sig);
         }
     };
 }

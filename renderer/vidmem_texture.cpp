@@ -1,5 +1,8 @@
 #include "vidmem_texture.hpp"
+#include "base/file_block.hpp"
 #include "base/log.hpp"
+#include "base/md5.hpp"
+#include "common/image.hpp"
 #include "dxguids.hpp"
 #include "math/color_conv.hpp"
 #include "sysmem_texture.hpp"
@@ -37,6 +40,64 @@ HRESULT WINAPI jkgm::vidmem_texture::Load(LPDIRECT3DTEXTURE a)
 
     auto *src = cast_tex->surf;
 
+    // Compute and report texture signature
+    uint32_t bound_width = src->desc.dwWidth;
+    uint32_t bound_height = src->desc.dwHeight;
+
+    md5_hasher mh;
+    mh.add(make_span(&bound_width, 1).as_const_bytes());
+    mh.add(make_span(&bound_height, 1).as_const_bytes());
+    mh.add(make_span(src->buffer).as_const_bytes());
+
+    auto sig = mh.finish();
+    LOG_DEBUG("Loaded texture with signature ", static_cast<std::string>(sig));
+
+    auto repl_map = surf->r->get_replacement_material(sig);
+
+    if(repl_map.has_value()) {
+        LOG_DEBUG("Found replacement");
+        if((*repl_map)->albedo_map.has_value()) {
+            auto fs = make_file_input_block(*(*repl_map)->albedo_map);
+            auto img = load_image(fs.get());
+
+            gl::bind_texture(gl::texture_bind_target::texture_2d, surf->albedo_texture);
+            gl::tex_image_2d(gl::texture_bind_target::texture_2d,
+                             /*level*/ 0,
+                             gl::texture_internal_format::srgb_a8,
+                             img->dimensions,
+                             gl::texture_pixel_format::rgba,
+                             gl::texture_pixel_type::uint8,
+                             make_span(img->data).as_const_bytes());
+            gl::generate_mipmap(gl::texture_bind_target::texture_2d);
+            gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
+            gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
+                                       gl::min_filter::linear_mipmap_linear);
+        }
+
+        if((*repl_map)->emissive_map.has_value()) {
+            auto fs = make_file_input_block(*(*repl_map)->emissive_map);
+            auto img = load_image(fs.get());
+
+            surf->emissive_texture = gl::texture();
+            gl::bind_texture(gl::texture_bind_target::texture_2d, *(surf->emissive_texture));
+            gl::tex_image_2d(gl::texture_bind_target::texture_2d,
+                             /*level*/ 0,
+                             gl::texture_internal_format::srgb_a8,
+                             img->dimensions,
+                             gl::texture_pixel_format::rgba,
+                             gl::texture_pixel_type::uint8,
+                             make_span(img->data).as_const_bytes());
+            gl::generate_mipmap(gl::texture_bind_target::texture_2d);
+            gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
+            gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
+                                       gl::min_filter::linear_mipmap_linear);
+        }
+
+        surf->albedo_factor = (*repl_map)->albedo_factor;
+        surf->emissive_factor = (*repl_map)->emissive_factor;
+        return D3D_OK;
+    }
+
     uint16_t const *in_em = (uint16_t const *)src->buffer.data();
 
     for(auto &out_em : src->conv_buffer) {
@@ -53,7 +114,7 @@ HRESULT WINAPI jkgm::vidmem_texture::Load(LPDIRECT3DTEXTURE a)
         ++in_em;
     }
 
-    gl::bind_texture(gl::texture_bind_target::texture_2d, surf->ogl_texture);
+    gl::bind_texture(gl::texture_bind_target::texture_2d, surf->albedo_texture);
     gl::tex_image_2d(gl::texture_bind_target::texture_2d,
                      /*level*/ 0,
                      gl::texture_internal_format::srgb_a8,
@@ -69,9 +130,10 @@ HRESULT WINAPI jkgm::vidmem_texture::Load(LPDIRECT3DTEXTURE a)
     return D3D_OK;
 }
 
-jkgm::vidmem_texture_surface::vidmem_texture_surface(size_t texture_index)
+jkgm::vidmem_texture_surface::vidmem_texture_surface(renderer *r, size_t texture_index)
     : DirectDrawSurface_impl("vidmem texture")
     , d3dtexture(this)
+    , r(r)
     , texture_index(texture_index)
 {
 }

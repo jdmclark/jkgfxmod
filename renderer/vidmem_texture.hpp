@@ -27,17 +27,23 @@ namespace jkgm {
 
     class vidmem_texture_surface : public DirectDrawSurface_impl {
     private:
-        renderer *r;
         vidmem_texture d3dtexture;
 
     public:
+        renderer *r;
+
         int refct = 0;
         DDSURFACEDESC desc;
 
         size_t texture_index = 0U;
-        gl::texture ogl_texture;
 
-        explicit vidmem_texture_surface(size_t texture_index);
+        gl::texture albedo_texture;
+        color albedo_factor = color::fill(1.0f);
+
+        std::optional<gl::texture> emissive_texture;
+        color_rgb emissive_factor = color_rgb::fill(0.0f);
+
+        vidmem_texture_surface(renderer *r, size_t texture_index);
 
         void set_surface_desc(DDSURFACEDESC const &desc);
 

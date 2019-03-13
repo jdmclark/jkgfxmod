@@ -11,10 +11,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="char.cpp" />
     <ClCompile Include="default_logger.cpp" />
     <ClCompile Include="diagnostic_context.cpp" />
     <ClCompile Include="diagnostic_context_location.cpp" />
     <ClCompile Include="env.cpp" />
+    <ClCompile Include="fd_input_stream.cpp" />
     <ClCompile Include="fd_output_stream.cpp" />
     <ClCompile Include="file_block.cpp" />
     <ClCompile Include="file_log_backend.cpp" />
@@ -27,9 +29,14 @@
     <ClCompile Include="log_frontend.cpp" />
     <ClCompile Include="log_level.cpp" />
     <ClCompile Include="log_midend.cpp" />
+    <ClCompile Include="md5.cpp" />
     <ClCompile Include="memory_block.cpp" />
     <ClCompile Include="output_stream.cpp" />
     <ClCompile Include="pipe.cpp" />
+    <ClCompile Include="std_input_stream.cpp" />
+    <ClCompile Include="std_output_log_backend.cpp" />
+    <ClCompile Include="std_output_stream.cpp" />
+    <ClCompile Include="string_search.cpp" />
     <ClCompile Include="system_string.cpp" />
     <ClCompile Include="win32.cpp" />
   </ItemGroup>
@@ -37,12 +44,14 @@
     <ClInclude Include="buffered_input_stream.hpp" />
     <ClInclude Include="buffered_output_stream.hpp" />
     <ClInclude Include="build_traits.hpp" />
+    <ClInclude Include="char.hpp" />
     <ClInclude Include="constants.hpp" />
     <ClInclude Include="cstring_view.hpp" />
     <ClInclude Include="default_logger.hpp" />
     <ClInclude Include="diagnostic_context.hpp" />
     <ClInclude Include="diagnostic_context_location.hpp" />
     <ClInclude Include="env.hpp" />
+    <ClInclude Include="fd_input_stream.hpp" />
     <ClInclude Include="fd_output_stream.hpp" />
     <ClInclude Include="filesystem.hpp" />
     <ClInclude Include="file_block.hpp" />
@@ -53,21 +62,31 @@
     <ClInclude Include="format_base.hpp" />
     <ClInclude Include="format_numeric.hpp" />
     <ClInclude Include="global.hpp" />
+    <ClInclude Include="hash_combine.hpp" />
     <ClInclude Include="id.hpp" />
     <ClInclude Include="input_block.hpp" />
     <ClInclude Include="input_stream.hpp" />
+    <ClInclude Include="lexical_cast.hpp" />
     <ClInclude Include="local.hpp" />
     <ClInclude Include="log.hpp" />
     <ClInclude Include="log_backend.hpp" />
     <ClInclude Include="log_frontend.hpp" />
     <ClInclude Include="log_level.hpp" />
     <ClInclude Include="log_midend.hpp" />
+    <ClInclude Include="md5.hpp" />
     <ClInclude Include="memory_block.hpp" />
     <ClInclude Include="narrow.hpp" />
     <ClInclude Include="output_block.hpp" />
     <ClInclude Include="output_stream.hpp" />
+    <ClInclude Include="oxford_join.hpp" />
     <ClInclude Include="pipe.hpp" />
+    <ClInclude Include="range.hpp" />
+    <ClInclude Include="runtime_assert.hpp" />
     <ClInclude Include="span.hpp" />
+    <ClInclude Include="std_input_stream.hpp" />
+    <ClInclude Include="std_output_log_backend.hpp" />
+    <ClInclude Include="std_output_stream.hpp" />
+    <ClInclude Include="string_search.hpp" />
     <ClInclude Include="system_string.hpp" />
     <ClInclude Include="tagged.hpp" />
     <ClInclude Include="uid.hpp" />

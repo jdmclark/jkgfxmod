@@ -1,7 +1,10 @@
 #pragma once
 
+#include "base/filesystem.hpp"
+#include "base/md5.hpp"
 #include "base/span.hpp"
 #include "common/config.hpp"
+#include "common/material.hpp"
 #include "math/point.hpp"
 #include "math/size.hpp"
 #include <Windows.h>
@@ -56,6 +59,8 @@ namespace jkgm {
             get_directdraw_vidmem_texture_surface(DDSURFACEDESC const &desc) = 0;
 
         virtual IDirectDrawPalette *get_directdraw_palette(span<PALETTEENTRY const> entries) = 0;
+
+        virtual std::optional<material const *> get_replacement_material(md5 const &sig) = 0;
     };
 
     std::unique_ptr<renderer> create_renderer(HINSTANCE dll_instance, config const *the_config);

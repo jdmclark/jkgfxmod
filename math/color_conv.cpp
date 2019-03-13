@@ -81,3 +81,22 @@ jkgm::color_rgba8 jkgm::rgba5551_to_srgb_a8(uint16_t input)
     auto pm_col = extend(get<rgb>(s_col) * a, a);
     return to_discrete_color(linear_to_srgb(pm_col));
 }
+
+uint16_t jkgm::srgb_a8_to_rgb565(color_rgba8 input)
+{
+    auto r = (uint16_t)(((get<0>(input) >> 3) & 0x1F) << 11);
+    auto g = (uint16_t)(((get<1>(input) >> 2) & 0x3F) << 5);
+    auto b = (uint16_t)((get<2>(input) >> 3) & 0x1F);
+
+    return r | g | b;
+}
+
+uint16_t jkgm::srgb_a8_to_rgba5551(color_rgba8 input)
+{
+    auto a = (uint16_t)(((get<3>(input) >> 7) & 0x1) << 15);
+    auto r = (uint16_t)(((get<0>(input) >> 3) & 0x1F) << 10);
+    auto g = (uint16_t)(((get<1>(input) >> 3) & 0x1F) << 5);
+    auto b = (uint16_t)((get<2>(input) >> 3) & 0x1F);
+
+    return a | r | g | b;
+}

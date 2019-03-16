@@ -21,7 +21,6 @@ namespace jkgm {
         uint32_t texture_index;
 
         explicit raw_material_cel_record(jkgm::input_stream *is);
-        json::json json_serialize_object() const;
     };
 
     class raw_material_texture_record {
@@ -34,9 +33,6 @@ namespace jkgm {
         std::vector<std::vector<uint8_t>> image_data;
 
         explicit raw_material_texture_record(jkgm::input_stream *is);
-        json::json json_serialize_object(std::string const &base_texture_name,
-                                         std::optional<colormap const *> master_colormap,
-                                         size_t transparent_index) const;
     };
 
     class raw_material {
@@ -57,8 +53,5 @@ namespace jkgm {
         std::vector<raw_material_texture_record> texture_records;
 
         explicit raw_material(jkgm::input_stream *is);
-
-        json::json json_serialize_object(fs::path const &extract_path,
-                                         std::optional<colormap const *> master_colormap) const;
     };
 }

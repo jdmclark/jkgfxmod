@@ -57,8 +57,23 @@ namespace jkgm {
         std::vector<std::unique_ptr<out_material>> materials;
     };
 
-    void convert_image(fs::path const &in_path, fs::path const &out_path)
+    class out_processed_image_map {
+    public:
+        std::map<fs::path, std::string> srgb_map;
+    };
+
+    std::string get_convert_image(out_processed_image_map *map,
+                                  fs::path const &in_path,
+                                  std::string const &desired_name,
+                                  fs::path const &desired_out_path)
     {
+        auto it = map->srgb_map.find(in_path);
+        if(it != map->srgb_map.end()) {
+            // File has already been processed. Reuse the same file.
+            return it->second;
+        }
+
+        // File has not been seen before.
         auto is = make_file_input_block(in_path);
         auto img = load_image(is.get());
 
@@ -69,8 +84,12 @@ namespace jkgm {
             em = to_discrete_color(linear_to_srgb(pma_col));
         }
 
-        auto os = make_file_output_block(out_path);
+        auto os = make_file_output_block(desired_out_path);
         store_image_png(os.get(), *img);
+
+        // Add to map
+        map->srgb_map.emplace(in_path, desired_name);
+        return desired_name;
     }
 
     std::vector<md5> get_mat_cel_signatures(std::string const &mat_filename,
@@ -125,6 +144,7 @@ namespace jkgm {
 
     std::unique_ptr<out_material>
         process_material(json::json const &doc,
+                         out_processed_image_map *img_map,
                          virtual_file_system *vfs,
                          std::vector<std::unique_ptr<colormap>> const &colormaps,
                          fs::path const &script_path,
@@ -152,9 +172,13 @@ namespace jkgm {
 
         if(doc.contains("albedo_map")) {
             auto map_filename = str(format(rv->name, ".albedo.png"));
-            convert_image(script_path.parent_path() / static_cast<std::string>(doc["albedo_map"]),
-                          output_path / map_filename);
-            rv->albedo_map = map_filename;
+            auto real_map_filename =
+                get_convert_image(img_map,
+                                  /*input path*/ script_path.parent_path() /
+                                      static_cast<std::string>(doc["albedo_map"]),
+                                  /*desired name*/ map_filename,
+                                  /*desired out path*/ output_path / map_filename);
+            rv->albedo_map = real_map_filename;
         }
 
         if(doc.contains("albedo_factor")) {
@@ -172,9 +196,13 @@ namespace jkgm {
 
         if(doc.contains("emissive_map")) {
             auto map_filename = str(format(rv->name, ".emissive.png"));
-            convert_image(script_path.parent_path() / static_cast<std::string>(doc["emissive_map"]),
-                          output_path / map_filename);
-            rv->emissive_map = map_filename;
+            auto real_map_filename =
+                get_convert_image(img_map,
+                                  /*input path*/ script_path.parent_path() /
+                                      static_cast<std::string>(doc["emissive_map"]),
+                                  /*desired name*/ map_filename,
+                                  /*desired out path*/ output_path / map_filename);
+            rv->emissive_map = real_map_filename;
         }
 
         if(doc.contains("emissive_factor")) {
@@ -252,9 +280,17 @@ namespace jkgm {
 
             rv->replaces.emplace_back(mat_filename, celnum);
 
-            auto new_sigs = get_mat_cel_signatures(mat_filename, celnum, vfs, colormaps);
-            std::copy(
-                new_sigs.begin(), new_sigs.end(), std::inserter(signatures, signatures.begin()));
+            diagnostic_context dc(mat_filename);
+            try {
+                auto new_sigs = get_mat_cel_signatures(mat_filename, celnum, vfs, colormaps);
+                std::copy(new_sigs.begin(),
+                          new_sigs.end(),
+                          std::inserter(signatures, signatures.begin()));
+            }
+            catch(std::exception const &e) {
+                LOG_ERROR("Failed to load MAT file: ", e.what());
+                throw std::runtime_error("Invalid script");
+            }
         }
 
         rv->replaces_signatures.reserve(signatures.size());
@@ -391,17 +427,21 @@ namespace jkgm {
 
             std::vector<std::unique_ptr<colormap>> colormaps;
             for(auto const &em : colormap_names) {
-                LOG_INFO(em);
-                auto f = vfs->open(em);
-                colormaps.push_back(std::make_unique<colormap>(f.get()));
+                diagnostic_context dc(em);
+                try {
+                    auto f = vfs->open(em);
+                    colormaps.push_back(std::make_unique<colormap>(f.get()));
+                }
+                catch(std::exception const &e) {
+                    LOG_ERROR("Failed to load colormap: ", e.what());
+                    return EXIT_FAILURE;
+                }
             }
 
             // Create output directory
             fs::create_directories(output_path);
 
             // Process script
-            diagnostic_context dc(script_path.generic_string());
-
             memory_block script_mb;
 
             try {
@@ -443,9 +483,16 @@ namespace jkgm {
             }
 
             LOG_INFO("Compiling materials...");
+            out_processed_image_map img_map;
             for(auto const &em : script_doc["materials"]) {
-                pack.materials.push_back(
-                    process_material(em, vfs.get(), colormaps, script_path, output_path));
+                try {
+                    pack.materials.push_back(process_material(
+                        em, &img_map, vfs.get(), colormaps, script_path, output_path));
+                }
+                catch(std::exception const &e) {
+                    LOG_ERROR("Failed to process script: ", e.what());
+                    return EXIT_FAILURE;
+                }
             }
 
             LOG_INFO("Done");

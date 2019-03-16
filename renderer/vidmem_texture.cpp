@@ -25,7 +25,7 @@ ULONG WINAPI jkgm::vidmem_texture::Release()
 
 HRESULT WINAPI jkgm::vidmem_texture::GetHandle(LPDIRECT3DDEVICE a, LPD3DTEXTUREHANDLE b)
 {
-    *b = (D3DTEXTUREHANDLE)(surf->texture_index);
+    *b = (D3DTEXTUREHANDLE)(surf->material_id.get());
     return D3D_OK;
 }
 
@@ -37,6 +37,9 @@ HRESULT WINAPI jkgm::vidmem_texture::Load(LPDIRECT3DTEXTURE a)
         LOG_ERROR("Direct3DTexture(vidmem)::Load passed a non-sysmem texture");
         abort();
     }
+
+    // Reset material to default state
+    surf->clear();
 
     auto *src = cast_tex->surf;
 
@@ -57,47 +60,22 @@ HRESULT WINAPI jkgm::vidmem_texture::Load(LPDIRECT3DTEXTURE a)
     if(repl_map.has_value()) {
         LOG_DEBUG("Found replacement");
         if((*repl_map)->albedo_map.has_value()) {
-            auto fs = make_file_input_block(*(*repl_map)->albedo_map);
-            auto img = load_image(fs.get());
-
-            gl::bind_texture(gl::texture_bind_target::texture_2d, surf->albedo_texture);
-            gl::tex_image_2d(gl::texture_bind_target::texture_2d,
-                             /*level*/ 0,
-                             gl::texture_internal_format::srgb_a8,
-                             img->dimensions,
-                             gl::texture_pixel_format::rgba,
-                             gl::texture_pixel_type::uint8,
-                             make_span(img->data).as_const_bytes());
-            gl::generate_mipmap(gl::texture_bind_target::texture_2d);
-            gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
-            gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
-                                       gl::min_filter::linear_mipmap_linear);
+            surf->albedo_map = surf->r->get_srgb_texture_from_filename(*(*repl_map)->albedo_map);
         }
 
         if((*repl_map)->emissive_map.has_value()) {
-            auto fs = make_file_input_block(*(*repl_map)->emissive_map);
-            auto img = load_image(fs.get());
-
-            surf->emissive_texture = gl::texture();
-            gl::bind_texture(gl::texture_bind_target::texture_2d, *(surf->emissive_texture));
-            gl::tex_image_2d(gl::texture_bind_target::texture_2d,
-                             /*level*/ 0,
-                             gl::texture_internal_format::srgb_a8,
-                             img->dimensions,
-                             gl::texture_pixel_format::rgba,
-                             gl::texture_pixel_type::uint8,
-                             make_span(img->data).as_const_bytes());
-            gl::generate_mipmap(gl::texture_bind_target::texture_2d);
-            gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
-            gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
-                                       gl::min_filter::linear_mipmap_linear);
+            surf->emissive_map =
+                surf->r->get_srgb_texture_from_filename(*(*repl_map)->emissive_map);
         }
 
         surf->albedo_factor = (*repl_map)->albedo_factor;
         surf->emissive_factor = (*repl_map)->emissive_factor;
+        surf->alpha_mode = (*repl_map)->alpha_mode;
+        surf->alpha_cutoff = (*repl_map)->alpha_cutoff;
         return D3D_OK;
     }
 
+    // No replacements found. Create standard material.
     uint16_t const *in_em = (uint16_t const *)src->buffer.data();
 
     for(auto &out_em : src->conv_buffer) {
@@ -105,6 +83,7 @@ HRESULT WINAPI jkgm::vidmem_texture::Load(LPDIRECT3DTEXTURE a)
         if(src->desc.ddpfPixelFormat.dwRGBAlphaBitMask) {
             // Convert from RGBA5551 to RGBA8888
             out_em = rgba5551_to_srgb_a8(*in_em);
+            surf->alpha_mode = material_alpha_mode::blend;
         }
         else {
             // Convert from RGB565 to RGBA8888
@@ -114,28 +93,37 @@ HRESULT WINAPI jkgm::vidmem_texture::Load(LPDIRECT3DTEXTURE a)
         ++in_em;
     }
 
-    gl::bind_texture(gl::texture_bind_target::texture_2d, surf->albedo_texture);
-    gl::tex_image_2d(gl::texture_bind_target::texture_2d,
-                     /*level*/ 0,
-                     gl::texture_internal_format::srgb_a8,
-                     make_size((int)src->desc.dwWidth, (int)src->desc.dwHeight),
-                     gl::texture_pixel_format::rgba,
-                     gl::texture_pixel_type::uint8,
-                     make_span(src->conv_buffer).as_const_bytes());
-    gl::generate_mipmap(gl::texture_bind_target::texture_2d);
-    gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
-    gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
-                               gl::min_filter::linear_mipmap_linear);
+    surf->albedo_map = surf->r->create_srgb_texture_from_buffer(
+        make_size((int)src->desc.dwWidth, (int)src->desc.dwHeight),
+        make_span(src->conv_buffer).as_const_bytes());
 
     return D3D_OK;
 }
 
-jkgm::vidmem_texture_surface::vidmem_texture_surface(renderer *r, size_t texture_index)
+jkgm::vidmem_texture_surface::vidmem_texture_surface(renderer *r, material_instance_id material_id)
     : DirectDrawSurface_impl("vidmem texture")
     , d3dtexture(this)
     , r(r)
-    , texture_index(texture_index)
+    , material_id(material_id)
 {
+}
+
+void jkgm::vidmem_texture_surface::clear()
+{
+    if(albedo_map.has_value()) {
+        r->release_srgb_texture(*albedo_map);
+        albedo_map.reset();
+    }
+
+    if(emissive_map.has_value()) {
+        r->release_srgb_texture(*emissive_map);
+        emissive_map.reset();
+    }
+
+    albedo_factor = color::fill(1.0f);
+    emissive_factor = color_rgb::fill(0.0f);
+    alpha_mode = material_alpha_mode::opaque;
+    alpha_cutoff = 0.5f;
 }
 
 void jkgm::vidmem_texture_surface::set_surface_desc(DDSURFACEDESC const &desc)

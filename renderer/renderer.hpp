@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base/filesystem.hpp"
+#include "base/id.hpp"
 #include "base/md5.hpp"
 #include "base/span.hpp"
 #include "common/config.hpp"
@@ -14,6 +15,9 @@
 
 namespace jkgm {
     enum class renderer_mode { menu, ingame };
+
+    MAKE_ID_TYPE(srgb_texture, size_t);
+    MAKE_ID_TYPE(material_instance, size_t);
 
     class renderer {
     public:
@@ -61,6 +65,11 @@ namespace jkgm {
         virtual IDirectDrawPalette *get_directdraw_palette(span<PALETTEENTRY const> entries) = 0;
 
         virtual std::optional<material const *> get_replacement_material(md5 const &sig) = 0;
+
+        virtual srgb_texture_id create_srgb_texture_from_buffer(size<2, int> const &dims,
+                                                                span<char const> data) = 0;
+        virtual srgb_texture_id get_srgb_texture_from_filename(fs::path const &file) = 0;
+        virtual void release_srgb_texture(srgb_texture_id id) = 0;
     };
 
     std::unique_ptr<renderer> create_renderer(HINSTANCE dll_instance, config const *the_config);

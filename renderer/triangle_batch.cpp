@@ -25,11 +25,11 @@ jkgm::triangle::triangle()
 jkgm::triangle::triangle(triangle_vertex v0,
                          triangle_vertex v1,
                          triangle_vertex v2,
-                         size_t material_index)
+                         material_instance_id material)
     : v0(v0)
     , v1(v1)
     , v2(v2)
-    , material_index(material_index)
+    , material(material)
     , normal(direction<3, float>::zero())
 {
 }
@@ -71,7 +71,7 @@ void jkgm::triangle_batch::insert(triangle const &tri)
 void jkgm::triangle_batch::sort()
 {
     std::sort(begin(), end(), [](auto const &a, auto const &b) {
-        return a.material_index < b.material_index;
+        return a.material.get() < b.material.get();
     });
 }
 

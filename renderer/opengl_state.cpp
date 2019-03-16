@@ -237,6 +237,11 @@ void jkgm::triangle_buffer_model::update_buffers()
                         make_span(color).subspan(0, num_vertices).as_const_bytes());
 }
 
+jkgm::srgb_texture::srgb_texture(size<2, int> dims)
+    : dims(dims)
+{
+}
+
 jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res, config const *the_config)
     : screen_renderbuffer(screen_res, the_config->msaa_samples)
     , screen_postbuffer1(screen_res)
@@ -248,10 +253,6 @@ jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res, config c
         "menu", &menu_program, "jkgm/shaders/menu.vert", "jkgm/shaders/menu.frag");
     link_program_from_files(
         "game", &game_program, "jkgm/shaders/game.vert", "jkgm/shaders/game.frag");
-    link_program_from_files("game_untextured",
-                            &game_untextured_program,
-                            "jkgm/shaders/game.vert",
-                            "jkgm/shaders/game_untextured.frag");
     link_program_from_files("post_gauss7",
                             &post_gauss7,
                             "jkgm/shaders/postprocess.vert",

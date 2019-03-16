@@ -1,10 +1,12 @@
 #include "renderer.hpp"
 #include "backbuffer_menu_surface.hpp"
 #include "backbuffer_surface.hpp"
+#include "base/file_block.hpp"
 #include "base/file_stream.hpp"
 #include "base/log.hpp"
 #include "base/memory_block.hpp"
 #include "base/win32.hpp"
+#include "common/image.hpp"
 #include "common/material_map.hpp"
 #include "d3d_impl.hpp"
 #include "d3ddevice_impl.hpp"
@@ -148,7 +150,7 @@ namespace jkgm {
         bool is_transparent = false;
         triangle_batch *current_triangle_batch = &world_batch;
 
-        size_t current_material_index = 0U;
+        material_instance_id current_material = material_instance_id(0U);
 
     public:
         explicit renderer_impl(HINSTANCE dll_instance, config const *the_config)
@@ -560,7 +562,7 @@ namespace jkgm {
             is_gun = false;
             is_transparent = false;
             current_triangle_batch = &world_batch;
-            current_material_index = 0U;
+            current_material = material_instance_id(0U);
 
             world_batch.clear();
             world_transparent_batch.clear();
@@ -584,6 +586,61 @@ namespace jkgm {
             }
         }
 
+        void bind_material(material_instance_id id)
+        {
+            if(id.get() == 0U) {
+                // This is the default (untextured) material
+                gl::set_active_texture_unit(1);
+                gl::bind_texture(gl::texture_bind_target::texture_2d, gl::default_texture);
+                gl::set_active_texture_unit(0);
+                gl::bind_texture(gl::texture_bind_target::texture_2d, gl::default_texture);
+
+                // Disable features
+                gl::set_uniform_vector(gl::uniform_location_id(1), point<4, float>::zero());
+
+                // Albedo factor
+                gl::set_uniform_vector(gl::uniform_location_id(3), color::fill(1.0f));
+
+                // Emissive factor
+                gl::set_uniform_vector(gl::uniform_location_id(5), color_rgb::zero());
+
+                // Alpha cutoff
+                gl::set_uniform_float(gl::uniform_location_id(6), 0.0f);
+            }
+            else {
+                auto const &mat = vidmem_texture_surfaces.at(id.get() - 1);
+
+                gl::texture_view albedo_map = gl::default_texture;
+                if(mat->albedo_map.has_value()) {
+                    albedo_map = at(ogs->srgb_textures, *mat->albedo_map).handle;
+                }
+
+                gl::texture_view emissive_map = gl::default_texture;
+                if(mat->emissive_map.has_value()) {
+                    emissive_map = at(ogs->srgb_textures, *mat->emissive_map).handle;
+                }
+
+                gl::set_active_texture_unit(1);
+                gl::bind_texture(gl::texture_bind_target::texture_2d, emissive_map);
+                gl::set_active_texture_unit(0);
+                gl::bind_texture(gl::texture_bind_target::texture_2d, albedo_map);
+
+                // Enable features
+                gl::set_uniform_vector(
+                    gl::uniform_location_id(1),
+                    make_point(mat->albedo_map.has_value() ? 1.0f : 0.0f,
+                               mat->emissive_map.has_value() ? 1.0f : 0.0f,
+                               (mat->alpha_mode == material_alpha_mode::mask) ? 1.0f : 0.0f,
+                               /*unused*/ 0.0f));
+
+                gl::set_uniform_vector(gl::uniform_location_id(3), mat->albedo_factor);
+                gl::set_uniform_vector(gl::uniform_location_id(5), mat->emissive_factor);
+                gl::set_uniform_float(gl::uniform_location_id(6), mat->alpha_cutoff);
+            }
+
+            current_material = id;
+        }
+
         void draw_batch(triangle_batch const &tb, triangle_buffer_model *trimdl)
         {
             gl::bind_vertex_array(trimdl->vao);
@@ -592,7 +649,8 @@ namespace jkgm {
             size_t num_verts = 0U;
 
             for(auto const &tri : tb) {
-                if(current_material_index != tri.material_index) {
+                if(current_material != tri.material) {
+                    // Draw pending elements from previous material
                     if(num_verts > 0) {
                         gl::draw_arrays(gl::element_type::triangles, curr_offset, num_verts);
 
@@ -600,45 +658,7 @@ namespace jkgm {
                         num_verts = 0U;
                     }
 
-                    if(current_material_index == 0U) {
-                        // Switching from untextured program
-                        gl::use_program(ogs->game_program);
-                    }
-                    else if(tri.material_index == 0U) {
-                        // Switching to untextured program
-                        gl::use_program(ogs->game_untextured_program);
-                        gl::set_active_texture_unit(1);
-                        gl::bind_texture(gl::texture_bind_target::texture_2d, gl::default_texture);
-                        gl::set_active_texture_unit(0);
-                        gl::bind_texture(gl::texture_bind_target::texture_2d, gl::default_texture);
-                        // Albedo factor
-                        gl::set_uniform_vector(gl::uniform_location_id(2), color::fill(1.0f));
-                        // Emissive factor
-                        gl::set_uniform_vector(gl::uniform_location_id(4), color_rgb::zero());
-                    }
-
-                    if(tri.material_index != 0U) {
-                        auto &material = vidmem_texture_surfaces.at(tri.material_index - 1);
-                        gl::set_active_texture_unit(1);
-                        if(material->emissive_texture.has_value()) {
-                            gl::bind_texture(gl::texture_bind_target::texture_2d,
-                                             *material->emissive_texture);
-                        }
-                        else {
-                            gl::bind_texture(gl::texture_bind_target::texture_2d,
-                                             gl::default_texture);
-                        }
-
-                        gl::set_active_texture_unit(0);
-                        gl::bind_texture(
-                            gl::texture_bind_target::texture_2d,
-                            vidmem_texture_surfaces.at(tri.material_index - 1)->albedo_texture);
-                        gl::set_uniform_vector(gl::uniform_location_id(2), material->albedo_factor);
-                        gl::set_uniform_vector(gl::uniform_location_id(4),
-                                               material->emissive_factor);
-                    }
-
-                    current_material_index = tri.material_index;
+                    bind_material(tri.material);
                 }
 
                 num_verts += 3;
@@ -700,36 +720,19 @@ namespace jkgm {
             gl::set_depth_mask(true);
             gl::disable(gl::capability::cull_face);
             gl::set_face_cull_mode(gl::face_mode::front_and_back);
-            gl::set_alpha_function(gl::comparison_function::greater_equal, 0.99999f);
             gl::set_blend_function(gl::blend_function::one,
                                    gl::blend_function::one_minus_source_alpha);
             gl::set_depth_function(gl::comparison_function::less);
+            gl::set_alpha_function(gl::comparison_function::greater_equal, 0.99999f);
 
             gl::use_program(ogs->game_program);
             gl::set_uniform_vector(gl::uniform_location_id(0),
                                    static_cast<size<2, float>>(conf_scr_res));
-            gl::set_uniform_integer(gl::uniform_location_id(1), 0);
-            // Albedo factor
-            gl::set_uniform_vector(gl::uniform_location_id(2), color::fill(1.0f));
-            gl::set_uniform_integer(gl::uniform_location_id(3), 1);
-            // Emissive factor
-            gl::set_uniform_vector(gl::uniform_location_id(4), color_rgb::zero());
-            gl::use_program(ogs->game_untextured_program);
-            gl::set_uniform_vector(gl::uniform_location_id(0),
-                                   static_cast<size<2, float>>(conf_scr_res));
-            gl::set_uniform_integer(gl::uniform_location_id(1), 0);
-            // Albedo factor
-            gl::set_uniform_vector(gl::uniform_location_id(2), color::fill(1.0f));
-            gl::set_uniform_integer(gl::uniform_location_id(3), 1);
-            // Emissive factor
-            gl::set_uniform_vector(gl::uniform_location_id(4), color_rgb::zero());
+            gl::set_uniform_integer(gl::uniform_location_id(2), 0);
+            gl::set_uniform_integer(gl::uniform_location_id(4), 1);
 
-            gl::set_active_texture_unit(1);
-            gl::bind_texture(gl::texture_bind_target::texture_2d, gl::default_texture);
-            gl::set_active_texture_unit(0);
-            gl::bind_texture(gl::texture_bind_target::texture_2d, gl::default_texture);
-
-            current_material_index = 0U;
+            // Initialize material with default values
+            bind_material(material_instance_id(0U));
 
             // Draw first pass (opaque world geometry)
             draw_batch(world_batch, &ogs->world_trimdl);
@@ -753,10 +756,11 @@ namespace jkgm {
             draw_batch(gun_batch, &ogs->gun_trimdl);
 
             // Draw fifth pass (transparent gun geometry with alpha testing)
+            gl::disable(gl::capability::blend);
             gl::enable(gl::capability::alpha_test);
             draw_batch(gun_transparent_batch, &ogs->gun_transparent_trimdl);
 
-            // Draw sixth pass (transparent gun geometry with alpha blending)
+            // Draw sixth pass (transparent gun geometry with alpha mode)
             gl::disable(gl::capability::alpha_test);
             gl::enable(gl::capability::blend);
             gl::set_depth_mask(false);
@@ -812,7 +816,7 @@ namespace jkgm {
                         auto const *payload = (D3DSTATE const *)cmd_span.data();
                         switch(payload->drstRenderStateType) {
                         case D3DRENDERSTATE_TEXTUREHANDLE:
-                            current_material_index = (size_t)payload->dwArg[0];
+                            current_material = material_instance_id((size_t)payload->dwArg[0]);
                             break;
 
                         // Silently ignore some useless commands
@@ -894,7 +898,7 @@ namespace jkgm {
                                      triangle_vertex(make_point(v3.sx, v3.sy, v3.sz, v3.rhw),
                                                      make_point(v3.tu, v3.tv),
                                                      extend(get<rgb>(c3) * get<a>(c3), get<a>(c3))),
-                                     current_material_index));
+                                     current_material));
                     } break;
 
                     default:
@@ -1010,12 +1014,14 @@ namespace jkgm {
             auto get_matching_buffer = [&] {
                 for(auto &tex : vidmem_texture_surfaces) {
                     if(tex->refct <= 0) {
+                        tex->refct = 0;
+                        tex->clear();
                         return tex.get();
                     }
                 }
 
                 vidmem_texture_surfaces.push_back(std::make_unique<vidmem_texture_surface>(
-                    this, vidmem_texture_surfaces.size() + 1));
+                    this, material_instance_id(vidmem_texture_surfaces.size() + 1)));
                 return vidmem_texture_surfaces.back().get();
             };
 
@@ -1054,6 +1060,96 @@ namespace jkgm {
         std::optional<material const *> get_replacement_material(md5 const &sig) override
         {
             return materials.get_material(sig);
+        }
+
+        std::optional<srgb_texture_id> get_existing_free_srgb_texture(size<2, int> const &dims)
+        {
+            for(size_t i = 0; i < ogs->srgb_textures.size(); ++i) {
+                auto &em = ogs->srgb_textures[i];
+                if(em.refct <= 0 && em.dims == dims) {
+                    // This texture is a match. Clean it up before returning.
+                    if(em.origin_filename.has_value()) {
+                        ogs->file_to_srgb_texture_map.erase(*em.origin_filename);
+                    }
+
+                    em.refct = 0;
+
+                    return srgb_texture_id(i);
+                }
+            }
+
+            return std::nullopt;
+        }
+
+        srgb_texture_id create_srgb_texture_from_buffer(size<2, int> const &dims,
+                                                        span<char const> data) override
+        {
+            auto existing_buf = get_existing_free_srgb_texture(dims);
+            if(existing_buf.has_value()) {
+                // Matching texture already exists. Refill it.
+                auto &em = at(ogs->srgb_textures, *existing_buf);
+                gl::bind_texture(gl::texture_bind_target::texture_2d, em.handle);
+                gl::tex_sub_image_2d(gl::texture_bind_target::texture_2d,
+                                     0,
+                                     make_box(make_point(0, 0), dims),
+                                     gl::texture_pixel_format::rgba,
+                                     gl::texture_pixel_type::uint8,
+                                     data);
+                gl::generate_mipmap(gl::texture_bind_target::texture_2d);
+
+                ++em.refct;
+                return *existing_buf;
+            }
+
+            // Create new texture
+            srgb_texture_id rv(ogs->srgb_textures.size());
+            ogs->srgb_textures.emplace_back(dims);
+
+            auto &em = ogs->srgb_textures.back();
+            em.refct = 1;
+
+            gl::bind_texture(gl::texture_bind_target::texture_2d, em.handle);
+            gl::tex_image_2d(gl::texture_bind_target::texture_2d,
+                             /*level*/ 0,
+                             gl::texture_internal_format::srgb_a8,
+                             dims,
+                             gl::texture_pixel_format::rgba,
+                             gl::texture_pixel_type::uint8,
+                             data);
+            gl::generate_mipmap(gl::texture_bind_target::texture_2d);
+            gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
+            gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
+                                       gl::min_filter::linear_mipmap_linear);
+
+            return rv;
+        }
+
+        srgb_texture_id get_srgb_texture_from_filename(fs::path const &file) override
+        {
+            auto it = ogs->file_to_srgb_texture_map.find(file);
+            if(it != ogs->file_to_srgb_texture_map.end()) {
+                // Image file already loaded
+                srgb_texture_id rv(it->second);
+                ++at(ogs->srgb_textures, rv).refct;
+                return rv;
+            }
+
+            auto fs = make_file_input_block(file);
+            auto img = load_image(fs.get());
+
+            auto rv = create_srgb_texture_from_buffer(img->dimensions,
+                                                      make_span(img->data).as_const_bytes());
+
+            auto &em = at(ogs->srgb_textures, rv);
+            em.origin_filename = file;
+            ogs->file_to_srgb_texture_map.emplace(file, rv.get());
+
+            return rv;
+        }
+
+        void release_srgb_texture(srgb_texture_id id) override
+        {
+            --at(ogs->srgb_textures, id).refct;
         }
     };
 }

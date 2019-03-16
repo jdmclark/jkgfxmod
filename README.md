@@ -4,6 +4,8 @@ JkGfxMod is a graphics enhancement and compatibility tool for Jedi Knight: Dark 
 
 ## Features
 
+- Adds support for high-resolution and emissive textures
+    - Requires a material pack (not included)
 - Improves compatibility with modern versions of Windows
 - Improves game performance in certain scenarios
 - Renders the game in full 32-bit color
@@ -24,6 +26,23 @@ JkGfxMod has only been tested with the CD-ROM version of Jedi Knight: Dark Force
 - Edit the config file: `jkgm.json`
     - Note: You must specify your desired resolution in this file
 - Run `inject.exe`
+
+## Creating material packs
+
+Material packs must be compiled using the `compile` utility.
+
+- Create a source directory and script file
+    - Not currently documented
+    - See `assets/sample_matpack` for a working example
+- Run the compile utility
+    - Example: `compile --script script.json --output outdir --resource path_to_jk/resource`
+
+After the `compile` command completes, the finished material pack will be inside the output directory.
+
+## Installing material packs
+
+Copy the material pack directory to the `jkgm/materials` directory in your Jedi Knight directory.
+
 
 ## Issues, questions, and feedback
 

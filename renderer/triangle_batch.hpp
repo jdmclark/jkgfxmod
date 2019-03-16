@@ -3,6 +3,7 @@
 #include "math/color.hpp"
 #include "math/direction.hpp"
 #include "math/point.hpp"
+#include "renderer.hpp"
 #include <vector>
 
 namespace jkgm {
@@ -17,12 +18,15 @@ namespace jkgm {
 
     struct triangle {
         triangle_vertex v0, v1, v2;
-        size_t material_index = 0U;
+        material_instance_id material = material_instance_id(0U);
         direction<3, float> normal;
         int num_sup = 0;
 
         triangle();
-        triangle(triangle_vertex v0, triangle_vertex v1, triangle_vertex v2, size_t material_index);
+        triangle(triangle_vertex v0,
+                 triangle_vertex v1,
+                 triangle_vertex v2,
+                 material_instance_id material);
     };
 
     class triangle_batch {

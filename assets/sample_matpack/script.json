@@ -1,0 +1,167 @@
+{
+    "name": "Sample",
+    "description": "JkGfxUpgrade Sample",
+    "comment": "This texture pack is intended as an example for mod authors. It demonstrates most material features.",
+
+    "materials": [
+        {
+            "name": "jknup.00abb3.cel0",
+            "replaces": [ [ "mat/00abb3.mat", 0 ] ],
+
+            "albedo_map": "00abb3_base_ruined.png"
+        },
+        {
+            "name": "jknup.00abb3.cel1",
+            "replaces": [ [ "mat/00abb3.mat", 1 ] ],
+
+            "albedo_map": "00abb3_base.png"
+        },
+        {
+            "name": "jknup.08tgrate.cel0",
+            "replaces": [ [ "mat/08tgrate.mat", 0 ] ],
+
+            "albedo_map": "08tgrate_cel0.png",
+
+            "alpha_mode": "mask",
+            "alpha_cutoff": 0.5
+        },
+        {
+            "name": "jknup.00abb3.cel2",
+            "replaces": [ [ "mat/00abb3.mat", 2 ] ],
+
+            "albedo_map": "00abb3_base.png",
+            "emissive_map": "00abb3_cel_2_e.png",
+            "emissive_factor": [ 2, 2, 2 ]
+        },
+        {
+            "name": "jknup.00abb3.cel3",
+            "replaces": [ [ "mat/00abb3.mat", 3 ] ],
+
+            "albedo_map": "00abb3_base.png",
+            "emissive_map": "00abb3_cel_3_e.png",
+            "emissive_factor": [ 2, 2, 2 ]
+        },
+        {
+            "name": "jknup.00abb3.cel4",
+            "replaces": [ [ "mat/00abb3.mat", 4 ] ],
+
+            "albedo_map": "00abb3_base.png",
+            "emissive_map": "00abb3_cel_4_e.png",
+            "emissive_factor": [ 2, 2, 2 ]
+        },
+
+        {
+            "name": "jknup.sabergreen0",
+            "replaces": [ "mat/sabergreen0.mat" ],
+
+            "albedo_map": "saberbase0.png",
+            "emissive_map": "saberbase0.png",
+            "emissive_factor": [ 0.0, 10.0, 0.0 ]
+        },
+        {
+            "name": "jknup.sabergreen1",
+            "replaces": [ "mat/sabergreen1.mat" ],
+
+            "albedo_map": "saberbase1.png",
+            "emissive_map": "saberbase1.png",
+            "emissive_factor": [ 0.0, 10.0, 0.0 ]
+        },
+        {
+            "name": "jknup.saberred0",
+            "replaces": [ "mat/saberred0.mat" ],
+
+            "albedo_map": "saberbase0.png",
+            "emissive_map": "saberbase0.png",
+            "emissive_factor": [ 10.0, 0.0, 0.0 ]
+        },
+        {
+            "name": "jknup.saberred1",
+            "replaces": [ "mat/saberred1.mat" ],
+
+            "albedo_map": "saberbase1.png",
+            "emissive_map": "saberbase1.png",
+            "emissive_factor": [ 10.0, 0.0, 0.0 ]
+        },
+        {
+            "name": "jknup.saberyellow0",
+            "replaces": [ "mat/saberyellow0.mat" ],
+
+            "albedo_map": "saberbase0.png",
+            "emissive_map": "saberbase0.png",
+            "emissive_factor": [ 8.9, 7.65, 0.0 ]
+        },
+        {
+            "name": "jknup.saberyellow1",
+            "replaces": [ "mat/saberyellow1.mat" ],
+
+            "albedo_map": "saberbase1.png",
+            "emissive_map": "saberbase1.png",
+            "emissive_factor": [ 8.9, 7.65, 0.0 ]
+        },
+        {
+            "name": "jknup.saberblue0",
+            "replaces": [ "mat/saberblue0.mat" ],
+
+            "albedo_map": "saberbase0.png",
+            "emissive_map": "saberbase0.png",
+            "emissive_factor": [ 6.39, 7.65, 10.0 ]
+        },
+        {
+            "name": "jknup.saberblue1",
+            "replaces": [ "mat/saberblue1.mat" ],
+
+            "albedo_map": "saberbase1.png",
+            "emissive_map": "saberbase1.png",
+            "emissive_factor": [ 6.39, 7.65, 10.0 ]
+        },
+        {
+            "name": "jknup.saberdred0",
+            "replaces": [ "mat/saberdred0.mat" ],
+
+            "albedo_map": "saberbase0.png",
+            "emissive_map": "saberbase0.png",
+            "emissive_factor": [ 8.0, 0.0, 1.0 ]
+        },
+        {
+            "name": "jknup.saberdred1",
+            "replaces": [ "mat/saberdred1.mat" ],
+
+            "albedo_map": "saberbase1.png",
+            "albedo_factor": [ 0.8, 0.8, 0.8, 1.0 ],
+            "emissive_map": "saberbase1.png",
+            "emissive_factor": [ 8.0, 0.0, 0.0 ]
+        },
+        {
+            "name": "jknup.saberorange0",
+            "replaces": [ "mat/saberorange0.mat" ],
+
+            "albedo_map": "saberbase0.png",
+            "emissive_map": "saberbase0.png",
+            "emissive_factor": [ 10.0, 5.76, 0.0 ]
+        },
+        {
+            "name": "jknup.saberorange1",
+            "replaces": [ "mat/saberorange1.mat" ],
+
+            "albedo_map": "saberbase1.png",
+            "emissive_map": "saberbase1.png",
+            "emissive_factor": [ 10.0, 5.76, 0.0 ]
+        },
+        {
+            "name": "jknup.saberpurple0",
+            "replaces": [ "mat/saberpurple0.mat" ],
+
+            "albedo_map": "saberbase0.png",
+            "emissive_map": "saberbase0.png",
+            "emissive_factor": [ 8.75, 4.98, 9.06 ]
+        },
+        {
+            "name": "jknup.saberpurple1",
+            "replaces": [ "mat/saberpurple1.mat" ],
+
+            "albedo_map": "saberbase1.png",
+            "emissive_map": "saberbase1.png",
+            "emissive_factor": [ 8.75, 4.98, 9.06 ]
+        }
+    ]
+}

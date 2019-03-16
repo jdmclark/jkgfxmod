@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common/material.hpp"
 #include "d3dtexture_impl.hpp"
 #include "ddrawsurface_impl.hpp"
 #include "glutil/texture.hpp"
@@ -35,16 +36,21 @@ namespace jkgm {
         int refct = 0;
         DDSURFACEDESC desc;
 
-        size_t texture_index = 0U;
+        material_instance_id material_id;
 
-        gl::texture albedo_texture;
+        // Vidmem textures embody a material instance:
+        std::optional<srgb_texture_id> albedo_map;
         color albedo_factor = color::fill(1.0f);
 
-        std::optional<gl::texture> emissive_texture;
+        std::optional<srgb_texture_id> emissive_map;
         color_rgb emissive_factor = color_rgb::fill(0.0f);
 
-        vidmem_texture_surface(renderer *r, size_t texture_index);
+        material_alpha_mode alpha_mode = material_alpha_mode::opaque;
+        float alpha_cutoff = 0.5f;
 
+        vidmem_texture_surface(renderer *r, material_instance_id material_id);
+
+        void clear();
         void set_surface_desc(DDSURFACEDESC const &desc);
 
         HRESULT WINAPI QueryInterface(REFIID riid, LPVOID *ppvObj) override;

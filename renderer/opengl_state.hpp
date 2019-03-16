@@ -9,6 +9,8 @@
 #include "glutil/shader.hpp"
 #include "glutil/texture.hpp"
 #include "glutil/vertex_array.hpp"
+#include <map>
+#include <vector>
 
 namespace jkgm {
     gl::shader compile_shader_from_file(fs::path const &filename, gl::shader_type type);
@@ -87,10 +89,18 @@ namespace jkgm {
         void update_buffers();
     };
 
+    struct srgb_texture {
+        size<2, int> dims;
+        gl::texture handle;
+        int refct = 0;
+        std::optional<fs::path> origin_filename;
+
+        explicit srgb_texture(size<2, int> dims);
+    };
+
     struct opengl_state {
         gl::program menu_program;
         gl::program game_program;
-        gl::program game_untextured_program;
 
         gl::program post_gauss7;
         gl::program post_low_pass;
@@ -113,6 +123,9 @@ namespace jkgm {
         post_buffer screen_postbuffer2;
 
         hdr_stack bloom_layers;
+
+        std::vector<srgb_texture> srgb_textures;
+        std::map<fs::path, size_t> file_to_srgb_texture_map;
 
         opengl_state(size<2, int> screen_res, config const *the_config);
     };

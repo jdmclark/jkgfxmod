@@ -122,7 +122,7 @@ void jkgm::vidmem_texture_surface::clear()
 
     albedo_factor = color::fill(1.0f);
     emissive_factor = color_rgb::fill(0.0f);
-    alpha_mode = material_alpha_mode::opaque;
+    alpha_mode = material_alpha_mode::blend;
     alpha_cutoff = 0.5f;
 }
 

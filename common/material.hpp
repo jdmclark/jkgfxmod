@@ -5,7 +5,7 @@
 #include <optional>
 
 namespace jkgm {
-    enum class material_alpha_mode { opaque, mask, blend };
+    enum class material_alpha_mode { blend, mask };
 
     class material {
     public:
@@ -15,7 +15,7 @@ namespace jkgm {
         std::optional<fs::path> emissive_map;
         color_rgb emissive_factor = color_rgb::zero();
 
-        material_alpha_mode alpha_mode = material_alpha_mode::opaque;
+        material_alpha_mode alpha_mode = material_alpha_mode::blend;
         float alpha_cutoff = 0.5f;
     };
 }

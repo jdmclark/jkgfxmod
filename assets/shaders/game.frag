@@ -20,15 +20,16 @@ void main()
 {
     vec4 albedo_map_sample = texture(albedo_map, vp_texcoords);
     albedo_map_sample = mix(vec4(1.0), albedo_map_sample, features.x);
-    vec4 albedo = albedo_map_sample * vp_color * albedo_factor;
 
     if(features.z > 0.5) {
-        if(albedo.a < alpha_cutoff) {
+        if(albedo_map_sample.a < alpha_cutoff) {
             discard;
         }
 
-        albedo.a = 1.0;
+        albedo_map_sample.a = 1.0;
     }
+
+    vec4 albedo = albedo_map_sample * vp_color * albedo_factor;
 
     vec3 emissive_map_sample = texture(emissive_map, vp_texcoords).rgb;
     emissive_map_sample = mix(vec3(1.0), emissive_map_sample, features.y);

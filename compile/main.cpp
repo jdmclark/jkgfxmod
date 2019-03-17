@@ -17,7 +17,7 @@
 #include <set>
 
 namespace jkgm {
-    enum class out_material_alpha_mode { opaque, mask, blend };
+    enum class out_material_alpha_mode { blend, mask };
 
     class out_material_replacement {
     public:
@@ -218,10 +218,7 @@ namespace jkgm {
 
         if(doc.contains("alpha_mode")) {
             auto const &am = doc["alpha_mode"];
-            if(am == "opaque") {
-                rv->alpha_mode = out_material_alpha_mode::opaque;
-            }
-            else if(am == "mask") {
+            if(am == "mask") {
                 rv->alpha_mode = out_material_alpha_mode::mask;
             }
             else if(am == "blend") {
@@ -335,10 +332,6 @@ namespace jkgm {
         if(mat.alpha_mode.has_value()) {
             switch(*mat.alpha_mode) {
             default:
-            case out_material_alpha_mode::opaque:
-                rv["alpha_mode"] = "opaque";
-                break;
-
             case out_material_alpha_mode::blend:
                 rv["alpha_mode"] = "blend";
                 break;

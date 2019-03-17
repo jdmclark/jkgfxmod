@@ -45,7 +45,7 @@ namespace jkgm {
         std::optional<srgb_texture_id> emissive_map;
         color_rgb emissive_factor = color_rgb::fill(0.0f);
 
-        material_alpha_mode alpha_mode = material_alpha_mode::opaque;
+        material_alpha_mode alpha_mode = material_alpha_mode::blend;
         float alpha_cutoff = 0.5f;
 
         vidmem_texture_surface(renderer *r, material_instance_id material_id);

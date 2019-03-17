@@ -88,6 +88,7 @@
       <PrecompiledHeaderOutputFile />
       <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <UseFullPaths>false</UseFullPaths>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

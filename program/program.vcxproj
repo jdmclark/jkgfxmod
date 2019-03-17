@@ -116,6 +116,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
+      <UseFullPaths>false</UseFullPaths>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

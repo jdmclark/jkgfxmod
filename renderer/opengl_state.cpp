@@ -163,11 +163,9 @@ jkgm::hdr_stack::hdr_stack()
 jkgm::triangle_buffer_model::triangle_buffer_model()
 {
     gl::bind_vertex_array(vao);
+
     gl::enable_vertex_attrib_array(0U);
     gl::bind_buffer(gl::buffer_bind_target::array, pos_buffer);
-    gl::buffer_reserve(gl::buffer_bind_target::array,
-                       vb_capacity * sizeof(point<4, float>),
-                       gl::buffer_usage::stream_draw);
     gl::vertex_attrib_pointer(/*index*/ 0,
                               /*elements*/ 4,
                               gl::vertex_element_type::float32,
@@ -175,9 +173,6 @@ jkgm::triangle_buffer_model::triangle_buffer_model()
 
     gl::enable_vertex_attrib_array(1U);
     gl::bind_buffer(gl::buffer_bind_target::array, texcoord_buffer);
-    gl::buffer_reserve(gl::buffer_bind_target::array,
-                       vb_capacity * sizeof(point<2, float>),
-                       gl::buffer_usage::stream_draw);
     gl::vertex_attrib_pointer(/*index*/ 1,
                               /*elements*/ 2,
                               gl::vertex_element_type::float32,
@@ -185,8 +180,6 @@ jkgm::triangle_buffer_model::triangle_buffer_model()
 
     gl::enable_vertex_attrib_array(2U);
     gl::bind_buffer(gl::buffer_bind_target::array, color_buffer);
-    gl::buffer_reserve(
-        gl::buffer_bind_target::array, vb_capacity * sizeof(color), gl::buffer_usage::stream_draw);
     gl::vertex_attrib_pointer(/*index*/ 2,
                               /*elements*/ 4,
                               gl::vertex_element_type::float32,
@@ -201,40 +194,25 @@ void jkgm::triangle_buffer_model::maybe_grow_buffers(unsigned int new_capacity)
         pos.resize(vb_capacity, point<4, float>::zero());
         texcoords.resize(vb_capacity, point<2, float>::zero());
         color.resize(vb_capacity, color::zero());
-
-        gl::bind_buffer(gl::buffer_bind_target::array, pos_buffer);
-        gl::buffer_reserve(gl::buffer_bind_target::array,
-                           vb_capacity * sizeof(point<4, float>),
-                           gl::buffer_usage::stream_draw);
-
-        gl::bind_buffer(gl::buffer_bind_target::array, texcoord_buffer);
-        gl::buffer_reserve(gl::buffer_bind_target::array,
-                           vb_capacity * sizeof(point<2, float>),
-                           gl::buffer_usage::stream_draw);
-
-        gl::bind_buffer(gl::buffer_bind_target::array, color_buffer);
-        gl::buffer_reserve(gl::buffer_bind_target::array,
-                           vb_capacity * sizeof(color),
-                           gl::buffer_usage::stream_draw);
     }
 }
 
 void jkgm::triangle_buffer_model::update_buffers()
 {
     gl::bind_buffer(gl::buffer_bind_target::array, pos_buffer);
-    gl::buffer_sub_data(gl::buffer_bind_target::array,
-                        /*offset*/ 0U,
-                        make_span(pos).subspan(0, num_vertices).as_const_bytes());
+    gl::buffer_data(gl::buffer_bind_target::array,
+                    make_span(pos).as_const_bytes(),
+                    gl::buffer_usage::stream_draw);
 
     gl::bind_buffer(gl::buffer_bind_target::array, texcoord_buffer);
-    gl::buffer_sub_data(gl::buffer_bind_target::array,
-                        /*offset*/ 0U,
-                        make_span(texcoords).subspan(0, num_vertices).as_const_bytes());
+    gl::buffer_data(gl::buffer_bind_target::array,
+                    make_span(texcoords).as_const_bytes(),
+                    gl::buffer_usage::stream_draw);
 
     gl::bind_buffer(gl::buffer_bind_target::array, color_buffer);
-    gl::buffer_sub_data(gl::buffer_bind_target::array,
-                        /*offset*/ 0U,
-                        make_span(color).subspan(0, num_vertices).as_const_bytes());
+    gl::buffer_data(gl::buffer_bind_target::array,
+                    make_span(color).as_const_bytes(),
+                    gl::buffer_usage::stream_draw);
 }
 
 jkgm::srgb_texture::srgb_texture(size<2, int> dims)

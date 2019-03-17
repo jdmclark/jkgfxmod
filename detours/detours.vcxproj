@@ -97,6 +97,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
+      <UseFullPaths>false</UseFullPaths>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

@@ -73,7 +73,7 @@ namespace jkgm {
         gl::buffer pos_buffer;
         gl::buffer texcoord_buffer;
         gl::buffer color_buffer;
-        unsigned int vb_capacity = 10U;
+        unsigned int vb_capacity = 0U;
 
     public:
         gl::vertex_array vao;

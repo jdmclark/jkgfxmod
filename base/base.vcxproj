@@ -164,6 +164,7 @@
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
       <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
+      <UseFullPaths>false</UseFullPaths>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

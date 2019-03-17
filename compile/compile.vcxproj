@@ -99,6 +99,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeaderOutputFile />
+      <UseFullPaths>false</UseFullPaths>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

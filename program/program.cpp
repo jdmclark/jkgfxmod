@@ -13,14 +13,14 @@ jkgm::program::program()
     jkgm::flag_set<jkgm::log_level> stdout_diagnostic_level{
         jkgm::log_level::error, jkgm::log_level::warning, jkgm::log_level::info};
 
-    if(jkgm::has_environment_variable("jkgm_DEBUG")) {
+    if(jkgm::has_environment_variable("JKGM_DEBUG")) {
         stdout_diagnostic_level += jkgm::log_level::debug;
     }
 
     jkgm::emplace_log_backend<jkgm::std_output_log_backend>(stdout_diagnostic_level);
 
     // Enable file logging if the correct environment variables are set
-    std::optional<std::string> maybe_log_file = jkgm::get_environment_variable("jkgm_LOG_FILE");
+    std::optional<std::string> maybe_log_file = jkgm::get_environment_variable("JKGM_LOG_FILE");
     if(maybe_log_file.has_value()) {
         jkgm::emplace_log_backend<jkgm::file_log_backend>({jkgm::log_level::error,
                                                            jkgm::log_level::warning,

@@ -57,12 +57,13 @@ namespace jkgm {
         std::vector<std::unique_ptr<out_material>> materials;
     };
 
-    class out_processed_image_map {
+    class processed_names_map {
     public:
+        std::set<std::string> seen_material_names;
         std::map<fs::path, std::string> srgb_map;
     };
 
-    std::string get_convert_image(out_processed_image_map *map,
+    std::string get_convert_image(processed_names_map *map,
                                   fs::path const &in_path,
                                   std::string const &desired_name,
                                   fs::path const &desired_out_path)
@@ -144,7 +145,7 @@ namespace jkgm {
 
     std::unique_ptr<out_material>
         process_material(json::json const &doc,
-                         out_processed_image_map *img_map,
+                         processed_names_map *img_map,
                          virtual_file_system *vfs,
                          std::vector<std::unique_ptr<colormap>> const &colormaps,
                          fs::path const &script_path,
@@ -158,15 +159,21 @@ namespace jkgm {
         }
 
         rv->name = doc["name"];
+
+        std::string lc_name;
+        lc_name.reserve(rv->name.size());
+        std::transform(rv->name.begin(), rv->name.end(), std::back_inserter(lc_name), to_lower);
+        if(img_map->seen_material_names.find(lc_name) != img_map->seen_material_names.end()) {
+            LOG_ERROR("Material name '", rv->name, "' defined multiple times");
+            throw std::runtime_error("Invalid script");
+        }
+
+        img_map->seen_material_names.insert(std::move(lc_name));
+
         LOG_INFO(rv->name);
 
         if(rv->name.find_first_of("<>:\"/\\|?*") != std::string::npos) {
             LOG_ERROR("Material '", rv->name, "' name contains invalid characters");
-            throw std::runtime_error("Invalid script");
-        }
-
-        if(!doc.contains("replaces")) {
-            LOG_ERROR("Material '", rv->name, "' does not specify any materials to replace");
             throw std::runtime_error("Invalid script");
         }
 
@@ -264,11 +271,6 @@ namespace jkgm {
                 // Brief replacement: material and cel tuple
                 mat_filename = em[0];
                 celnum = em[1];
-            }
-            else if(em.is_object()) {
-                // Full replacement
-                mat_filename = em["file"];
-                celnum = em["cel"];
             }
             else {
                 LOG_ERROR("Material '", rv->name, "' contains an unreadable replacement");
@@ -476,7 +478,7 @@ namespace jkgm {
             }
 
             LOG_INFO("Compiling materials...");
-            out_processed_image_map img_map;
+            processed_names_map img_map;
             for(auto const &em : script_doc["materials"]) {
                 try {
                     pack.materials.push_back(process_material(

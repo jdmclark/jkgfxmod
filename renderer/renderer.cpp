@@ -586,7 +586,7 @@ namespace jkgm {
             }
         }
 
-        void bind_material(material_instance_id id)
+        void bind_material(material_instance_id id, bool force_opaque)
         {
             if(id.get() == 0U) {
                 // This is the default (untextured) material
@@ -630,7 +630,9 @@ namespace jkgm {
                     gl::uniform_location_id(1),
                     make_point(mat->albedo_map.has_value() ? 1.0f : 0.0f,
                                mat->emissive_map.has_value() ? 1.0f : 0.0f,
-                               (mat->alpha_mode == material_alpha_mode::mask) ? 1.0f : 0.0f,
+                               ((mat->alpha_mode == material_alpha_mode::mask) && (!force_opaque))
+                                   ? 1.0f
+                                   : 0.0f,
                                /*unused*/ 0.0f));
 
                 gl::set_uniform_vector(gl::uniform_location_id(3), mat->albedo_factor);
@@ -641,12 +643,14 @@ namespace jkgm {
             current_material = id;
         }
 
-        void draw_batch(triangle_batch const &tb, triangle_buffer_model *trimdl)
+        void draw_batch(triangle_batch const &tb, triangle_buffer_model *trimdl, bool force_opaque)
         {
             gl::bind_vertex_array(trimdl->vao);
 
             size_t curr_offset = 0U;
             size_t num_verts = 0U;
+
+            bind_material(material_instance_id(0U), force_opaque);
 
             for(auto const &tri : tb) {
                 if(current_material != tri.material) {
@@ -658,7 +662,7 @@ namespace jkgm {
                         num_verts = 0U;
                     }
 
-                    bind_material(tri.material);
+                    bind_material(tri.material, force_opaque);
                 }
 
                 num_verts += 3;
@@ -731,21 +735,20 @@ namespace jkgm {
             gl::set_uniform_integer(gl::uniform_location_id(2), 0);
             gl::set_uniform_integer(gl::uniform_location_id(4), 1);
 
-            // Initialize material with default values
-            bind_material(material_instance_id(0U));
-
             // Draw first pass (opaque world geometry)
-            draw_batch(world_batch, &ogs->world_trimdl);
+            draw_batch(world_batch, &ogs->world_trimdl, /*force opaque*/ true);
 
             // Draw second pass (transparent world geometry with alpha testing)
             gl::enable(gl::capability::alpha_test);
-            draw_batch(world_transparent_batch, &ogs->world_transparent_trimdl);
+            draw_batch(
+                world_transparent_batch, &ogs->world_transparent_trimdl, /*force opaque*/ true);
 
             // Draw third pass (transparent world geometry with alpha blending)
             gl::disable(gl::capability::alpha_test);
             gl::enable(gl::capability::blend);
             gl::set_depth_mask(false);
-            draw_batch(world_transparent_batch, &ogs->world_transparent_trimdl);
+            draw_batch(
+                world_transparent_batch, &ogs->world_transparent_trimdl, /*force opaque*/ false);
 
             // Perform z-clear before drawing gun overlay
             gl::set_depth_mask(true);
@@ -753,18 +756,18 @@ namespace jkgm {
 
             // Draw fourth pass (opaque gun geometry)
             gl::disable(gl::capability::blend);
-            draw_batch(gun_batch, &ogs->gun_trimdl);
+            draw_batch(gun_batch, &ogs->gun_trimdl, /*force opaque*/ true);
 
             // Draw fifth pass (transparent gun geometry with alpha testing)
             gl::disable(gl::capability::blend);
             gl::enable(gl::capability::alpha_test);
-            draw_batch(gun_transparent_batch, &ogs->gun_transparent_trimdl);
+            draw_batch(gun_transparent_batch, &ogs->gun_transparent_trimdl, /*force opaque*/ true);
 
             // Draw sixth pass (transparent gun geometry with alpha mode)
             gl::disable(gl::capability::alpha_test);
             gl::enable(gl::capability::blend);
             gl::set_depth_mask(false);
-            draw_batch(gun_transparent_batch, &ogs->gun_transparent_trimdl);
+            draw_batch(gun_transparent_batch, &ogs->gun_transparent_trimdl, /*force opaque*/ false);
 
             gl::set_depth_mask(true);
         }

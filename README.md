@@ -27,6 +27,11 @@ JkGfxMod has only been tested with the CD-ROM version of Jedi Knight: Dark Force
     - Note: You must specify your desired resolution in this file
 - Run `inject.exe`
 
+## Installing material packs
+
+Copy the material pack directory to the `jkgm/materials` directory in your Jedi Knight directory.
+
+
 ## Creating material packs
 
 Material packs must be compiled using the `compile` utility.
@@ -39,10 +44,7 @@ Material packs must be compiled using the `compile` utility.
 
 After the `compile` command completes, the finished material pack will be inside the output directory.
 
-## Installing material packs
-
-Copy the material pack directory to the `jkgm/materials` directory in your Jedi Knight directory.
-
+For more information, please see the [material compiler reference](doc/compile.md).
 
 ## Issues, questions, and feedback
 

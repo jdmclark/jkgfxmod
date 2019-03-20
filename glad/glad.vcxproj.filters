@@ -21,6 +21,9 @@
     <ClInclude Include="glad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="khrplatform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="glad.cpp">

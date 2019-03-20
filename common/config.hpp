@@ -1,8 +1,8 @@
 #pragma once
 
-#include <tuple>
-#include <string>
 #include <memory>
+#include <string>
+#include <tuple>
 
 namespace jkgm {
     class config {
@@ -10,6 +10,7 @@ namespace jkgm {
         std::tuple<int, int> resolution = std::make_tuple(640, 480);
         bool fullscreen = false;
         int msaa_samples = 4;
+        float max_anisotropy = 2.0f;
         std::string command = "jk.exe";
     };
 

@@ -83,6 +83,7 @@ namespace jkgm::gl {
 
     void set_texture_compare_mode(texture_bind_target target, texture_compare_mode mode);
     void set_texture_compare_function(texture_bind_target target, comparison_function func);
+    void set_texture_max_anisotropy(texture_bind_target target, float max_anisotropy);
     void set_texture_max_level(texture_bind_target target, int max_level);
     void set_texture_mag_filter(texture_bind_target target, mag_filter filter);
     void set_texture_min_filter(texture_bind_target target, min_filter filter);

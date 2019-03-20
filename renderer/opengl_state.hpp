@@ -101,6 +101,7 @@ namespace jkgm {
     struct opengl_state {
         gl::program menu_program;
         gl::program game_program;
+        gl::program game_alpha_depth_program;
 
         gl::program post_gauss7;
         gl::program post_low_pass;

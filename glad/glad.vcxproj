@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClInclude Include="gl.h" />
     <ClInclude Include="glad.h" />
+    <ClInclude Include="khrplatform.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="glad.cpp" />

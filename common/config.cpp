@@ -16,10 +16,25 @@ std::unique_ptr<jkgm::config> jkgm::load_config_file()
         fs->copy_to(&mob);
 
         auto j = json::json::parse(mb.str());
-        j.at("resolution").get_to(rv->resolution);
-        j.at("fullscreen").get_to(rv->fullscreen);
-        j.at("msaa_samples").get_to(rv->msaa_samples);
-        j.at("command").get_to(rv->command);
+        if(j.contains("resolution")) {
+            j.at("resolution").get_to(rv->resolution);
+        }
+
+        if(j.contains("fullscreen")) {
+            j.at("fullscreen").get_to(rv->fullscreen);
+        }
+
+        if(j.contains("msaa_samples")) {
+            j.at("msaa_samples").get_to(rv->msaa_samples);
+        }
+
+        if(j.contains("max_anisotropy")) {
+            j.at("max_anisotropy").get_to(rv->max_anisotropy);
+        }
+
+        if(j.contains("command")) {
+            j.at("command").get_to(rv->command);
+        }
     }
     catch(std::exception const &e) {
         LOG_WARNING("Failed to load configuration file: ", e.what());

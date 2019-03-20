@@ -231,6 +231,10 @@ jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res, config c
         "menu", &menu_program, "jkgm/shaders/menu.vert", "jkgm/shaders/menu.frag");
     link_program_from_files(
         "game", &game_program, "jkgm/shaders/game.vert", "jkgm/shaders/game.frag");
+    link_program_from_files("game_alpha_depth",
+                            &game_alpha_depth_program,
+                            "jkgm/shaders/game.vert",
+                            "jkgm/shaders/game_alpha_depth.frag");
     link_program_from_files("post_gauss7",
                             &post_gauss7,
                             "jkgm/shaders/postprocess.vert",

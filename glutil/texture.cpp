@@ -38,6 +38,11 @@ void jkgm::gl::set_texture_compare_function(texture_bind_target target, comparis
     glTexParameteri(static_cast<GLenum>(target), GL_TEXTURE_COMPARE_FUNC, static_cast<GLint>(func));
 }
 
+void jkgm::gl::set_texture_max_anisotropy(texture_bind_target target, float max_anisotropy)
+{
+    glTexParameterf(static_cast<GLenum>(target), GL_TEXTURE_MAX_ANISOTROPY_EXT, max_anisotropy);
+}
+
 void jkgm::gl::set_texture_max_level(texture_bind_target target, int max_level)
 {
     glTexParameteri(static_cast<GLenum>(target), GL_TEXTURE_MAX_LEVEL, max_level);

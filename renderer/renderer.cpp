@@ -718,7 +718,6 @@ namespace jkgm {
             fill_buffer(gun_transparent_batch, &ogs->gun_transparent_trimdl);
 
             // Draw batches
-            gl::disable(gl::capability::alpha_test);
             gl::disable(gl::capability::blend);
             gl::enable(gl::capability::depth_test);
             gl::set_depth_mask(true);
@@ -727,7 +726,12 @@ namespace jkgm {
             gl::set_blend_function(gl::blend_function::one,
                                    gl::blend_function::one_minus_source_alpha);
             gl::set_depth_function(gl::comparison_function::less);
-            gl::set_alpha_function(gl::comparison_function::greater_equal, 0.99999f);
+
+            gl::use_program(ogs->game_alpha_depth_program);
+            gl::set_uniform_vector(gl::uniform_location_id(0),
+                                   static_cast<size<2, float>>(conf_scr_res));
+            gl::set_uniform_integer(gl::uniform_location_id(2), 0);
+            gl::set_uniform_integer(gl::uniform_location_id(4), 1);
 
             gl::use_program(ogs->game_program);
             gl::set_uniform_vector(gl::uniform_location_id(0),
@@ -739,12 +743,12 @@ namespace jkgm {
             draw_batch(world_batch, &ogs->world_trimdl, /*force opaque*/ true);
 
             // Draw second pass (transparent world geometry with alpha testing)
-            gl::enable(gl::capability::alpha_test);
+            gl::use_program(ogs->game_alpha_depth_program);
             draw_batch(
                 world_transparent_batch, &ogs->world_transparent_trimdl, /*force opaque*/ true);
 
             // Draw third pass (transparent world geometry with alpha blending)
-            gl::disable(gl::capability::alpha_test);
+            gl::use_program(ogs->game_program);
             gl::enable(gl::capability::blend);
             gl::set_depth_mask(false);
             draw_batch(
@@ -759,12 +763,12 @@ namespace jkgm {
             draw_batch(gun_batch, &ogs->gun_trimdl, /*force opaque*/ true);
 
             // Draw fifth pass (transparent gun geometry with alpha testing)
+            gl::use_program(ogs->game_alpha_depth_program);
             gl::disable(gl::capability::blend);
-            gl::enable(gl::capability::alpha_test);
             draw_batch(gun_transparent_batch, &ogs->gun_transparent_trimdl, /*force opaque*/ true);
 
             // Draw sixth pass (transparent gun geometry with alpha mode)
-            gl::disable(gl::capability::alpha_test);
+            gl::use_program(ogs->game_program);
             gl::enable(gl::capability::blend);
             gl::set_depth_mask(false);
             draw_batch(gun_transparent_batch, &ogs->gun_transparent_trimdl, /*force opaque*/ false);
@@ -1120,6 +1124,8 @@ namespace jkgm {
                              gl::texture_pixel_type::uint8,
                              data);
             gl::generate_mipmap(gl::texture_bind_target::texture_2d);
+            gl::set_texture_max_anisotropy(gl::texture_bind_target::texture_2d,
+                                           std::max(1.0f, the_config->max_anisotropy));
             gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
             gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
                                        gl::min_filter::linear_mipmap_linear);

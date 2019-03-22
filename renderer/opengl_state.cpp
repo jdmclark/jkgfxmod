@@ -2,6 +2,7 @@
 #include "base/file_stream.hpp"
 #include "base/log.hpp"
 #include "base/memory_block.hpp"
+#include <random>
 
 jkgm::gl::shader jkgm::compile_shader_from_file(fs::path const &filename, gl::shader_type type)
 {
@@ -101,6 +102,93 @@ jkgm::render_buffer::render_buffer(size<2, int> dims, int num_samples)
     gl::bind_framebuffer(gl::framebuffer_bind_target::any, gl::default_framebuffer);
 }
 
+jkgm::ssao_depth_render_buffer::ssao_depth_render_buffer(size<2, int> dims)
+    : viewport(make_point(0, 0), dims)
+{
+    gl::bind_framebuffer(gl::framebuffer_bind_target::any, fbo);
+
+    gl::bind_renderbuffer(rbo);
+    gl::renderbuffer_storage(gl::renderbuffer_format::depth, dims);
+    gl::framebuffer_renderbuffer(
+        gl::framebuffer_bind_target::any, gl::framebuffer_attachment::depth, rbo);
+
+    gl::bind_texture(gl::texture_bind_target::texture_2d, tex);
+    gl::tex_image_2d(gl::texture_bind_target::texture_2d,
+                     /*level*/ 0,
+                     gl::texture_internal_format::rgba32f,
+                     dims,
+                     gl::texture_pixel_format::rgba,
+                     gl::texture_pixel_type::float32,
+                     make_span((char const *)nullptr, 0U));
+    gl::set_texture_max_level(gl::texture_bind_target::texture_2d, 0U);
+    gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
+    gl::set_texture_min_filter(gl::texture_bind_target::texture_2d, gl::min_filter::linear);
+    gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
+                              gl::texture_direction::s,
+                              gl::texture_wrap_mode::clamp_to_border);
+    gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
+                              gl::texture_direction::t,
+                              gl::texture_wrap_mode::clamp_to_border);
+    gl::set_texture_border_color(gl::texture_bind_target::texture_2d,
+                                 color(0.0f, 0.0f, 1.0f, std::numeric_limits<float>::lowest()));
+    gl::framebuffer_texture(
+        gl::framebuffer_bind_target::any, gl::framebuffer_attachment::color0, tex, /*level*/ 0);
+
+    gl::draw_buffers(gl::draw_buffer::color0);
+
+    auto fbs = gl::check_framebuffer_status(gl::framebuffer_bind_target::any);
+    if(gl::check_framebuffer_status(gl::framebuffer_bind_target::any) !=
+       gl::framebuffer_status::complete) {
+        gl::log_errors();
+        LOG_ERROR("Failed to create SSAO depth framebuffer: ", static_cast<int>(fbs));
+    }
+
+    gl::bind_framebuffer(gl::framebuffer_bind_target::any, gl::default_framebuffer);
+}
+
+jkgm::ssao_occlusion_buffer::ssao_occlusion_buffer(size<2, int> dims)
+    : viewport(make_point(0, 0), dims)
+{
+    gl::bind_framebuffer(gl::framebuffer_bind_target::any, fbo);
+
+    gl::bind_renderbuffer(rbo);
+    gl::renderbuffer_storage(gl::renderbuffer_format::depth, dims);
+
+    gl::bind_texture(gl::texture_bind_target::texture_2d, tex);
+    gl::tex_image_2d(gl::texture_bind_target::texture_2d,
+                     /*level*/ 0,
+                     gl::texture_internal_format::rg32f,
+                     dims,
+                     gl::texture_pixel_format::rg,
+                     gl::texture_pixel_type::float32,
+                     span<char const>(nullptr, 0U));
+    gl::set_texture_max_level(gl::texture_bind_target::texture_2d, 0U);
+    gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
+    gl::set_texture_min_filter(gl::texture_bind_target::texture_2d, gl::min_filter::linear);
+    gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
+                              gl::texture_direction::s,
+                              gl::texture_wrap_mode::clamp_to_edge);
+    gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
+                              gl::texture_direction::t,
+                              gl::texture_wrap_mode::clamp_to_edge);
+
+    gl::framebuffer_renderbuffer(
+        gl::framebuffer_bind_target::any, gl::framebuffer_attachment::depth, rbo);
+    gl::framebuffer_texture(
+        gl::framebuffer_bind_target::any, gl::framebuffer_attachment::color0, tex, 0);
+
+    gl::draw_buffers(gl::draw_buffer::color0);
+
+    auto fbs = gl::check_framebuffer_status(gl::framebuffer_bind_target::any);
+    if(gl::check_framebuffer_status(gl::framebuffer_bind_target::any) !=
+       gl::framebuffer_status::complete) {
+        gl::log_errors();
+        LOG_ERROR("Failed to create SSAO framebuffer: ", static_cast<int>(fbs));
+    }
+
+    gl::bind_framebuffer(gl::framebuffer_bind_target::any, gl::default_framebuffer);
+}
+
 jkgm::post_buffer::post_buffer(size<2, int> dims)
     : viewport(make_point(0, 0), dims)
 {
@@ -184,6 +272,11 @@ jkgm::triangle_buffer_model::triangle_buffer_model()
                               /*elements*/ 4,
                               gl::vertex_element_type::float32,
                               /*normalized*/ false);
+
+    gl::enable_vertex_attrib_array(3U);
+    gl::bind_buffer(gl::buffer_bind_target::array, normal_buffer);
+    gl::vertex_attrib_pointer(
+        /*index*/ 3, /*elements*/ 3, gl::vertex_element_type::float32, /*normalized*/ false);
 }
 
 void jkgm::triangle_buffer_model::maybe_grow_buffers(unsigned int new_capacity)
@@ -194,6 +287,7 @@ void jkgm::triangle_buffer_model::maybe_grow_buffers(unsigned int new_capacity)
         pos.resize(vb_capacity, point<4, float>::zero());
         texcoords.resize(vb_capacity, point<2, float>::zero());
         color.resize(vb_capacity, color::zero());
+        normals.resize(vb_capacity, direction<3, float>::zero());
     }
 }
 
@@ -212,6 +306,11 @@ void jkgm::triangle_buffer_model::update_buffers()
     gl::bind_buffer(gl::buffer_bind_target::array, color_buffer);
     gl::buffer_data(gl::buffer_bind_target::array,
                     make_span(color).as_const_bytes(),
+                    gl::buffer_usage::stream_draw);
+
+    gl::bind_buffer(gl::buffer_bind_target::array, normal_buffer);
+    gl::buffer_data(gl::buffer_bind_target::array,
+                    make_span(normals).as_const_bytes(),
                     gl::buffer_usage::stream_draw);
 }
 
@@ -235,6 +334,18 @@ jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res, config c
                             &game_alpha_depth_program,
                             "jkgm/shaders/game.vert",
                             "jkgm/shaders/game_alpha_depth.frag");
+    link_program_from_files("game_ssao_depth",
+                            &game_ssao_depth_program,
+                            "jkgm/shaders/game.vert",
+                            "jkgm/shaders/game_ssao_depth.frag");
+    link_program_from_files("game_ssao",
+                            &post_ssao_program,
+                            "jkgm/shaders/postprocess.vert",
+                            "jkgm/shaders/post_ssao.frag");
+    link_program_from_files("post_gauss3",
+                            &post_gauss3,
+                            "jkgm/shaders/postprocess.vert",
+                            "jkgm/shaders/post_gauss3.frag");
     link_program_from_files("post_gauss7",
                             &post_gauss7,
                             "jkgm/shaders/postprocess.vert",
@@ -273,4 +384,31 @@ jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res, config c
     gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
 
     hud_texture_data.resize(volume(screen_res), color_rgba8::zero());
+
+    if(the_config->enable_ssao) {
+        ssao_depthbuffer = std::make_unique<ssao_depth_render_buffer>(screen_res);
+        ssao_occlusionbuffer = std::make_unique<ssao_occlusion_buffer>(screen_res);
+
+        std::uniform_real_distribution<float> ssao_noise_dist(0.0f, 1.0f);
+        std::default_random_engine generator;
+        std::vector<point<2, float>> ssao_noise;
+        ssao_noise.reserve(16);
+        for(size_t i = 0; i < 16; ++i) {
+            ssao_noise.push_back(normalize(make_point(ssao_noise_dist(generator) * 2.0f - 1.0f,
+                                                      ssao_noise_dist(generator) * 2.0f - 1.0f)));
+        }
+
+        ssao_noise_texture = std::make_unique<gl::texture>();
+        gl::bind_texture(gl::texture_bind_target::texture_2d, *ssao_noise_texture);
+        gl::tex_image_2d(gl::texture_bind_target::texture_2d,
+                         /*level*/ 0,
+                         gl::texture_internal_format::rg32f,
+                         make_size(4, 4),
+                         gl::texture_pixel_format::rg,
+                         gl::texture_pixel_type::float32,
+                         make_span(ssao_noise).as_const_bytes());
+        gl::set_texture_max_level(gl::texture_bind_target::texture_2d, 0);
+        gl::set_texture_min_filter(gl::texture_bind_target::texture_2d, gl::min_filter::nearest);
+        gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::nearest);
+    }
 }

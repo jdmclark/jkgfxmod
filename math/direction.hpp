@@ -38,6 +38,8 @@ namespace jkgm {
     };
     struct xyz {
     };
+    struct xyw {
+    };
 
     template <size_t N,
               class F,
@@ -127,5 +129,14 @@ namespace jkgm {
     auto swizzle(xyz /*swiz*/, abstract_vector<N, F, Tag> const &v)
     {
         return abstract_vector<3, F, Tag>(get<0>(v), get<1>(v), get<2>(v));
+    }
+
+    template <size_t N,
+              class F,
+              class Tag,
+              class = std::enable_if_t<N >= 4 && Tag::has_dimension_swizzle>>
+    auto swizzle(xyw /*swiz*/, abstract_vector<N, F, Tag> const &v)
+    {
+        return abstract_vector<3, F, Tag>(get<0>(v), get<1>(v), get<3>(v));
     }
 }

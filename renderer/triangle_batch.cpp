@@ -32,6 +32,16 @@ jkgm::triangle::triangle(triangle_vertex v0,
     , material(material)
     , normal(direction<3, float>::zero())
 {
+    auto p0 = make_point(get<x>(v0.pos), get<y>(v0.pos), get<w>(v0.pos));
+    auto p1 = make_point(get<x>(v1.pos), get<y>(v1.pos), get<w>(v1.pos));
+    auto p2 = make_point(get<x>(v2.pos), get<y>(v2.pos), get<w>(v2.pos));
+
+    normal = normalize(cross(p1 - p0, p2 - p0));
+
+    // JK disables backface culling. Make all of the normals point in the same direction.
+    if(dot(normal, point<3, float>::zero() - p0) < 0.0f) {
+        normal = -normal;
+    }
 }
 
 jkgm::triangle_batch::triangle_batch()
@@ -77,7 +87,7 @@ void jkgm::triangle_batch::sort()
 
 namespace jkgm {
     namespace {
-        constexpr float dist_threshold = 0.0001f;
+        constexpr float dist_threshold = 0.001f;
 
         template <class ItT>
         void do_partition(ItT it_begin, ItT it_end)
@@ -88,9 +98,9 @@ namespace jkgm {
 
             // Separate triangles into occluded-by, ambiguous, and occludes
             auto &a = *it_begin;
-            auto a_v0 = get<xyz>(a.v0.pos);
-            auto a_v1 = get<xyz>(a.v1.pos);
-            auto a_v2 = get<xyz>(a.v2.pos);
+            auto a_v0 = get<xyw>(a.v0.pos);
+            auto a_v1 = get<xyw>(a.v1.pos);
+            auto a_v2 = get<xyw>(a.v2.pos);
 
             auto a_v0v1_nrm = normalize(cross(a_v1 - a_v0, a.normal));
             auto a_v1v2_nrm = normalize(cross(a_v2 - a_v1, a.normal));
@@ -100,9 +110,9 @@ namespace jkgm {
 
             for(auto it = it_begin + 1; it != it_end; ++it) {
                 auto &b = *it;
-                auto b_v0 = get<xyz>(b.v0.pos);
-                auto b_v1 = get<xyz>(b.v1.pos);
-                auto b_v2 = get<xyz>(b.v2.pos);
+                auto b_v0 = get<xyw>(b.v0.pos);
+                auto b_v1 = get<xyw>(b.v1.pos);
+                auto b_v2 = get<xyw>(b.v2.pos);
 
                 bool b_v0_inside = (dot(b_v0 - a_v0, a_v0v1_nrm) > 0.0f) &&
                                    (dot(b_v0 - a_v1, a_v1v2_nrm) > 0.0f) &&
@@ -128,10 +138,10 @@ namespace jkgm {
                                 !(b_v2_inside && b_v2_dist > -dist_threshold);
 
                 if(in_front) {
-                    b.num_sup = 1;
+                    b.num_sup = -1;
                 }
                 else if(behind) {
-                    b.num_sup = -1;
+                    b.num_sup = 1;
                 }
                 else {
                     b.num_sup = 0;
@@ -180,17 +190,17 @@ namespace jkgm {
 
             // Partition triangles by a triangle
             auto &a = *it_begin;
-            auto a_v0 = get<xyz>(a.v0.pos);
-            auto a_v1 = get<xyz>(a.v1.pos);
-            auto a_v2 = get<xyz>(a.v2.pos);
+            auto a_v0 = get<xyw>(a.v0.pos);
+            auto a_v1 = get<xyw>(a.v1.pos);
+            auto a_v2 = get<xyw>(a.v2.pos);
 
             a.num_sup = 0;
 
             for(auto it = it_begin + 1; it != it_end; ++it) {
                 auto &b = *it;
-                auto b_v0 = get<xyz>(b.v0.pos);
-                auto b_v1 = get<xyz>(b.v1.pos);
-                auto b_v2 = get<xyz>(b.v2.pos);
+                auto b_v0 = get<xyw>(b.v0.pos);
+                auto b_v1 = get<xyw>(b.v1.pos);
+                auto b_v2 = get<xyw>(b.v2.pos);
 
                 auto b_v0_dist = dot(b_v0 - a_v0, a.normal);
                 auto b_v1_dist = dot(b_v1 - a_v0, a.normal);
@@ -202,10 +212,10 @@ namespace jkgm {
                                  b_v2_dist > -dist_threshold);
 
                 if(in_front) {
-                    b.num_sup = -1;
+                    b.num_sup = 1;
                 }
                 else if(behind) {
-                    b.num_sup = 1;
+                    b.num_sup = -1;
                 }
                 else {
                     b.num_sup = 0;
@@ -252,15 +262,16 @@ namespace jkgm {
                 return;
             }
 
-            // Partition triangles by the midpoint of the space
+            // Partition triangles by the midpoint of the space.
+            // Note that the eye space depth coordinate is stored in W, not in Z.
             float space_start = std::numeric_limits<float>::max();
             float space_end = std::numeric_limits<float>::lowest();
             for(auto it = it_begin; it != it_end; ++it) {
                 auto const &em = *it;
 
-                auto z0 = get<z>(em.v0.pos);
-                auto z1 = get<z>(em.v1.pos);
-                auto z2 = get<z>(em.v2.pos);
+                auto z0 = get<w>(em.v0.pos);
+                auto z1 = get<w>(em.v1.pos);
+                auto z2 = get<w>(em.v2.pos);
 
                 space_start = std::min(space_start, std::min(z0, std::min(z1, z2)));
                 space_end = std::max(space_start, std::max(z0, std::max(z1, z2)));
@@ -273,9 +284,9 @@ namespace jkgm {
             for(auto it = it_begin; it != it_end; ++it) {
                 auto &em = *it;
 
-                auto z0 = get<z>(em.v0.pos);
-                auto z1 = get<z>(em.v1.pos);
-                auto z2 = get<z>(em.v2.pos);
+                auto z0 = get<w>(em.v0.pos);
+                auto z1 = get<w>(em.v1.pos);
+                auto z2 = get<w>(em.v2.pos);
 
                 bool is_near =
                     (z0 > space_midpoint_far && z1 > space_midpoint_far && z2 > space_midpoint_far);
@@ -286,10 +297,10 @@ namespace jkgm {
                     em.num_sup = 0;
                 }
                 else if(is_near) {
-                    em.num_sup = 1;
+                    em.num_sup = -1;
                 }
                 else if(is_far) {
-                    em.num_sup = -1;
+                    em.num_sup = 1;
                 }
                 else {
                     em.num_sup = 0;
@@ -332,19 +343,5 @@ namespace jkgm {
 
 void jkgm::sorted_triangle_batch::sort()
 {
-    // Precompute normals
-    for(auto &em : *this) {
-        auto p0 = get<xyz>(em.v0.pos);
-        auto p1 = get<xyz>(em.v1.pos);
-        auto p2 = get<xyz>(em.v2.pos);
-
-        em.normal = normalize(cross(p1 - p0, p2 - p0));
-
-        // JK disables backface culling. Make all of the normals point in the same direction.
-        if(dot(em.normal, point<3, float>::zero() - p0) < 0.0f) {
-            em.normal = -em.normal;
-        }
-    }
-
     do_fast_partition(begin(), end());
 }

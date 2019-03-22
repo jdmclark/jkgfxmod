@@ -81,6 +81,7 @@ namespace jkgm::gl {
 
     void set_active_texture_unit(int unit);
 
+    void set_texture_border_color(texture_bind_target target, color c);
     void set_texture_compare_mode(texture_bind_target target, texture_compare_mode mode);
     void set_texture_compare_function(texture_bind_target target, comparison_function func);
     void set_texture_max_anisotropy(texture_bind_target target, float max_anisotropy);

@@ -36,6 +36,7 @@
 #include "zbuffer_surface.hpp"
 #include <Windows.h>
 #include <chrono>
+#include <random>
 
 namespace jkgm {
     static WNDPROC original_wkernel_wndproc = nullptr;
@@ -103,6 +104,7 @@ namespace jkgm {
 
         renderer_mode mode = renderer_mode::menu;
         size<2, int> conf_scr_res;
+        size<2, float> conf_scr_res_f;
 
         DirectDraw_impl ddraw1;
         DirectDraw2_impl ddraw2;
@@ -152,10 +154,13 @@ namespace jkgm {
 
         material_instance_id current_material = material_instance_id(0U);
 
+        std::vector<point<3, float>> ssao_kernel;
+
     public:
         explicit renderer_impl(HINSTANCE dll_instance, config const *the_config)
             : the_config(the_config)
             , conf_scr_res(std::get<0>(the_config->resolution), std::get<1>(the_config->resolution))
+            , conf_scr_res_f(static_cast<size<2, float>>(conf_scr_res))
             , ddraw1(this)
             , ddraw2(this)
             , d3d1(this)
@@ -173,6 +178,21 @@ namespace jkgm {
 
             menu_prev_ticks = std::chrono::high_resolution_clock::now();
             menu_curr_ticks = menu_prev_ticks;
+
+            std::uniform_real_distribution<float> ssao_sample_dist(0.0f, 1.0f);
+            std::default_random_engine generator;
+
+            ssao_kernel.reserve(16);
+            for(size_t i = 0; i < 16; ++i) {
+                float scale = (float)i / 16;
+                scale *= scale;
+                scale = lerp(0.1f, 1.0f, scale);
+                ssao_kernel.push_back(
+                    normalize(point<3, float>(ssao_sample_dist(generator) * 2.0f - 1.0f,
+                                              ssao_sample_dist(generator) * 2.0f - 1.0f,
+                                              ssao_sample_dist(generator))) *
+                    ssao_sample_dist(generator) * scale);
+            }
         }
 
         void set_renderer_mode(renderer_mode mode) override
@@ -685,18 +705,21 @@ namespace jkgm {
                 mdl->pos[curr_vert] = tri.v0.pos;
                 mdl->texcoords[curr_vert] = tri.v0.texcoords;
                 mdl->color[curr_vert] = tri.v0.color;
+                mdl->normals[curr_vert] = tri.normal;
 
                 ++curr_vert;
 
                 mdl->pos[curr_vert] = tri.v1.pos;
                 mdl->texcoords[curr_vert] = tri.v1.texcoords;
                 mdl->color[curr_vert] = tri.v1.color;
+                mdl->normals[curr_vert] = tri.normal;
 
                 ++curr_vert;
 
                 mdl->pos[curr_vert] = tri.v2.pos;
                 mdl->texcoords[curr_vert] = tri.v2.texcoords;
                 mdl->color[curr_vert] = tri.v2.color;
+                mdl->normals[curr_vert] = tri.normal;
 
                 ++curr_vert;
             }
@@ -705,17 +728,104 @@ namespace jkgm {
             mdl->update_buffers();
         }
 
-        void end_game() override
+        void draw_game_ssao_depth_pass()
         {
-            world_batch.sort();
-            world_transparent_batch.sort();
-            gun_batch.sort();
-            gun_transparent_batch.sort();
+            gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->ssao_depthbuffer->fbo);
+            gl::clear({gl::clear_flag::depth});
 
-            fill_buffer(world_batch, &ogs->world_trimdl);
-            fill_buffer(world_transparent_batch, &ogs->world_transparent_trimdl);
-            fill_buffer(gun_batch, &ogs->gun_trimdl);
-            fill_buffer(gun_transparent_batch, &ogs->gun_transparent_trimdl);
+            // Draw batches
+            gl::disable(gl::capability::blend);
+            gl::enable(gl::capability::depth_test);
+            gl::set_depth_mask(true);
+            gl::disable(gl::capability::cull_face);
+            gl::set_face_cull_mode(gl::face_mode::front_and_back);
+            gl::set_blend_function(gl::blend_function::one,
+                                   gl::blend_function::one_minus_source_alpha);
+            gl::set_depth_function(gl::comparison_function::less);
+
+            gl::use_program(ogs->game_ssao_depth_program);
+            gl::set_uniform_vector(gl::uniform_location_id(0),
+                                   static_cast<size<2, float>>(conf_scr_res));
+            gl::set_uniform_integer(gl::uniform_location_id(2), 0);
+            gl::set_uniform_integer(gl::uniform_location_id(4), 1);
+
+            // Draw first pass (opaque world geometry)
+            draw_batch(world_batch, &ogs->world_trimdl, /*force opaque*/ true);
+
+            // Draw second pass (transparent world geometry with alpha testing)
+            draw_batch(
+                world_transparent_batch, &ogs->world_transparent_trimdl, /*force opaque*/ true);
+
+            // Draw fourth pass (opaque gun geometry)
+            draw_batch(gun_batch, &ogs->gun_trimdl, /*force opaque*/ true);
+
+            // Draw fifth pass (transparent gun geometry with alpha testing)
+            draw_batch(gun_transparent_batch, &ogs->gun_transparent_trimdl, /*force opaque*/ true);
+
+            gl::set_depth_mask(true);
+        }
+
+        void draw_game_ssao_postprocess()
+        {
+            // Compute SSAO:
+            gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->ssao_occlusionbuffer->fbo);
+            gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
+
+            gl::use_program(ogs->post_ssao_program);
+            gl::set_uniform_integer(gl::uniform_location_id(0), 0);
+            gl::set_uniform_integer(gl::uniform_location_id(1), 1);
+
+            for(size_t i = 0; i < ssao_kernel.size(); ++i) {
+                gl::set_uniform_vector(gl::uniform_location_id(2 + i), ssao_kernel[i]);
+            }
+
+            gl::set_active_texture_unit(1);
+            gl::bind_texture(gl::texture_bind_target::texture_2d, *ogs->ssao_noise_texture);
+
+            gl::set_active_texture_unit(0);
+            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->ssao_depthbuffer->tex);
+
+            gl::bind_vertex_array(ogs->postmdl.vao);
+            gl::draw_elements(
+                gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
+
+            // Blur SSAO:
+            gl::use_program(ogs->post_gauss3);
+            gl::set_uniform_integer(gl::uniform_location_id(0), 0);
+
+            auto hdr_vp_size = static_cast<size<2, float>>(ogs->ssao_depthbuffer->viewport.size());
+            gl::set_uniform_vector(gl::uniform_location_id(1), hdr_vp_size);
+
+            // - Horizontal:
+            gl::set_uniform_vector(gl::uniform_location_id(2), make_direction(1.0f, 0.0f));
+
+            gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->screen_postbuffer1.fbo);
+            gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
+
+            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->ssao_occlusionbuffer->tex);
+            gl::draw_elements(
+                gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
+
+            // - Vertical:
+            gl::set_uniform_vector(gl::uniform_location_id(2), make_direction(0.0f, 1.0f));
+
+            gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->ssao_occlusionbuffer->fbo);
+            gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
+
+            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->screen_postbuffer1.tex);
+            gl::draw_elements(
+                gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
+        }
+
+        void draw_game_ssao_pass()
+        {
+            draw_game_ssao_depth_pass();
+            draw_game_ssao_postprocess();
+        }
+
+        void draw_game_color_pass()
+        {
+            gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->screen_renderbuffer.fbo);
 
             // Draw batches
             gl::disable(gl::capability::blend);
@@ -732,12 +842,24 @@ namespace jkgm {
                                    static_cast<size<2, float>>(conf_scr_res));
             gl::set_uniform_integer(gl::uniform_location_id(2), 0);
             gl::set_uniform_integer(gl::uniform_location_id(4), 1);
+            gl::set_uniform_integer(gl::uniform_location_id(7), 2);
 
             gl::use_program(ogs->game_program);
             gl::set_uniform_vector(gl::uniform_location_id(0),
                                    static_cast<size<2, float>>(conf_scr_res));
             gl::set_uniform_integer(gl::uniform_location_id(2), 0);
             gl::set_uniform_integer(gl::uniform_location_id(4), 1);
+            gl::set_uniform_integer(gl::uniform_location_id(7), 2);
+
+            gl::set_active_texture_unit(2);
+            if(the_config->enable_ssao) {
+                gl::bind_texture(gl::texture_bind_target::texture_2d,
+                                 ogs->ssao_occlusionbuffer->tex);
+            }
+            else {
+                gl::bind_texture(gl::texture_bind_target::texture_2d, gl::default_texture);
+            }
+            gl::set_active_texture_unit(0);
 
             // Draw first pass (opaque world geometry)
             draw_batch(world_batch, &ogs->world_trimdl, /*force opaque*/ true);
@@ -774,6 +896,36 @@ namespace jkgm {
             draw_batch(gun_transparent_batch, &ogs->gun_transparent_trimdl, /*force opaque*/ false);
 
             gl::set_depth_mask(true);
+        }
+
+        void end_game() override
+        {
+            world_batch.sort();
+            world_transparent_batch.sort();
+            gun_batch.sort();
+            gun_transparent_batch.sort();
+
+            fill_buffer(world_batch, &ogs->world_trimdl);
+            fill_buffer(world_transparent_batch, &ogs->world_transparent_trimdl);
+            fill_buffer(gun_batch, &ogs->gun_trimdl);
+            fill_buffer(gun_transparent_batch, &ogs->gun_transparent_trimdl);
+
+            if(the_config->enable_ssao) {
+                draw_game_ssao_pass();
+            }
+
+            draw_game_color_pass();
+        }
+
+        static point<4, float> d3dtl_to_point(size<2, float> const &screen_dims,
+                                              D3DTLVERTEX const &p)
+        {
+            // Convert pretransformed vertex to phony view space
+            float w = 1.0f / p.rhw;
+            return make_point(w * ((p.sx / (get<x>(screen_dims) * 0.5f)) - 1.0f),
+                              w * ((-p.sy / (get<y>(screen_dims) * 0.5f)) + 1.0f),
+                              w * (-p.sz),
+                              w);
         }
 
         void execute_game(IDirect3DExecuteBuffer *cmdbuf, IDirect3DViewport *vp) override
@@ -896,13 +1048,13 @@ namespace jkgm {
                                                        (uint8_t)RGBA_GETALPHA(v3.color))));
 
                         current_triangle_batch->insert(
-                            triangle(triangle_vertex(make_point(v1.sx, v1.sy, v1.sz, v1.rhw),
+                            triangle(triangle_vertex(d3dtl_to_point(conf_scr_res_f, v1),
                                                      make_point(v1.tu, v1.tv),
                                                      extend(get<rgb>(c1) * get<a>(c1), get<a>(c1))),
-                                     triangle_vertex(make_point(v2.sx, v2.sy, v2.sz, v2.rhw),
+                                     triangle_vertex(d3dtl_to_point(conf_scr_res_f, v2),
                                                      make_point(v2.tu, v2.tv),
                                                      extend(get<rgb>(c2) * get<a>(c2), get<a>(c2))),
-                                     triangle_vertex(make_point(v3.sx, v3.sy, v3.sz, v3.rhw),
+                                     triangle_vertex(d3dtl_to_point(conf_scr_res_f, v3),
                                                      make_point(v3.tu, v3.tv),
                                                      extend(get<rgb>(c3) * get<a>(c3), get<a>(c3))),
                                      current_material));

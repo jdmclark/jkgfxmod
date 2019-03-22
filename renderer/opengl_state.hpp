@@ -10,6 +10,7 @@
 #include "glutil/texture.hpp"
 #include "glutil/vertex_array.hpp"
 #include <map>
+#include <optional>
 #include <vector>
 
 namespace jkgm {
@@ -38,7 +39,28 @@ namespace jkgm {
 
         box<2, int> viewport;
 
-        explicit render_buffer(size<2, int> dims, int num_samples);
+        render_buffer(size<2, int> dims, int num_samples);
+    };
+
+    class ssao_depth_render_buffer {
+    public:
+        gl::framebuffer fbo;
+        gl::texture tex;
+        gl::renderbuffer rbo;
+
+        box<2, int> viewport;
+
+        explicit ssao_depth_render_buffer(size<2, int> dims);
+    };
+
+    class ssao_occlusion_buffer {
+    public:
+        gl::framebuffer fbo;
+        gl::texture tex;
+        gl::renderbuffer rbo;
+        box<2, int> viewport;
+
+        explicit ssao_occlusion_buffer(size<2, int> dims);
     };
 
     class post_buffer {
@@ -73,6 +95,7 @@ namespace jkgm {
         gl::buffer pos_buffer;
         gl::buffer texcoord_buffer;
         gl::buffer color_buffer;
+        gl::buffer normal_buffer;
         unsigned int vb_capacity = 0U;
 
     public:
@@ -81,6 +104,7 @@ namespace jkgm {
         std::vector<point<4, float>> pos;
         std::vector<point<2, float>> texcoords;
         std::vector<jkgm::color> color;
+        std::vector<direction<3, float>> normals;
         int num_vertices = 0;
 
         triangle_buffer_model();
@@ -102,7 +126,10 @@ namespace jkgm {
         gl::program menu_program;
         gl::program game_program;
         gl::program game_alpha_depth_program;
+        gl::program game_ssao_depth_program;
 
+        gl::program post_ssao_program;
+        gl::program post_gauss3;
         gl::program post_gauss7;
         gl::program post_low_pass;
         gl::program post_to_srgb;
@@ -118,6 +145,10 @@ namespace jkgm {
 
         gl::texture hud_texture;
         std::vector<color_rgba8> hud_texture_data;
+
+        std::unique_ptr<ssao_depth_render_buffer> ssao_depthbuffer;
+        std::unique_ptr<ssao_occlusion_buffer> ssao_occlusionbuffer;
+        std::unique_ptr<gl::texture> ssao_noise_texture;
 
         render_buffer screen_renderbuffer;
         post_buffer screen_postbuffer1;

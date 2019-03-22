@@ -28,6 +28,11 @@ void jkgm::gl::set_active_texture_unit(int unit)
     glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(unit));
 }
 
+void jkgm::gl::set_texture_border_color(texture_bind_target target, color c)
+{
+    glTexParameterfv(static_cast<GLenum>(target), GL_TEXTURE_BORDER_COLOR, c.data.data());
+}
+
 void jkgm::gl::set_texture_compare_mode(texture_bind_target target, texture_compare_mode mode)
 {
     glTexParameteri(static_cast<GLenum>(target), GL_TEXTURE_COMPARE_MODE, static_cast<GLint>(mode));

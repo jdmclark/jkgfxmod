@@ -3,5 +3,6 @@
     "fullscreen": true,
     "msaa_samples": 4,
     "max_anisotropy": 2.0,
+    "enable_ssao": true,
     "command": "jk.exe"
 }

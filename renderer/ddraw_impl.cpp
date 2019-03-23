@@ -55,12 +55,12 @@ HRESULT WINAPI jkgm::DirectDraw_impl::CreatePalette(DWORD a,
 {
     LOG_ERROR("DirectDraw::CreatePalette(", a, ")");
 
-    if((a & DDPCAPS_8BIT) && (a & DDPCAPS_ALLOW256)) {
+    if(a & DDPCAPS_8BIT) {
         *c = r->get_directdraw_palette(make_span(b, 256));
         return DD_OK;
     }
 
-    LOG_ERROR("DirectDraw::CreatePalette unimplemented palette type");
+    LOG_ERROR("DirectDraw::CreatePalette unimplemented palette type: ", a);
     abort();
 }
 

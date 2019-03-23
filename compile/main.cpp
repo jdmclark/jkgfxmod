@@ -14,6 +14,7 @@
 #include "math/color_conv.hpp"
 #include "program/program.hpp"
 #include "raw_material.hpp"
+#include <bitset>
 #include <set>
 
 namespace jkgm {
@@ -63,6 +64,12 @@ namespace jkgm {
         std::map<fs::path, std::string> srgb_map;
     };
 
+    bool is_pow2(int dim)
+    {
+        std::bitset<sizeof(dim) * 8> bs(dim);
+        return bs.count() == 1;
+    }
+
     std::string get_convert_image(processed_names_map *map,
                                   fs::path const &in_path,
                                   std::string const &desired_name,
@@ -74,23 +81,37 @@ namespace jkgm {
             return it->second;
         }
 
+        diagnostic_context dc(in_path.generic_string());
+
         // File has not been seen before.
-        auto is = make_file_input_block(in_path);
-        auto img = load_image(is.get());
+        try {
+            auto is = make_file_input_block(in_path);
+            auto img = load_image(is.get());
 
-        // Premultiply alpha
-        for(auto &em : img->data) {
-            auto linear_col = srgb_to_linear(to_float_color(em));
-            auto pma_col = extend(get<rgb>(linear_col) * get<a>(linear_col), get<a>(linear_col));
-            em = to_discrete_color(linear_to_srgb(pma_col));
+            if(!is_pow2(get<x>(img->dimensions)) || !is_pow2(get<y>(img->dimensions))) {
+                LOG_ERROR("Image dimensions are not power of two");
+                throw std::runtime_error("invalid image");
+            }
+
+            // Premultiply alpha
+            for(auto &em : img->data) {
+                auto linear_col = srgb_to_linear(to_float_color(em));
+                auto pma_col =
+                    extend(get<rgb>(linear_col) * get<a>(linear_col), get<a>(linear_col));
+                em = to_discrete_color(linear_to_srgb(pma_col));
+            }
+
+            auto os = make_file_output_block(desired_out_path);
+            store_image_png(os.get(), *img);
+
+            // Add to map
+            map->srgb_map.emplace(in_path, desired_name);
+            return desired_name;
         }
-
-        auto os = make_file_output_block(desired_out_path);
-        store_image_png(os.get(), *img);
-
-        // Add to map
-        map->srgb_map.emplace(in_path, desired_name);
-        return desired_name;
+        catch(std::exception const &e) {
+            LOG_ERROR("Failed to load image file: ", e.what());
+            throw;
+        }
     }
 
     std::vector<md5> get_mat_cel_signatures(std::string const &mat_filename,

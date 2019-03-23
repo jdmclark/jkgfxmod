@@ -22,6 +22,7 @@ namespace jkgm {
         HRESULT WINAPI GetSurfaceDesc(LPDDSURFACEDESC a) override;
         HRESULT WINAPI Lock(LPRECT a, LPDDSURFACEDESC b, DWORD c, HANDLE d) override;
         HRESULT WINAPI SetColorKey(DWORD a, LPDDCOLORKEY b) override;
+        HRESULT WINAPI SetPalette(LPDIRECTDRAWPALETTE a) override;
         HRESULT WINAPI Unlock(LPVOID a) override;
     };
 }

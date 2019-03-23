@@ -1,5 +1,5 @@
-#include "base/log.hpp"
 #include "offscreen_menu_surface.hpp"
+#include "base/log.hpp"
 
 jkgm::offscreen_menu_surface::offscreen_menu_surface()
     : DirectDrawSurface_impl("offscreen menu")
@@ -137,6 +137,12 @@ HRESULT WINAPI jkgm::offscreen_menu_surface::SetColorKey(DWORD a, LPDDCOLORKEY b
     for(auto &em : buffer) {
         em = color_key;
     }
+    return DD_OK;
+}
+
+HRESULT WINAPI jkgm::offscreen_menu_surface::SetPalette(LPDIRECTDRAWPALETTE a)
+{
+    // Intentionally ignored: renderer tracks the global palette object
     return DD_OK;
 }
 

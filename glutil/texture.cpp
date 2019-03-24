@@ -172,6 +172,7 @@ namespace jkgm::gl {
 
     static_assert(texture_pixel_format::rgb == texture_pixel_format(GL_RGB));
     static_assert(texture_pixel_format::rgba == texture_pixel_format(GL_RGBA));
+    static_assert(texture_pixel_format::red == texture_pixel_format(GL_RED));
     static_assert(texture_pixel_format::rg == texture_pixel_format(GL_RG));
     static_assert(texture_pixel_format::bgra == texture_pixel_format(GL_BGRA));
     static_assert(texture_pixel_format::depth_component ==

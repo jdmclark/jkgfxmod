@@ -11,10 +11,9 @@ layout(location = 5) uniform vec3 emissive_factor;
 
 layout(location = 6) uniform float alpha_cutoff;
 
-layout(location = 7) uniform sampler2D ssao_map;
-
 in vec2 vp_texcoords;
 in vec4 vp_color;
+in vec3 vp_normal;
 
 layout(location = 0) out vec4 out_color;
 
@@ -37,12 +36,5 @@ void main()
     emissive_map_sample = mix(vec3(1.0), emissive_map_sample, features.y);
     vec3 emissive = emissive_map_sample * emissive_factor;
 
-    if(albedo.a < 0.99999f) {
-        discard;
-    }
-
-    vec4 ssao_sample = texelFetch(ssao_map, ivec2(gl_FragCoord.xy), 0);
-    float ssao_factor = 1.0 - ssao_sample.r;
-
-    out_color = vec4(emissive + (albedo.rgb * vec3(ssao_factor)), albedo.a);
+    out_color = vec4(emissive + albedo.rgb, albedo.a);
 }

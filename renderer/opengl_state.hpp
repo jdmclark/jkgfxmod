@@ -31,26 +31,35 @@ namespace jkgm {
         post_model();
     };
 
+    class render_depthbuffer {
+    public:
+        gl::renderbuffer rbo;
+
+        box<2, int> viewport;
+
+        explicit render_depthbuffer(size<2, int> dims);
+    };
+
     class render_buffer {
     public:
         gl::framebuffer fbo;
         gl::texture tex;
-        gl::renderbuffer rbo;
 
         box<2, int> viewport;
 
-        explicit render_buffer(size<2, int> dims);
+        render_buffer(size<2, int> dims, render_depthbuffer *rbo);
     };
 
-    class ssao_depth_render_buffer {
+    class render_gbuffer {
     public:
         gl::framebuffer fbo;
-        gl::texture tex;
-        gl::renderbuffer rbo;
+        gl::texture color_tex;
+        gl::texture emissive_tex;
+        gl::texture depth_nrm_tex;
 
         box<2, int> viewport;
 
-        explicit ssao_depth_render_buffer(size<2, int> dims);
+        render_gbuffer(size<2, int> dims, render_depthbuffer *rbo);
     };
 
     class ssao_occlusion_buffer {
@@ -124,11 +133,13 @@ namespace jkgm {
 
     struct opengl_state {
         gl::program menu_program;
-        gl::program game_program;
-        gl::program game_alpha_depth_program;
-        gl::program game_ssao_depth_program;
 
-        gl::program post_ssao_program;
+        gl::program game_opaque_pass_program;
+        gl::program game_post_ssao_program;
+        gl::program game_post_opaque_composite_program;
+
+        gl::program game_transparency_pass_program;
+
         gl::program post_gauss3;
         gl::program post_gauss7;
         gl::program post_low_pass;
@@ -146,13 +157,16 @@ namespace jkgm {
         gl::texture hud_texture;
         std::vector<color_rgba8> hud_texture_data;
 
-        std::unique_ptr<ssao_depth_render_buffer> ssao_depthbuffer;
         std::unique_ptr<ssao_occlusion_buffer> ssao_occlusionbuffer;
         std::unique_ptr<gl::texture> ssao_noise_texture;
+
+        render_depthbuffer shared_depthbuffer;
 
         render_buffer screen_renderbuffer;
         post_buffer screen_postbuffer1;
         post_buffer screen_postbuffer2;
+
+        render_gbuffer gbuffer;
 
         hdr_stack bloom_layers;
 

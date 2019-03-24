@@ -24,12 +24,14 @@ namespace jkgm::gl {
         back_left = 0x402,
         back_right = 0x403,
         color0 = 0x8CE0,
-        color1 = 0x8CE1
+        color1 = 0x8CE1,
+        color2 = 0x8CE2
     };
 
     enum class framebuffer_attachment : enum_type {
         color0 = 0x8CE0,
         color1 = 0x8CE1,
+        color2 = 0x8CE2,
         depth = 0x8D00,
         stencil = 0x8D20,
         depth_stencil = 0x821A

@@ -59,6 +59,7 @@ namespace jkgm::gl {
     enum class texture_pixel_format : enum_type {
         rgb = 0x1907,
         rgba = 0x1908,
+        red = 0x1903,
         rg = 0x8227,
         bgra = 0x80E1,
         depth_component = 0x1902

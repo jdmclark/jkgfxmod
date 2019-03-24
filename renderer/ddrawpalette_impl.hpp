@@ -1,7 +1,7 @@
 #pragma once
 
 #include "math/color.hpp"
-#include "renderer.hpp"
+#include "renderer_fwd.hpp"
 #include <array>
 #include <ddraw.h>
 #include <vector>

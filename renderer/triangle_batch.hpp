@@ -3,7 +3,7 @@
 #include "math/color.hpp"
 #include "math/direction.hpp"
 #include "math/point.hpp"
-#include "renderer.hpp"
+#include "renderer_fwd.hpp"
 #include <vector>
 
 namespace jkgm {

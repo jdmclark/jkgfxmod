@@ -8,6 +8,7 @@
 #include "common/material.hpp"
 #include "math/point.hpp"
 #include "math/size.hpp"
+#include "renderer_fwd.hpp"
 #include <Windows.h>
 #include <d3d.h>
 #include <ddraw.h>
@@ -15,9 +16,6 @@
 
 namespace jkgm {
     enum class renderer_mode { menu, ingame };
-
-    MAKE_ID_TYPE(srgb_texture, size_t);
-    MAKE_ID_TYPE(material_instance, size_t);
 
     class renderer {
     public:

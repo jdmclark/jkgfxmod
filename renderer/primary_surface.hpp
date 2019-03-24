@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ddrawsurface_impl.hpp"
-#include "renderer.hpp"
+#include "renderer_fwd.hpp"
 
 namespace jkgm {
     class primary_surface : public DirectDrawSurface_impl {

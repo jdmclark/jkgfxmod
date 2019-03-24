@@ -1,6 +1,7 @@
 #include "ddraw2_impl.hpp"
 #include "base/log.hpp"
 #include "dxguids.hpp"
+#include "renderer.hpp"
 #include <cassert>
 #include <d3d.h>
 

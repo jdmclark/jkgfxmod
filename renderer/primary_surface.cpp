@@ -1,6 +1,7 @@
 #include "primary_surface.hpp"
 #include "base/log.hpp"
 #include "dxguids.hpp"
+#include "renderer.hpp"
 
 jkgm::primary_surface::primary_surface(renderer *r)
     : DirectDrawSurface_impl("primary")

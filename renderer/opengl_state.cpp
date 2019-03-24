@@ -68,11 +68,11 @@ jkgm::post_model::post_model()
                     gl::buffer_usage::static_draw);
 }
 
-jkgm::render_buffer::render_buffer(size<2, int> dims, int num_samples)
+jkgm::render_buffer::render_buffer(size<2, int> dims)
     : viewport(make_point(0, 0), dims)
 {
     gl::bind_renderbuffer(rbo);
-    gl::renderbuffer_storage_multisample(num_samples, gl::renderbuffer_format::depth, dims);
+    gl::renderbuffer_storage(gl::renderbuffer_format::depth, dims);
 
     // Set up opaque framebuffer:
     gl::bind_framebuffer(gl::framebuffer_bind_target::any, fbo);
@@ -80,13 +80,15 @@ jkgm::render_buffer::render_buffer(size<2, int> dims, int num_samples)
     gl::framebuffer_renderbuffer(
         gl::framebuffer_bind_target::any, gl::framebuffer_attachment::depth, rbo);
 
-    gl::bind_texture(gl::texture_bind_target::texture_2d_multisample, tex);
-    gl::tex_image_2d_multisample(gl::texture_bind_target::texture_2d_multisample,
-                                 num_samples,
-                                 gl::texture_internal_format::rgba32f,
-                                 dims,
-                                 /*fixed sample locations*/ true);
-    gl::set_texture_max_level(gl::texture_bind_target::texture_2d_multisample, 0U);
+    gl::bind_texture(gl::texture_bind_target::texture_2d, tex);
+    gl::tex_image_2d(gl::texture_bind_target::texture_2d,
+                     /*level*/ 0,
+                     gl::texture_internal_format::rgba32f,
+                     dims,
+                     gl::texture_pixel_format::rgba,
+                     gl::texture_pixel_type::float32,
+                     span<char const>(nullptr, 0U));
+    gl::set_texture_max_level(gl::texture_bind_target::texture_2d, 0U);
     gl::framebuffer_texture(
         gl::framebuffer_bind_target::any, gl::framebuffer_attachment::color0, tex, 0);
 
@@ -320,7 +322,7 @@ jkgm::srgb_texture::srgb_texture(size<2, int> dims)
 }
 
 jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res, config const *the_config)
-    : screen_renderbuffer(screen_res, the_config->msaa_samples)
+    : screen_renderbuffer(screen_res)
     , screen_postbuffer1(screen_res)
     , screen_postbuffer2(screen_res)
 {

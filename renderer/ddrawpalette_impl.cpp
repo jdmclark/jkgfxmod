@@ -2,6 +2,7 @@
 #include "base/log.hpp"
 #include "dxguids.hpp"
 #include "math/color_conv.hpp"
+#include "renderer.hpp"
 
 jkgm::DirectDrawPalette_impl::DirectDrawPalette_impl(renderer *r)
     : r(r)

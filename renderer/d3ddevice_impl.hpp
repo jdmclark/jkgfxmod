@@ -1,6 +1,6 @@
 #pragma once
 
-#include "renderer.hpp"
+#include "renderer_fwd.hpp"
 #include <d3d.h>
 
 namespace jkgm {

@@ -2,6 +2,7 @@
 #include "base/log.hpp"
 #include "dxguids.hpp"
 #include "offscreen_surface.hpp"
+#include "renderer.hpp"
 
 jkgm::backbuffer_surface::backbuffer_surface(renderer *r, size<2, int> dims)
     : DirectDrawSurface_impl("backbuffer")

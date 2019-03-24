@@ -39,7 +39,7 @@ namespace jkgm {
 
         box<2, int> viewport;
 
-        render_buffer(size<2, int> dims, int num_samples);
+        explicit render_buffer(size<2, int> dims);
     };
 
     class ssao_depth_render_buffer {

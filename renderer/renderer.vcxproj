@@ -68,6 +68,7 @@
     <ClInclude Include="primary_surface.hpp" />
     <ClInclude Include="dxguids.hpp" />
     <ClInclude Include="renderer.hpp" />
+    <ClInclude Include="renderer_fwd.hpp" />
     <ClInclude Include="sysmem_texture.hpp" />
     <ClInclude Include="triangle_batch.hpp" />
     <ClInclude Include="vidmem_texture.hpp" />

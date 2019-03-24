@@ -9,7 +9,6 @@ namespace jkgm {
     public:
         std::tuple<int, int> resolution = std::make_tuple(640, 480);
         bool fullscreen = false;
-        int msaa_samples = 4;
         float max_anisotropy = 2.0f;
         bool enable_ssao = true;
         std::string command = "jk.exe";

@@ -3,8 +3,7 @@
 #include "common/material.hpp"
 #include "d3dtexture_impl.hpp"
 #include "ddrawsurface_impl.hpp"
-#include "glutil/texture.hpp"
-#include "renderer.hpp"
+#include "renderer_fwd.hpp"
 #include <d3d.h>
 #include <ddraw.h>
 #include <vector>

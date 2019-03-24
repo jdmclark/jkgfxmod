@@ -1,6 +1,7 @@
 #include "zbuffer_surface.hpp"
 #include "base/log.hpp"
 #include "dxguids.hpp"
+#include "renderer.hpp"
 
 jkgm::zbuffer_surface::zbuffer_surface(renderer *r)
     : DirectDrawSurface_impl("zbuffer")

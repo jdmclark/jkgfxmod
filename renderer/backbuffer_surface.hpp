@@ -2,7 +2,7 @@
 
 #include "ddrawsurface_impl.hpp"
 #include "math/size.hpp"
-#include "renderer.hpp"
+#include "renderer_fwd.hpp"
 #include <vector>
 
 namespace jkgm {

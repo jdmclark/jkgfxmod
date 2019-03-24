@@ -24,10 +24,6 @@ std::unique_ptr<jkgm::config> jkgm::load_config_file()
             j.at("fullscreen").get_to(rv->fullscreen);
         }
 
-        if(j.contains("msaa_samples")) {
-            j.at("msaa_samples").get_to(rv->msaa_samples);
-        }
-
         if(j.contains("max_anisotropy")) {
             j.at("max_anisotropy").get_to(rv->max_anisotropy);
         }

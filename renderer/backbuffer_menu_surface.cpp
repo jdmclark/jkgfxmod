@@ -1,6 +1,8 @@
 #include "backbuffer_menu_surface.hpp"
 #include "base/log.hpp"
 #include "dxguids.hpp"
+#include "primary_menu_surface.hpp"
+#include "renderer.hpp"
 
 jkgm::backbuffer_menu_surface::backbuffer_menu_surface(renderer *r, primary_menu_surface *surf)
     : DirectDrawSurface_impl("backbuffer menu")

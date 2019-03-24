@@ -1,11 +1,12 @@
 #pragma once
 
 #include "ddrawsurface_impl.hpp"
-#include "primary_menu_surface.hpp"
-#include "renderer.hpp"
+#include "renderer_fwd.hpp"
 #include <vector>
 
 namespace jkgm {
+    class primary_menu_surface;
+
     class backbuffer_menu_surface : public DirectDrawSurface_impl {
     private:
         renderer *r;

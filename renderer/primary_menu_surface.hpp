@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ddrawsurface_impl.hpp"
-#include "renderer.hpp"
+#include "renderer_fwd.hpp"
 #include <vector>
 
 namespace jkgm {

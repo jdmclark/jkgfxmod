@@ -1,6 +1,7 @@
 #include "d3ddevice_impl.hpp"
 #include "base/log.hpp"
 #include "dxguids.hpp"
+#include "renderer.hpp"
 
 jkgm::Direct3DDevice_impl::Direct3DDevice_impl(renderer *r)
     : r(r)

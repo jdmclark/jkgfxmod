@@ -1,6 +1,7 @@
 #include "d3d_impl.hpp"
 #include "base/log.hpp"
 #include "dxguids.hpp"
+#include "renderer.hpp"
 
 jkgm::Direct3D_impl::Direct3D_impl(renderer *r)
     : r(r)

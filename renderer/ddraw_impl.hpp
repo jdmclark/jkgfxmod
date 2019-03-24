@@ -1,7 +1,7 @@
 #pragma once
 
+#include "renderer_fwd.hpp"
 #include <ddraw.h>
-#include "renderer.hpp"
 
 namespace jkgm {
     class DirectDraw_impl : public IDirectDraw {

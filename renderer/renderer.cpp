@@ -569,19 +569,6 @@ namespace jkgm {
             }
         }
 
-        void begin_game() override
-        {
-            is_gun = false;
-            is_transparent = false;
-            current_triangle_batch = &world_batch;
-            current_material = material_instance_id(0U);
-
-            world_batch.clear();
-            world_transparent_batch.clear();
-            gun_batch.clear();
-            gun_transparent_batch.clear();
-        }
-
         void update_current_batch()
         {
             if(is_gun && is_transparent) {
@@ -891,30 +878,25 @@ namespace jkgm {
                        &ogs->gun_transparent_trimdl, /*force opaque*/
                        false);
 
+            gl::enable(gl::capability::depth_test);
+            gl::enable(gl::capability::blend);
             gl::set_depth_mask(true);
         }
 
-        void end_game() override
-        {
-            world_batch.sort();
-            world_transparent_batch.sort();
-            gun_batch.sort();
-            gun_transparent_batch.sort();
+        void begin_game() override {}
 
-            fill_buffer(world_batch, &ogs->world_trimdl);
-            fill_buffer(world_transparent_batch, &ogs->world_transparent_trimdl);
-            fill_buffer(gun_batch, &ogs->gun_trimdl);
-            fill_buffer(gun_transparent_batch, &ogs->gun_transparent_trimdl);
-
-            draw_game_gbuffer_pass();
-            draw_game_transparency_pass();
-        }
+        void end_game() override {}
 
         static point<4, float> d3dtl_to_point(size<2, float> const &screen_dims,
                                               D3DTLVERTEX const &p)
         {
+            // Reassign w for full-screen overlay vertices
+            float w = 1.0f;
+            if(p.rhw != 0.0f) {
+                w = 1.0f / p.rhw;
+            }
+
             // Convert pretransformed vertex to phony view space
-            float w = 1.0f / p.rhw;
             return make_point(w * ((p.sx / (get<x>(screen_dims) * 0.5f)) - 1.0f),
                               w * ((-p.sy / (get<y>(screen_dims) * 0.5f)) + 1.0f),
                               w * (-p.sz),
@@ -975,14 +957,12 @@ namespace jkgm {
                         case D3DRENDERSTATE_ANTIALIAS:
                         case D3DRENDERSTATE_TEXTUREPERSPECTIVE:
                         case D3DRENDERSTATE_FILLMODE:
-                        case D3DRENDERSTATE_MONOENABLE:
                         case D3DRENDERSTATE_TEXTUREMAG:
                         case D3DRENDERSTATE_TEXTUREMIN:
                         case D3DRENDERSTATE_SRCBLEND:
                         case D3DRENDERSTATE_WRAPU:
                         case D3DRENDERSTATE_WRAPV:
                         case D3DRENDERSTATE_DESTBLEND:
-                        case D3DRENDERSTATE_ZFUNC:
                         case D3DRENDERSTATE_ALPHAFUNC:
                         case D3DRENDERSTATE_DITHERENABLE:
                         case D3DRENDERSTATE_FOGENABLE:
@@ -995,6 +975,8 @@ namespace jkgm {
                         case D3DRENDERSTATE_SPECULARENABLE:
                         case D3DRENDERSTATE_ALPHATESTENABLE:
                         case D3DRENDERSTATE_CULLMODE:
+                        case D3DRENDERSTATE_ZFUNC:
+                        case D3DRENDERSTATE_MONOENABLE:
                             break;
 
                         case D3DRENDERSTATE_ALPHABLENDENABLE:
@@ -1067,8 +1049,32 @@ namespace jkgm {
 
         void present_game() override
         {
+            world_batch.sort();
+            world_transparent_batch.sort();
+            gun_batch.sort();
+            gun_transparent_batch.sort();
+
+            fill_buffer(world_batch, &ogs->world_trimdl);
+            fill_buffer(world_transparent_batch, &ogs->world_transparent_trimdl);
+            fill_buffer(gun_batch, &ogs->gun_trimdl);
+            fill_buffer(gun_transparent_batch, &ogs->gun_transparent_trimdl);
+
+            draw_game_gbuffer_pass();
+            draw_game_transparency_pass();
+
             update_hud_texture();
             end_frame();
+
+            // Reset state:
+            is_gun = false;
+            is_transparent = false;
+            current_triangle_batch = &world_batch;
+            current_material = material_instance_id(0U);
+
+            world_batch.clear();
+            world_transparent_batch.clear();
+            gun_batch.clear();
+            gun_transparent_batch.clear();
         }
 
         void depth_clear_game() override

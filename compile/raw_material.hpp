@@ -32,7 +32,7 @@ namespace jkgm {
         uint32_t mipmap_count;
         std::vector<std::vector<uint8_t>> image_data;
 
-        explicit raw_material_texture_record(jkgm::input_stream *is);
+        raw_material_texture_record(jkgm::input_stream *is, uint32_t bitdepth);
     };
 
     class raw_material {

@@ -26,7 +26,8 @@ jkgm::raw_material_cel_record::raw_material_cel_record(jkgm::input_stream *is)
     }
 }
 
-jkgm::raw_material_texture_record::raw_material_texture_record(jkgm::input_stream *is)
+jkgm::raw_material_texture_record::raw_material_texture_record(jkgm::input_stream *is,
+                                                               uint32_t bitdepth)
 {
     is->read(jkgm::make_span(&width, 1).as_bytes());
     is->read(jkgm::make_span(&height, 1).as_bytes());
@@ -40,11 +41,12 @@ jkgm::raw_material_texture_record::raw_material_texture_record(jkgm::input_strea
 
     uint32_t next_width = width;
     uint32_t next_height = height;
+    uint32_t bytes_per_pixel = bitdepth / 8U;
     for(uint32_t i = 0; i < mipmap_count; ++i) {
         image_data.emplace_back();
         auto &data = image_data.back();
 
-        data.resize(next_width * next_height);
+        data.resize(next_width * next_height * bytes_per_pixel);
         is->read(jkgm::make_span(data).as_bytes());
 
         next_width >>= 1;
@@ -74,7 +76,7 @@ jkgm::raw_material::raw_material(jkgm::input_stream *is)
     is->read(jkgm::make_span(&transparency, 1).as_bytes());
     is->read(jkgm::make_span(&bitdepth, 1).as_bytes());
 
-    if(bitdepth != 8) {
+    if(bitdepth != 8 && bitdepth != 16) {
         LOG_ERROR("bitdepth ", bitdepth, " is not supported");
         throw std::runtime_error("Invalid MAT file");
     }
@@ -86,6 +88,6 @@ jkgm::raw_material::raw_material(jkgm::input_stream *is)
     }
 
     for(uint32_t i = 0; i < texture_count; ++i) {
-        texture_records.emplace_back(is);
+        texture_records.emplace_back(is, bitdepth);
     }
 }

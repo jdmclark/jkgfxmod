@@ -154,15 +154,12 @@ namespace jkgm {
         }
     }
 
-    std::vector<md5> get_mat_cel_signatures(std::string const &mat_filename,
-                                            int celnum,
-                                            virtual_file_system *vfs,
-                                            std::vector<std::unique_ptr<colormap>> const &colormaps)
+    std::vector<md5>
+        get_8bit_mat_cel_signatures(raw_material const &mat,
+                                    int celnum,
+                                    std::vector<std::unique_ptr<colormap>> const &colormaps)
     {
         std::vector<md5> rv;
-
-        auto mf = vfs->open(mat_filename);
-        raw_material mat(mf.get());
 
         auto const &cel = mat.cel_records.at(celnum);
         auto const &tex = mat.texture_records.at(cel.texture_index);
@@ -202,6 +199,46 @@ namespace jkgm {
         }
 
         return rv;
+    }
+
+    std::vector<md5> get_16bit_mat_cel_signatures(raw_material const &mat, int celnum)
+    {
+        std::vector<md5> rv;
+
+        auto const &cel = mat.cel_records.at(celnum);
+        auto const &tex = mat.texture_records.at(cel.texture_index);
+
+        uint32_t next_width = tex.width;
+        uint32_t next_height = tex.height;
+        for(auto const &data : tex.image_data) {
+            md5_hasher mh;
+            mh.add(make_span(&next_width, 1).as_const_bytes());
+            mh.add(make_span(&next_height, 1).as_const_bytes());
+            mh.add(make_span(data).as_const_bytes());
+
+            rv.push_back(mh.finish());
+
+            next_width >>= 1;
+            next_height >>= 1;
+        }
+
+        return rv;
+    }
+
+    std::vector<md5> get_mat_cel_signatures(std::string const &mat_filename,
+                                            int celnum,
+                                            virtual_file_system *vfs,
+                                            std::vector<std::unique_ptr<colormap>> const &colormaps)
+    {
+        auto mf = vfs->open(mat_filename);
+        raw_material mat(mf.get());
+
+        if(mat.bitdepth == 16) {
+            return get_16bit_mat_cel_signatures(mat, celnum);
+        }
+        else {
+            return get_8bit_mat_cel_signatures(mat, celnum, colormaps);
+        }
     }
 
     std::unique_ptr<out_material>

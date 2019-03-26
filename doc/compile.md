@@ -202,6 +202,24 @@ The `emissive_factor` field contains a floating point RGB vector (array of 3 JSO
 
 If `emissive_factor` is unspecified, the material behaves as if `emissive_factor` were black (RGB all 0.0). Note that materials which specify an emissive map must also specify a non-zero emissive factor in order for the material to emit light.
 
+##### displacement_map
+
+The `displacement_map` field is optional.
+
+The `displacement_map` field references a texture. The R channel of this texture describes the depth of the material in a linear colorspace. The other channels of this texture, if they exist, are ignored.
+
+If `displacement_map` is specified, the material depth is treated as `0` and interpreted normally.
+
+##### displacement_factor
+
+The `displacement_factor` field is optional.
+
+The `displacement_factor` field contains a single floating point value. If a displacement map has been specified, this value is used to scale the value of the displacement map for parallax mapping. Positive displacement factors will cause material features to appear to extend out from the face, while negative displacement factors will cause material features to extend into the face. A negative displacement factor is almost always what you want. This value has no suggested physical interpretation, and should be manually adjusted until the desired appearance is achieved.
+
+If `displacement_factor` is unspecified or is set to `0`, parallax mapping is disabled.
+
+Note that parallax mapping is a user-configurable option. Since users may choose to disable parallax mapping, either for performance or aesthetic reasons, your materials should be designed to look acceptable without parallax mapping.
+
 ##### alpha_mode
 
 The `alpha_mode` field is optional.

@@ -32,6 +32,10 @@ std::unique_ptr<jkgm::config> jkgm::load_config_file()
             j.at("enable_ssao").get_to(rv->enable_ssao);
         }
 
+        if(j.contains("enable_parallax")) {
+            j.at("enable_parallax").get_to(rv->enable_parallax);
+        }
+
         if(j.contains("command")) {
             j.at("command").get_to(rv->command);
         }

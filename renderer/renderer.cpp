@@ -205,6 +205,11 @@ namespace jkgm {
             return conf_scr_res;
         }
 
+        bool is_parallax_enabled() override
+        {
+            return the_config->enable_parallax;
+        }
+
         point<2, int> get_cursor_pos(point<2, int> real_pos) override
         {
             if(mode == renderer_mode::menu) {
@@ -589,6 +594,8 @@ namespace jkgm {
         {
             if(id.get() == 0U) {
                 // This is the default (untextured) material
+                gl::set_active_texture_unit(2);
+                gl::bind_texture(gl::texture_bind_target::texture_2d, gl::default_texture);
                 gl::set_active_texture_unit(1);
                 gl::bind_texture(gl::texture_bind_target::texture_2d, gl::default_texture);
                 gl::set_active_texture_unit(0);
@@ -602,6 +609,9 @@ namespace jkgm {
 
                 // Emissive factor
                 gl::set_uniform_vector(gl::uniform_location_id(5), color_rgb::zero());
+
+                // Displacement factor
+                gl::set_uniform_float(gl::uniform_location_id(8), 0.0f);
 
                 // Alpha cutoff
                 gl::set_uniform_float(gl::uniform_location_id(6), 0.0f);
@@ -619,6 +629,13 @@ namespace jkgm {
                     emissive_map = at(ogs->srgb_textures, *mat->emissive_map).handle;
                 }
 
+                gl::texture_view displacement_map = gl::default_texture;
+                if(mat->displacement_map.has_value()) {
+                    displacement_map = at(ogs->linear_textures, *mat->displacement_map).handle;
+                }
+
+                gl::set_active_texture_unit(2);
+                gl::bind_texture(gl::texture_bind_target::texture_2d, displacement_map);
                 gl::set_active_texture_unit(1);
                 gl::bind_texture(gl::texture_bind_target::texture_2d, emissive_map);
                 gl::set_active_texture_unit(0);
@@ -636,6 +653,7 @@ namespace jkgm {
 
                 gl::set_uniform_vector(gl::uniform_location_id(3), mat->albedo_factor);
                 gl::set_uniform_vector(gl::uniform_location_id(5), mat->emissive_factor);
+                gl::set_uniform_float(gl::uniform_location_id(8), mat->displacement_factor);
                 gl::set_uniform_float(gl::uniform_location_id(6), mat->alpha_cutoff);
             }
 
@@ -728,6 +746,7 @@ namespace jkgm {
                                    static_cast<size<2, float>>(conf_scr_res));
             gl::set_uniform_integer(gl::uniform_location_id(2), 0);
             gl::set_uniform_integer(gl::uniform_location_id(4), 1);
+            gl::set_uniform_integer(gl::uniform_location_id(7), 2);
 
             // Draw first pass (opaque world geometry)
             draw_batch(world_batch, &ogs->world_trimdl, /*force opaque*/ true);
@@ -857,7 +876,7 @@ namespace jkgm {
                                    static_cast<size<2, float>>(conf_scr_res));
             gl::set_uniform_integer(gl::uniform_location_id(2), 0);
             gl::set_uniform_integer(gl::uniform_location_id(4), 1);
-
+            gl::set_uniform_integer(gl::uniform_location_id(7), 2);
             gl::set_active_texture_unit(0);
 
             // Draw third pass (transparent world geometry with alpha blending)
@@ -1310,6 +1329,98 @@ namespace jkgm {
         void release_srgb_texture(srgb_texture_id id) override
         {
             --at(ogs->srgb_textures, id).refct;
+        }
+
+        std::optional<linear_texture_id> get_existing_free_linear_texture(size<2, int> const &dims)
+        {
+            for(size_t i = 0; i < ogs->linear_textures.size(); ++i) {
+                auto &em = ogs->linear_textures[i];
+                if(em.refct <= 0 && em.dims == dims) {
+                    // This texture is a match. Clean it up before returning.
+                    if(em.origin_filename.has_value()) {
+                        ogs->file_to_linear_texture_map.erase(*em.origin_filename);
+                    }
+
+                    em.refct = 0;
+
+                    return linear_texture_id(i);
+                }
+            }
+
+            return std::nullopt;
+        }
+
+        linear_texture_id create_linear_texture_from_buffer(size<2, int> const &dims,
+                                                            span<char const> data)
+        {
+            auto existing_buf = get_existing_free_linear_texture(dims);
+            if(existing_buf.has_value()) {
+                // Matching texture already exists. Refill it.
+                auto &em = at(ogs->linear_textures, *existing_buf);
+                gl::bind_texture(gl::texture_bind_target::texture_2d, em.handle);
+                gl::tex_sub_image_2d(gl::texture_bind_target::texture_2d,
+                                     0,
+                                     make_box(make_point(0, 0), dims),
+                                     gl::texture_pixel_format::rgba,
+                                     gl::texture_pixel_type::uint8,
+                                     data);
+                gl::generate_mipmap(gl::texture_bind_target::texture_2d);
+
+                ++em.refct;
+                return *existing_buf;
+            }
+
+            // Create new texture
+            linear_texture_id rv(ogs->linear_textures.size());
+            ogs->linear_textures.emplace_back(dims);
+
+            auto &em = ogs->linear_textures.back();
+            em.refct = 1;
+
+            gl::bind_texture(gl::texture_bind_target::texture_2d, em.handle);
+            gl::tex_image_2d(gl::texture_bind_target::texture_2d,
+                             /*level*/ 0,
+                             gl::texture_internal_format::rgba,
+                             dims,
+                             gl::texture_pixel_format::rgba,
+                             gl::texture_pixel_type::uint8,
+                             data);
+            gl::generate_mipmap(gl::texture_bind_target::texture_2d);
+            gl::set_texture_max_anisotropy(gl::texture_bind_target::texture_2d,
+                                           std::max(1.0f, the_config->max_anisotropy));
+            gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
+            gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
+                                       gl::min_filter::linear_mipmap_linear);
+
+            return rv;
+        }
+
+        linear_texture_id get_linear_texture_from_filename(fs::path const &file) override
+        {
+            auto it = ogs->file_to_linear_texture_map.find(file);
+            if(it != ogs->file_to_linear_texture_map.end()) {
+                // Image file already loaded
+                linear_texture_id rv(it->second);
+                ++at(ogs->linear_textures, rv).refct;
+                return rv;
+            }
+
+            auto fs = make_file_input_block(file);
+            auto img = load_image(fs.get());
+
+            auto rv = create_linear_texture_from_buffer(img->dimensions,
+                                                        make_span(img->data).as_const_bytes());
+
+            auto &em = at(ogs->linear_textures, rv);
+            em.origin_filename = file;
+            ogs->file_to_linear_texture_map.emplace(file, rv.get());
+
+            return rv;
+        }
+
+        void release_linear_texture(linear_texture_id id) override
+        {
+            --at(ogs->linear_textures, id).refct;
         }
     };
 }

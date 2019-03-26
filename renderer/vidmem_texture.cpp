@@ -68,8 +68,21 @@ HRESULT WINAPI jkgm::vidmem_texture::Load(LPDIRECT3DTEXTURE a)
                 surf->r->get_srgb_texture_from_filename(*(*repl_map)->emissive_map);
         }
 
+        if((*repl_map)->displacement_map.has_value()) {
+            surf->displacement_map =
+                surf->r->get_linear_texture_from_filename(*(*repl_map)->displacement_map);
+        }
+
         surf->albedo_factor = (*repl_map)->albedo_factor;
         surf->emissive_factor = (*repl_map)->emissive_factor;
+
+        if(surf->r->is_parallax_enabled()) {
+            surf->displacement_factor = (*repl_map)->displacement_factor;
+        }
+        else {
+            surf->displacement_factor = 0.0f;
+        }
+
         surf->alpha_mode = (*repl_map)->alpha_mode;
         surf->alpha_cutoff = (*repl_map)->alpha_cutoff;
         return D3D_OK;
@@ -120,8 +133,14 @@ void jkgm::vidmem_texture_surface::clear()
         emissive_map.reset();
     }
 
+    if(displacement_map.has_value()) {
+        r->release_linear_texture(*displacement_map);
+        displacement_map.reset();
+    }
+
     albedo_factor = color::fill(1.0f);
     emissive_factor = color_rgb::fill(0.0f);
+    displacement_factor = 0.0f;
     alpha_mode = material_alpha_mode::blend;
     alpha_cutoff = 0.5f;
 }

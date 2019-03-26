@@ -4,11 +4,15 @@ JkGfxMod is a graphics enhancement and compatibility tool for Jedi Knight: Dark 
 
 ## Features
 
-- Adds support for high-resolution and emissive textures
-    - Requires a material pack (not included)
 - Improves compatibility with modern versions of Windows
 - Improves game performance in certain scenarios
 - Renders the game in full 32-bit color
+- Adds screen-space ambient occlusion
+- Adds support for materials
+    - High-resolution/high-color textures
+    - Emissive textures
+    - Parallax occlusion mapping
+    - Requires a material pack (not included)
 - Corrects several graphics issues in the base game:
     - Transparent surfaces are now ordered correctly
     - Fixes dark fringes around color keyed surfaces

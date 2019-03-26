@@ -3,5 +3,6 @@
     "fullscreen": true,
     "max_anisotropy": 2.0,
     "enable_ssao": true,
+    "enable_parallax": true,
     "command": "jk.exe"
 }

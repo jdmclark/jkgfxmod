@@ -25,6 +25,8 @@ namespace jkgm {
         virtual size<2, int> get_configured_screen_resolution() = 0;
         virtual point<2, int> get_cursor_pos(point<2, int> real_pos) = 0;
 
+        virtual bool is_parallax_enabled() = 0;
+
         virtual void initialize(HWND parentWnd) = 0;
 
         virtual HRESULT enumerate_devices(LPDDENUMCALLBACKA cb, LPVOID lpContext) = 0;
@@ -67,7 +69,9 @@ namespace jkgm {
         virtual srgb_texture_id create_srgb_texture_from_buffer(size<2, int> const &dims,
                                                                 span<char const> data) = 0;
         virtual srgb_texture_id get_srgb_texture_from_filename(fs::path const &file) = 0;
+        virtual linear_texture_id get_linear_texture_from_filename(fs::path const &file) = 0;
         virtual void release_srgb_texture(srgb_texture_id id) = 0;
+        virtual void release_linear_texture(linear_texture_id id) = 0;
     };
 
     std::unique_ptr<renderer> create_renderer(HINSTANCE dll_instance, config const *the_config);

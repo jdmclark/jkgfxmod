@@ -11,6 +11,7 @@ namespace jkgm {
         bool fullscreen = false;
         float max_anisotropy = 2.0f;
         bool enable_ssao = true;
+        bool enable_parallax = true;
         std::string command = "jk.exe";
     };
 

@@ -17,10 +17,21 @@
             "albedo_map": "00abb3_base.png"
         },
         {
+            "name": "jknup.19cpipe2",
+            "replaces": [ "mat/19cpipe2.mat" ],
+
+            "albedo_map": "19cpipe2.png",
+            "displacement_map": "19cpipe2_d.png",
+            "displacement_factor": -0.2
+        },
+        {
             "name": "jknup.08tgrate.cel0",
             "replaces": [ [ "mat/08tgrate.mat", 0 ] ],
 
             "albedo_map": "08tgrate_cel0.png",
+
+            "displacement_map": "08tgrate_d_cel0.png",
+            "displacement_factor": -0.02,
 
             "alpha_mode": "mask",
             "alpha_cutoff": 0.5

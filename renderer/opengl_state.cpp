@@ -356,6 +356,11 @@ jkgm::srgb_texture::srgb_texture(size<2, int> dims)
 {
 }
 
+jkgm::linear_texture::linear_texture(size<2, int> dims)
+    : dims(dims)
+{
+}
+
 jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res, config const *the_config)
     : shared_depthbuffer(screen_res)
     , screen_renderbuffer(screen_res, &shared_depthbuffer)

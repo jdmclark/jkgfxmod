@@ -45,6 +45,9 @@ namespace jkgm {
         std::optional<std::string> emissive_map;
         std::optional<color_rgb> emissive_factor;
 
+        std::optional<std::string> displacement_map;
+        std::optional<float> displacement_factor;
+
         std::optional<out_material_alpha_mode> alpha_mode;
         std::optional<float> alpha_cutoff;
     };
@@ -62,12 +65,49 @@ namespace jkgm {
     public:
         std::set<std::string> seen_material_names;
         std::map<fs::path, std::string> srgb_map;
+        std::map<fs::path, std::string> linear_map;
     };
 
     bool is_pow2(int dim)
     {
         std::bitset<sizeof(dim) * 8> bs(dim);
         return bs.count() == 1;
+    }
+
+    std::string get_convert_linear_image(processed_names_map *map,
+                                         fs::path const &in_path,
+                                         std::string const &desired_name,
+                                         fs::path const &desired_out_path)
+    {
+        auto it = map->linear_map.find(in_path);
+        if(it != map->linear_map.end()) {
+            // File has already been processed. Reuse the same file.
+            return it->second;
+        }
+
+        diagnostic_context dc(in_path.generic_string());
+
+        // File has not been seen before.
+        try {
+            auto is = make_file_input_block(in_path);
+            auto img = load_image(is.get());
+
+            if(!is_pow2(get<x>(img->dimensions)) || !is_pow2(get<y>(img->dimensions))) {
+                LOG_ERROR("Image dimensions are not power of two");
+                throw std::runtime_error("invalid image");
+            }
+
+            auto os = make_file_output_block(desired_out_path);
+            store_image_png(os.get(), *img);
+
+            // Add to map
+            map->linear_map.emplace(in_path, desired_name);
+            return desired_name;
+        }
+        catch(std::exception const &e) {
+            LOG_ERROR("Failed to load image file: ", e.what());
+            throw;
+        }
     }
 
     std::string get_convert_image(processed_names_map *map,
@@ -244,6 +284,27 @@ namespace jkgm {
                 static_cast<float>(ef[0]), static_cast<float>(ef[1]), static_cast<float>(ef[2]));
         }
 
+        if(doc.contains("displacement_map")) {
+            auto map_filename = str(format(rv->name, ".displacement.png"));
+            auto real_map_filename =
+                get_convert_linear_image(img_map,
+                                         /*input path*/ script_path.parent_path() /
+                                             static_cast<std::string>(doc["displacement_map"]),
+                                         /*desired name*/ map_filename,
+                                         /*desired out path*/ output_path / map_filename);
+            rv->displacement_map = real_map_filename;
+        }
+
+        if(doc.contains("displacement_factor")) {
+            auto const &ef = doc["displacement_factor"];
+            if(!ef.is_number()) {
+                LOG_ERROR("Material '", rv->name, "' displacement factor must be a number");
+                throw std::runtime_error("Invalid script");
+            }
+
+            rv->displacement_factor = static_cast<float>(ef);
+        }
+
         if(doc.contains("alpha_mode")) {
             auto const &am = doc["alpha_mode"];
             if(am == "mask") {
@@ -350,6 +411,14 @@ namespace jkgm {
         if(mat.emissive_factor.has_value()) {
             auto c = *mat.emissive_factor;
             rv["emissive_factor"] = {get<0>(c), get<1>(c), get<2>(c)};
+        }
+
+        if(mat.displacement_map.has_value()) {
+            rv["displacement_map"] = *mat.displacement_map;
+        }
+
+        if(mat.displacement_factor.has_value()) {
+            rv["displacement_factor"] = *mat.displacement_factor;
         }
 
         if(mat.alpha_mode.has_value()) {

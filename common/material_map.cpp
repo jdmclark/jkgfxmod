@@ -47,6 +47,14 @@ void jkgm::material_map::add_metadata(fs::path const &metadata_file)
                 static_cast<float>(af[0]), static_cast<float>(af[1]), static_cast<float>(af[2]));
         }
 
+        if(em.contains("displacement_map")) {
+            mat->displacement_map = data_dir / std::string(em["displacement_map"]);
+        }
+
+        if(em.contains("displacement_factor")) {
+            mat->displacement_factor = em["displacement_factor"];
+        }
+
         if(em.contains("alpha_mode")) {
             auto const &am = em["alpha_mode"];
             if(am == "mask") {

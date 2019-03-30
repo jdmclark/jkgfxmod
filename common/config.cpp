@@ -31,6 +31,10 @@ std::unique_ptr<jkgm::config> jkgm::load_config_file()
             j.at("fullscreen").get_to(rv->fullscreen);
         }
 
+        if(j.contains("hud_scale")) {
+            j.at("hud_scale").get_to(rv->hud_scale);
+        }
+
         if(j.contains("max_anisotropy")) {
             j.at("max_anisotropy").get_to(rv->max_anisotropy);
         }

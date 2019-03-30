@@ -2,6 +2,7 @@
     "resolution": [ 1024, 768 ],
     "internal_resolution": null,
     "fullscreen": true,
+    "hud_scale": 1.0,
     "max_anisotropy": 2.0,
     "enable_ssao": true,
     "enable_parallax": true,

@@ -628,9 +628,9 @@ namespace jkgm {
             gl::use_program(ogs->menu_program);
             gl::set_uniform_integer(gl::uniform_location_id(0), 0);
 
-            gl::bind_vertex_array(ogs->menumdl.vao);
+            gl::bind_vertex_array(ogs->hudmdl.vao);
             gl::draw_elements(
-                gl::element_type::triangles, ogs->menumdl.num_indices, gl::index_type::uint32);
+                gl::element_type::triangles, ogs->hudmdl.num_indices, gl::index_type::uint32);
 
             for(auto &em : ddraw1_backbuffer_surface.buffer) {
                 em = ddraw1_backbuffer_surface.color_key;

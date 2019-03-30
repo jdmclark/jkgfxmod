@@ -42,6 +42,20 @@ namespace jkgm {
         overlay_model(size<2, int> scr_res, box<2, int> actual_scr_area);
     };
 
+    class hud_model {
+    public:
+        gl::vertex_array vao;
+        gl::buffer vb;
+        gl::buffer tcb;
+        gl::buffer ib;
+        unsigned int num_indices = 0U;
+
+        hud_model(size<2, int> scr_res,
+                  size<2, int> int_scr_res,
+                  box<2, int> actual_scr_area,
+                  float scale);
+    };
+
     class render_depthbuffer {
     public:
         gl::renderbuffer rbo;
@@ -167,6 +181,7 @@ namespace jkgm {
 
         post_model postmdl;
         overlay_model menumdl;
+        hud_model hudmdl;
         triangle_buffer_model world_trimdl;
         triangle_buffer_model world_transparent_trimdl;
         triangle_buffer_model gun_trimdl;

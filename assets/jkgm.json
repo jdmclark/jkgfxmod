@@ -1,5 +1,6 @@
 {
     "resolution": [ 1024, 768 ],
+    "internal_resolution": null,
     "fullscreen": true,
     "max_anisotropy": 2.0,
     "enable_ssao": true,

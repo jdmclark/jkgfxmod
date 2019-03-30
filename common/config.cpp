@@ -20,6 +20,13 @@ std::unique_ptr<jkgm::config> jkgm::load_config_file()
             j.at("resolution").get_to(rv->resolution);
         }
 
+        if(j.contains("internal_resolution")) {
+            auto const &em = j["internal_resolution"];
+            if(!em.is_null()) {
+                rv->internal_resolution = em;
+            }
+        }
+
         if(j.contains("fullscreen")) {
             j.at("fullscreen").get_to(rv->fullscreen);
         }

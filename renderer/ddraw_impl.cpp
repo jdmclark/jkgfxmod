@@ -130,7 +130,7 @@ HRESULT WINAPI jkgm::DirectDraw_impl::EnumDisplayModes(DWORD a,
     ddsd.ddpfPixelFormat.dwGBitMask = 0x7E0;
     ddsd.ddpfPixelFormat.dwBBitMask = 0x1F;
 
-    auto conf_scr_res = r->get_configured_screen_resolution();
+    auto conf_scr_res = r->get_internal_screen_resolution();
 
     ddsd.dwWidth = get<x>(conf_scr_res);
     ddsd.dwHeight = get<y>(conf_scr_res);

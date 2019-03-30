@@ -31,6 +31,17 @@ namespace jkgm {
         post_model();
     };
 
+    class overlay_model {
+    public:
+        gl::vertex_array vao;
+        gl::buffer vb;
+        gl::buffer tcb;
+        gl::buffer ib;
+        unsigned int num_indices = 6U;
+
+        overlay_model(size<2, int> scr_res, box<2, int> actual_scr_area);
+    };
+
     class render_depthbuffer {
     public:
         gl::renderbuffer rbo;
@@ -155,6 +166,7 @@ namespace jkgm {
         gl::program post_to_srgb;
 
         post_model postmdl;
+        overlay_model menumdl;
         triangle_buffer_model world_trimdl;
         triangle_buffer_model world_transparent_trimdl;
         triangle_buffer_model gun_trimdl;
@@ -185,6 +197,9 @@ namespace jkgm {
         std::vector<linear_texture> linear_textures;
         std::map<fs::path, size_t> file_to_linear_texture_map;
 
-        opengl_state(size<2, int> screen_res, config const *the_config);
+        opengl_state(size<2, int> screen_res,
+                     size<2, int> internal_screen_res,
+                     box<2, int> actual_screen_area,
+                     config const *the_config);
     };
 }

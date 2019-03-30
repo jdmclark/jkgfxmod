@@ -68,6 +68,51 @@ jkgm::post_model::post_model()
                     gl::buffer_usage::static_draw);
 }
 
+jkgm::overlay_model::overlay_model(size<2, int> scr_res, box<2, int> actual_scr_area)
+{
+    auto w = 2.0f / static_cast<float>(get<x>(scr_res));
+    auto h = 2.0f / static_cast<float>(get<y>(scr_res));
+
+    float x0 = (get<x>(actual_scr_area.start) * w) - 1.0f;
+    float x1 = (get<x>(actual_scr_area.stop) * w) - 1.0f;
+    float y0 = (get<y>(actual_scr_area.start) * h) - 1.0f;
+    float y1 = (get<y>(actual_scr_area.stop) * h) - 1.0f;
+
+    gl::bind_vertex_array(vao);
+
+    std::array<point<2, float>, 4> post_points{
+        make_point(x0, y0), make_point(x1, y0), make_point(x0, y1), make_point(x1, y1)};
+    std::array<point<2, float>, 4> post_texcoords{make_point(0.0f, 1.0f),
+                                                  make_point(1.0f, 1.0f),
+                                                  make_point(0.0f, 0.0f),
+                                                  make_point(1.0f, 0.0f)};
+    std::array<uint32_t, 6> post_indices{0, 1, 2, 2, 1, 3};
+
+    gl::enable_vertex_attrib_array(0U);
+    gl::bind_buffer(gl::buffer_bind_target::array, vb);
+    gl::buffer_data(gl::buffer_bind_target::array,
+                    make_span(post_points).as_const_bytes(),
+                    gl::buffer_usage::static_draw);
+    gl::vertex_attrib_pointer(
+        /*index*/ 0,
+        /*elements*/ 2,
+        gl::vertex_element_type::float32,
+        /*normalized*/ false);
+
+    gl::enable_vertex_attrib_array(1U);
+    gl::bind_buffer(gl::buffer_bind_target::array, tcb);
+    gl::buffer_data(gl::buffer_bind_target::array,
+                    make_span(post_texcoords).as_const_bytes(),
+                    gl::buffer_usage::static_draw);
+    gl::vertex_attrib_pointer(
+        /*index*/ 1, /*elements*/ 2, gl::vertex_element_type::float32, /*normalized*/ false);
+
+    gl::bind_buffer(gl::buffer_bind_target::element_array, ib);
+    gl::buffer_data(gl::buffer_bind_target::element_array,
+                    make_span(post_indices).as_const_bytes(),
+                    gl::buffer_usage::static_draw);
+}
+
 jkgm::render_depthbuffer::render_depthbuffer(size<2, int> dims)
     : viewport(make_point(0, 0), dims)
 {
@@ -361,8 +406,12 @@ jkgm::linear_texture::linear_texture(size<2, int> dims)
 {
 }
 
-jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res, config const *the_config)
-    : shared_depthbuffer(screen_res)
+jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res,
+                                               size<2, int> internal_screen_res,
+                                               box<2, int> actual_scr_area,
+                                               config const *the_config)
+    : menumdl(screen_res, actual_scr_area)
+    , shared_depthbuffer(screen_res)
     , screen_renderbuffer(screen_res, &shared_depthbuffer)
     , screen_postbuffer1(screen_res)
     , screen_postbuffer2(screen_res)
@@ -425,14 +474,14 @@ jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res, config c
     gl::tex_image_2d(gl::texture_bind_target::texture_2d,
                      0,
                      gl::texture_internal_format::srgb_a8,
-                     make_size(get<x>(screen_res), get<y>(screen_res)),
+                     make_size(get<x>(internal_screen_res), get<y>(internal_screen_res)),
                      gl::texture_pixel_format::bgra,
                      gl::texture_pixel_type::uint8,
                      make_span<char const>(nullptr, 0U));
     gl::set_texture_max_level(gl::texture_bind_target::texture_2d, 0U);
     gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
 
-    hud_texture_data.resize(volume(screen_res), color_rgba8::zero());
+    hud_texture_data.resize(volume(internal_screen_res), color_rgba8::zero());
 
     if(the_config->enable_ssao) {
         ssao_occlusionbuffer = std::make_unique<ssao_occlusion_buffer>(screen_res);

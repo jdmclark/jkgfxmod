@@ -22,7 +22,7 @@ namespace jkgm {
         virtual ~renderer() = default;
 
         virtual void set_renderer_mode(renderer_mode mode) = 0;
-        virtual size<2, int> get_configured_screen_resolution() = 0;
+        virtual size<2, int> get_internal_screen_resolution() = 0;
         virtual point<2, int> get_cursor_pos(point<2, int> real_pos) = 0;
 
         virtual bool is_parallax_enabled() = 0;

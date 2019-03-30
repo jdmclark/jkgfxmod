@@ -41,6 +41,7 @@
 namespace jkgm {
     static WNDPROC original_wkernel_wndproc = nullptr;
     static size<2, int> original_configured_screen_res = make_size(0, 0);
+    static box<2, int> actual_display_area = make_box(make_point(0, 0), make_size(0, 0));
 
     LRESULT CALLBACK renderer_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
@@ -82,10 +83,12 @@ namespace jkgm {
             auto xPos = (int16_t)lParam;
             auto yPos = (int16_t)(lParam >> 16);
 
-            xPos =
-                (int16_t)((float)xPos * (640.0f / (float)get<x>(original_configured_screen_res)));
-            yPos =
-                (int16_t)((float)yPos * (480.0f / (float)get<y>(original_configured_screen_res)));
+            auto d = actual_display_area.size();
+            auto wscale = 640.0f / static_cast<float>(get<x>(d));
+            auto hscale = 480.0f / static_cast<float>(get<y>(d));
+
+            xPos = (int16_t)((float)(xPos - get<x>(actual_display_area.start)) * wscale);
+            yPos = (int16_t)((float)(yPos - get<y>(actual_display_area.start)) * hscale);
 
             lParam = (((LPARAM)yPos << 16) | (LPARAM)xPos);
 
@@ -97,6 +100,53 @@ namespace jkgm {
         return CallWindowProc(original_wkernel_wndproc, hWnd, uMsg, wParam, lParam);
     }
 
+    static size<2, int> make_internal_scr_res(config const *the_config)
+    {
+        if(the_config->internal_resolution.has_value()) {
+            return make_size(std::get<0>(*the_config->internal_resolution),
+                             std::get<1>(*the_config->internal_resolution));
+        }
+
+        return make_size(std::get<0>(the_config->resolution), std::get<1>(the_config->resolution));
+    }
+
+    static size<2, float> make_internal_scr_res_scale_f(size<2, int> conf_scr_res)
+    {
+        return make_size(2.0f / (float)get<x>(conf_scr_res), 2.0f / (float)get<y>(conf_scr_res));
+    }
+
+    static box<2, int> make_internal_scr_area(size<2, int> conf_scr_res,
+                                              size<2, int> internal_scr_res)
+    {
+        // Adjust actual display area to fit the physical display area
+        float aspect = (float)get<x>(internal_scr_res) / (float)get<y>(internal_scr_res);
+
+        int width_if_height_fit = (int)(aspect * (float)get<y>(conf_scr_res));
+        if(width_if_height_fit <= get<x>(conf_scr_res)) {
+            // Virtual screen is taller or as tall as the physical screen
+            int leftpad = (get<x>(conf_scr_res) - width_if_height_fit) / 2;
+            return make_box(make_point(leftpad, 0),
+                            make_size(width_if_height_fit, get<y>(conf_scr_res)));
+        }
+
+        // Virtual screen is wider or as wide as the physical screen
+        int height_if_width_fit = (int)((float)get<x>(conf_scr_res) / aspect);
+        int toppad = (get<y>(conf_scr_res) - height_if_width_fit) / 2;
+        return make_box(make_point(0, toppad),
+                        make_size(get<x>(conf_scr_res), height_if_width_fit));
+    }
+
+    static direction<2, float> make_internal_scr_offset_f(size<2, int> conf_scr_res,
+                                                          box<2, int> actual_display_area)
+    {
+        float xoff =
+            ((float)get<x>(actual_display_area.start) / (float)get<x>(conf_scr_res)) * 2.0f;
+        float yoff =
+            ((float)get<y>(actual_display_area.start) / (float)get<y>(conf_scr_res)) * 2.0f;
+
+        return make_direction(xoff, yoff);
+    }
+
     class renderer_impl : public renderer {
     private:
         config const *the_config;
@@ -104,7 +154,11 @@ namespace jkgm {
 
         renderer_mode mode = renderer_mode::menu;
         size<2, int> conf_scr_res;
-        size<2, float> conf_scr_res_f;
+
+        size<2, int> internal_scr_res;
+        size<2, float> internal_scr_res_scale_f;
+        box<2, int> actual_display_area;
+        direction<2, float> internal_scr_offset_f;
 
         DirectDraw_impl ddraw1;
         DirectDraw2_impl ddraw2;
@@ -160,7 +214,10 @@ namespace jkgm {
         explicit renderer_impl(HINSTANCE dll_instance, config const *the_config)
             : the_config(the_config)
             , conf_scr_res(std::get<0>(the_config->resolution), std::get<1>(the_config->resolution))
-            , conf_scr_res_f(static_cast<size<2, float>>(conf_scr_res))
+            , internal_scr_res(make_internal_scr_res(the_config))
+            , internal_scr_res_scale_f(make_internal_scr_res_scale_f(conf_scr_res))
+            , actual_display_area(make_internal_scr_area(conf_scr_res, internal_scr_res))
+            , internal_scr_offset_f(make_internal_scr_offset_f(conf_scr_res, actual_display_area))
             , ddraw1(this)
             , ddraw2(this)
             , d3d1(this)
@@ -169,7 +226,7 @@ namespace jkgm {
             , ddraw1_primary_menu_surface(this)
             , ddraw1_backbuffer_menu_surface(this, &ddraw1_primary_menu_surface)
             , ddraw1_primary_surface(this)
-            , ddraw1_backbuffer_surface(this, conf_scr_res)
+            , ddraw1_backbuffer_surface(this, internal_scr_res)
             , ddraw1_zbuffer_surface(this)
             , ddraw1_palette(this)
             , dll_instance(dll_instance)
@@ -200,9 +257,9 @@ namespace jkgm {
             this->mode = mode;
         }
 
-        size<2, int> get_configured_screen_resolution() override
+        size<2, int> get_internal_screen_resolution() override
         {
-            return conf_scr_res;
+            return actual_display_area.size();
         }
 
         bool is_parallax_enabled() override
@@ -213,10 +270,14 @@ namespace jkgm {
         point<2, int> get_cursor_pos(point<2, int> real_pos) override
         {
             if(mode == renderer_mode::menu) {
+                auto d = actual_display_area.size();
+                auto wscale = 640.0f / static_cast<float>(get<x>(d));
+                auto hscale = 480.0f / static_cast<float>(get<y>(d));
+
                 // Stretch the point into 640x480
                 return make_point(
-                    (int)((float)get<x>(real_pos) * (640.0f / (float)get<x>(conf_scr_res))),
-                    (int)((float)get<y>(real_pos) * (480.0f / (float)get<y>(conf_scr_res))));
+                    (int)((float)(get<x>(real_pos) - get<x>(actual_display_area.start)) * wscale),
+                    (int)((float)(get<y>(real_pos) - get<y>(actual_display_area.start)) * hscale));
             }
 
             return real_pos;
@@ -231,7 +292,8 @@ namespace jkgm {
             original_wkernel_wndproc = (WNDPROC)GetWindowLongPtr(hWnd, GWLP_WNDPROC);
             SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG)&renderer_wndproc);
 
-            original_configured_screen_res = get_configured_screen_resolution();
+            original_configured_screen_res = conf_scr_res;
+            jkgm::actual_display_area = actual_display_area;
 
             if(the_config->fullscreen) {
                 DEVMODE dm;
@@ -282,7 +344,8 @@ namespace jkgm {
 
             SwapBuffers(hDC);
 
-            ogs = std::make_unique<opengl_state>(conf_scr_res, the_config);
+            ogs = std::make_unique<opengl_state>(
+                conf_scr_res, internal_scr_res, actual_display_area, the_config);
             begin_frame();
         }
 
@@ -297,7 +360,7 @@ namespace jkgm {
         void end_frame()
         {
             // Compose renderbuffer onto window:
-            auto current_wnd_sz = get_configured_screen_resolution();
+            auto current_wnd_sz = conf_scr_res;
 
             // Render low pass for bloom
             gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->screen_postbuffer2.fbo);
@@ -395,7 +458,6 @@ namespace jkgm {
                 ++curr_em;
             }
 
-            gl::bind_vertex_array(ogs->postmdl.vao);
             gl::draw_elements(
                 gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
 
@@ -472,9 +534,9 @@ namespace jkgm {
             gl::use_program(ogs->menu_program);
             gl::set_uniform_integer(gl::uniform_location_id(0), 0);
 
-            gl::bind_vertex_array(ogs->postmdl.vao);
+            gl::bind_vertex_array(ogs->menumdl.vao);
             gl::draw_elements(
-                gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
+                gl::element_type::triangles, ogs->menumdl.num_indices, gl::index_type::uint32);
 
             end_frame();
         }
@@ -504,9 +566,9 @@ namespace jkgm {
             gl::use_program(ogs->menu_program);
             gl::set_uniform_integer(gl::uniform_location_id(0), 0);
 
-            gl::bind_vertex_array(ogs->postmdl.vao);
+            gl::bind_vertex_array(ogs->menumdl.vao);
             gl::draw_elements(
-                gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
+                gl::element_type::triangles, ogs->menumdl.num_indices, gl::index_type::uint32);
 
             end_frame();
         }
@@ -553,21 +615,22 @@ namespace jkgm {
             // Blit texture data into texture
             gl::set_active_texture_unit(0);
             gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->hud_texture);
-            gl::tex_sub_image_2d(gl::texture_bind_target::texture_2d,
-                                 0,
-                                 make_box(make_point(0, 0),
-                                          make_point(get<x>(conf_scr_res), get<y>(conf_scr_res))),
-                                 gl::texture_pixel_format::rgba,
-                                 gl::texture_pixel_type::uint8,
-                                 make_span(ogs->hud_texture_data).as_const_bytes());
+            gl::tex_sub_image_2d(
+                gl::texture_bind_target::texture_2d,
+                0,
+                make_box(make_point(0, 0),
+                         make_point(get<x>(internal_scr_res), get<y>(internal_scr_res))),
+                gl::texture_pixel_format::rgba,
+                gl::texture_pixel_type::uint8,
+                make_span(ogs->hud_texture_data).as_const_bytes());
 
             // Render
             gl::use_program(ogs->menu_program);
             gl::set_uniform_integer(gl::uniform_location_id(0), 0);
 
-            gl::bind_vertex_array(ogs->postmdl.vao);
+            gl::bind_vertex_array(ogs->menumdl.vao);
             gl::draw_elements(
-                gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
+                gl::element_type::triangles, ogs->menumdl.num_indices, gl::index_type::uint32);
 
             for(auto &em : ddraw1_backbuffer_surface.buffer) {
                 em = ddraw1_backbuffer_surface.color_key;
@@ -906,7 +969,8 @@ namespace jkgm {
 
         void end_game() override {}
 
-        static point<4, float> d3dtl_to_point(size<2, float> const &screen_dims,
+        static point<4, float> d3dtl_to_point(size<2, float> const &scr_scale,
+                                              direction<2, float> const &screen_offset,
                                               D3DTLVERTEX const &p)
         {
             // Reassign w for full-screen overlay vertices
@@ -916,8 +980,8 @@ namespace jkgm {
             }
 
             // Convert pretransformed vertex to phony view space
-            return make_point(w * ((p.sx / (get<x>(screen_dims) * 0.5f)) - 1.0f),
-                              w * ((-p.sy / (get<y>(screen_dims) * 0.5f)) + 1.0f),
+            return make_point(w * ((p.sx * get<x>(scr_scale)) - 1.0f + get<x>(screen_offset)),
+                              w * ((-p.sy * get<y>(scr_scale)) + 1.0f - get<y>(screen_offset)),
                               w * (-p.sz),
                               w);
         }
@@ -1041,17 +1105,20 @@ namespace jkgm {
                                                        (uint8_t)RGBA_GETBLUE(v3.color),
                                                        (uint8_t)RGBA_GETALPHA(v3.color))));
 
-                        current_triangle_batch->insert(
-                            triangle(triangle_vertex(d3dtl_to_point(conf_scr_res_f, v1),
-                                                     make_point(v1.tu, v1.tv),
-                                                     extend(get<rgb>(c1) * get<a>(c1), get<a>(c1))),
-                                     triangle_vertex(d3dtl_to_point(conf_scr_res_f, v2),
-                                                     make_point(v2.tu, v2.tv),
-                                                     extend(get<rgb>(c2) * get<a>(c2), get<a>(c2))),
-                                     triangle_vertex(d3dtl_to_point(conf_scr_res_f, v3),
-                                                     make_point(v3.tu, v3.tv),
-                                                     extend(get<rgb>(c3) * get<a>(c3), get<a>(c3))),
-                                     current_material));
+                        current_triangle_batch->insert(triangle(
+                            triangle_vertex(
+                                d3dtl_to_point(internal_scr_res_scale_f, internal_scr_offset_f, v1),
+                                make_point(v1.tu, v1.tv),
+                                extend(get<rgb>(c1) * get<a>(c1), get<a>(c1))),
+                            triangle_vertex(
+                                d3dtl_to_point(internal_scr_res_scale_f, internal_scr_offset_f, v2),
+                                make_point(v2.tu, v2.tv),
+                                extend(get<rgb>(c2) * get<a>(c2), get<a>(c2))),
+                            triangle_vertex(
+                                d3dtl_to_point(internal_scr_res_scale_f, internal_scr_offset_f, v3),
+                                make_point(v3.tu, v3.tv),
+                                extend(get<rgb>(c3) * get<a>(c3), get<a>(c3))),
+                            current_material));
                     } break;
 
                     default:

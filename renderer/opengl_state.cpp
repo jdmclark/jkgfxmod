@@ -264,7 +264,7 @@ jkgm::render_buffer::render_buffer(size<2, int> dims, render_depthbuffer *rbo)
     gl::bind_texture(gl::texture_bind_target::texture_2d, tex);
     gl::tex_image_2d(gl::texture_bind_target::texture_2d,
                      /*level*/ 0,
-                     gl::texture_internal_format::rgba32f,
+                     gl::texture_internal_format::rgba16f,
                      dims,
                      gl::texture_pixel_format::rgba,
                      gl::texture_pixel_type::float32,
@@ -299,7 +299,7 @@ jkgm::render_gbuffer::render_gbuffer(size<2, int> dims, render_depthbuffer *rbo)
     gl::bind_texture(gl::texture_bind_target::texture_2d, color_tex);
     gl::tex_image_2d(gl::texture_bind_target::texture_2d,
                      /*level*/ 0,
-                     gl::texture_internal_format::rgba32f,
+                     gl::texture_internal_format::rgba16f,
                      dims,
                      gl::texture_pixel_format::rgba,
                      gl::texture_pixel_type::float32,
@@ -312,7 +312,7 @@ jkgm::render_gbuffer::render_gbuffer(size<2, int> dims, render_depthbuffer *rbo)
     gl::bind_texture(gl::texture_bind_target::texture_2d, emissive_tex);
     gl::tex_image_2d(gl::texture_bind_target::texture_2d,
                      /*level*/ 0,
-                     gl::texture_internal_format::rgba32f,
+                     gl::texture_internal_format::rgba16f,
                      dims,
                      gl::texture_pixel_format::rgba,
                      gl::texture_pixel_type::float32,
@@ -325,7 +325,7 @@ jkgm::render_gbuffer::render_gbuffer(size<2, int> dims, render_depthbuffer *rbo)
     gl::bind_texture(gl::texture_bind_target::texture_2d, depth_nrm_tex);
     gl::tex_image_2d(gl::texture_bind_target::texture_2d,
                      /*level*/ 0,
-                     gl::texture_internal_format::rgba32f,
+                     gl::texture_internal_format::rgba16f,
                      dims,
                      gl::texture_pixel_format::rgba,
                      gl::texture_pixel_type::float32,
@@ -417,7 +417,7 @@ jkgm::post_buffer::post_buffer(size<2, int> dims)
     gl::bind_texture(gl::texture_bind_target::texture_2d, tex);
     gl::tex_image_2d(gl::texture_bind_target::texture_2d,
                      /*level*/ 0,
-                     gl::texture_internal_format::rgba32f,
+                     gl::texture_internal_format::rgba16f,
                      dims,
                      gl::texture_pixel_format::rgba,
                      gl::texture_pixel_type::float32,
@@ -603,6 +603,12 @@ jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res,
                      make_span<char const>(nullptr, 0U));
     gl::set_texture_max_level(gl::texture_bind_target::texture_2d, 0U);
     gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
+    gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
+                              gl::texture_direction::s,
+                              gl::texture_wrap_mode::clamp_to_edge);
+    gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
+                              gl::texture_direction::t,
+                              gl::texture_wrap_mode::clamp_to_edge);
 
     menu_texture_data.resize(640 * 480, color_rgba8::zero());
 
@@ -616,6 +622,12 @@ jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res,
                      make_span<char const>(nullptr, 0U));
     gl::set_texture_max_level(gl::texture_bind_target::texture_2d, 0U);
     gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
+    gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
+                              gl::texture_direction::s,
+                              gl::texture_wrap_mode::clamp_to_edge);
+    gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
+                              gl::texture_direction::t,
+                              gl::texture_wrap_mode::clamp_to_edge);
 
     hud_texture_data.resize(volume(internal_screen_res), color_rgba8::zero());
 

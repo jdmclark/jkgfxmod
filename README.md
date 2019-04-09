@@ -26,10 +26,15 @@ JkGfxMod has only been tested with the CD-ROM version of Jedi Knight: Dark Force
 
 ## Using JkGfxMod
 
+**Note:** JkGfxMod is a standalone compatibility tool for Jedi Knight. JkGfxMod enables hardware-accelerated graphics in Jedi Knight without Windows compatibility settings, shims (installed by certain digital distributions), administrative privileges, or other DirectDraw wrappers (e.g. dgVoodoo). We recommend disabling these compatibility fixes before using JkGfxMod.
+
 - Extract the distribution package into your Jedi Knight directory
 - Edit the config file: `jkgm.json`
-    - Note: You must specify your desired resolution in this file
+    - You must specify your desired resolution in this file.
+    - Your desktop color depth is used automatically and does not need to be configured.
 - Run `inject.exe`
+- Enable hardware acceleration in the display options
+    - The Jedi Knight display options screen is hard-coded to say 16-bit color. Ignore this. JkGfxMod will always use your desktop color depth.
 
 ## Installing material packs
 

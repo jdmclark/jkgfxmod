@@ -15,9 +15,9 @@ void main()
 
     vec2 off1 = vec2(1.3333333333333333) * blur_direction;
 
-    color += texture(fbuf_image, vp_texcoords) * 0.29411764705882354;
-    color += texture(fbuf_image, vp_texcoords + (off1 / fbuf_dimensions)) * 0.35294117647058826;
-    color += texture(fbuf_image, vp_texcoords - (off1 / fbuf_dimensions)) * 0.35294117647058826;
+    color += texture(fbuf_image, vp_texcoords) * 0.375;
+    color += texture(fbuf_image, vp_texcoords + (off1 / fbuf_dimensions)) * 0.3125;
+    color += texture(fbuf_image, vp_texcoords - (off1 / fbuf_dimensions)) * 0.3125;
 
     out_color = color;
 }

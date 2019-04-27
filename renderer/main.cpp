@@ -85,7 +85,7 @@ HWND WINAPI HookedCreateWindowExA(DWORD dwExStyle,
         LOG_DEBUG("Detected main window creation");
         main_window_seen = true;
 
-        the_renderer->initialize(rv);
+        the_renderer->initialize(hInstance, rv);
     }
 
     return rv;

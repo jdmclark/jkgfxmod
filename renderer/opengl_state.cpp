@@ -368,9 +368,6 @@ jkgm::ssao_occlusion_buffer::ssao_occlusion_buffer(size<2, int> dims)
 {
     gl::bind_framebuffer(gl::framebuffer_bind_target::any, fbo);
 
-    gl::bind_renderbuffer(rbo);
-    gl::renderbuffer_storage(gl::renderbuffer_format::depth, dims);
-
     gl::bind_texture(gl::texture_bind_target::texture_2d, tex);
     gl::tex_image_2d(gl::texture_bind_target::texture_2d,
                      /*level*/ 0,
@@ -389,8 +386,6 @@ jkgm::ssao_occlusion_buffer::ssao_occlusion_buffer(size<2, int> dims)
                               gl::texture_direction::t,
                               gl::texture_wrap_mode::clamp_to_edge);
 
-    gl::framebuffer_renderbuffer(
-        gl::framebuffer_bind_target::any, gl::framebuffer_attachment::depth, rbo);
     gl::framebuffer_texture(
         gl::framebuffer_bind_target::any, gl::framebuffer_attachment::color0, tex, 0);
 
@@ -411,9 +406,6 @@ jkgm::post_buffer::post_buffer(size<2, int> dims)
 {
     gl::bind_framebuffer(gl::framebuffer_bind_target::any, fbo);
 
-    gl::bind_renderbuffer(rbo);
-    gl::renderbuffer_storage(gl::renderbuffer_format::depth, dims);
-
     gl::bind_texture(gl::texture_bind_target::texture_2d, tex);
     gl::tex_image_2d(gl::texture_bind_target::texture_2d,
                      /*level*/ 0,
@@ -432,8 +424,6 @@ jkgm::post_buffer::post_buffer(size<2, int> dims)
                               gl::texture_direction::t,
                               gl::texture_wrap_mode::clamp_to_edge);
 
-    gl::framebuffer_renderbuffer(
-        gl::framebuffer_bind_target::any, gl::framebuffer_attachment::depth, rbo);
     gl::framebuffer_texture(
         gl::framebuffer_bind_target::any, gl::framebuffer_attachment::color0, tex, 0);
 
@@ -466,69 +456,85 @@ jkgm::hdr_stack::hdr_stack()
 }
 
 jkgm::triangle_buffer_model::triangle_buffer_model()
+    : mmio(nullptr, 0U)
 {
     gl::bind_vertex_array(vao);
 
+    gl::bind_buffer(gl::buffer_bind_target::array, vbo);
     gl::enable_vertex_attrib_array(0U);
-    gl::bind_buffer(gl::buffer_bind_target::array, pos_buffer);
     gl::vertex_attrib_pointer(/*index*/ 0,
                               /*elements*/ 4,
                               gl::vertex_element_type::float32,
-                              /*normalized*/ false);
-
+                              /*normalized*/ false,
+                              /*stride*/ sizeof(triangle_buffer_vertex),
+                              /*offset*/ offsetof(triangle_buffer_vertex, pos));
     gl::enable_vertex_attrib_array(1U);
-    gl::bind_buffer(gl::buffer_bind_target::array, texcoord_buffer);
     gl::vertex_attrib_pointer(/*index*/ 1,
                               /*elements*/ 2,
                               gl::vertex_element_type::float32,
-                              /*normalized*/ false);
-
+                              /*normalized*/ false,
+                              /*stride*/ sizeof(triangle_buffer_vertex),
+                              /*offset*/ offsetof(triangle_buffer_vertex, texcoords));
     gl::enable_vertex_attrib_array(2U);
-    gl::bind_buffer(gl::buffer_bind_target::array, color_buffer);
     gl::vertex_attrib_pointer(/*index*/ 2,
                               /*elements*/ 4,
                               gl::vertex_element_type::float32,
-                              /*normalized*/ false);
-
+                              /*normalized*/ false,
+                              /*stride*/ sizeof(triangle_buffer_vertex),
+                              /*offset*/ offsetof(triangle_buffer_vertex, col));
     gl::enable_vertex_attrib_array(3U);
-    gl::bind_buffer(gl::buffer_bind_target::array, normal_buffer);
-    gl::vertex_attrib_pointer(
-        /*index*/ 3, /*elements*/ 3, gl::vertex_element_type::float32, /*normalized*/ false);
+    gl::vertex_attrib_pointer(/*index*/ 3,
+                              /*elements*/ 3,
+                              gl::vertex_element_type::float32,
+                              /*normalized*/ false,
+                              /*stride*/ sizeof(triangle_buffer_vertex),
+                              /*offset*/ offsetof(triangle_buffer_vertex, normal));
 }
 
 void jkgm::triangle_buffer_model::maybe_grow_buffers(unsigned int new_capacity)
 {
-    if(vb_capacity < new_capacity) {
-        vb_capacity = new_capacity;
+    gl::bind_buffer(gl::buffer_bind_target::array, vbo);
 
-        pos.resize(vb_capacity, point<4, float>::zero());
-        texcoords.resize(vb_capacity, point<2, float>::zero());
-        color.resize(vb_capacity, color::zero());
-        normals.resize(vb_capacity, direction<3, float>::zero());
+    if(vb_capacity < new_capacity) {
+        vb_capacity = new_capacity * 2;
+
+        gl::bind_buffer(gl::buffer_bind_target::array, vbo);
+        gl::buffer_reserve(gl::buffer_bind_target::array,
+                           vb_capacity * sizeof(triangle_buffer_vertex),
+                           gl::buffer_usage::stream_draw);
     }
+
+    mmio = gl::map_buffer_range<triangle_buffer_vertex>(
+        gl::buffer_bind_target::array, 0, vb_capacity, {gl::buffer_access::write});
 }
 
 void jkgm::triangle_buffer_model::update_buffers()
 {
-    gl::bind_buffer(gl::buffer_bind_target::array, pos_buffer);
-    gl::buffer_data(gl::buffer_bind_target::array,
-                    make_span(pos).as_const_bytes(),
-                    gl::buffer_usage::stream_draw);
+    gl::bind_buffer(gl::buffer_bind_target::array, vbo);
+    gl::unmap_buffer(gl::buffer_bind_target::array);
+}
 
-    gl::bind_buffer(gl::buffer_bind_target::array, texcoord_buffer);
-    gl::buffer_data(gl::buffer_bind_target::array,
-                    make_span(texcoords).as_const_bytes(),
-                    gl::buffer_usage::stream_draw);
+jkgm::triangle_buffer_sequence::triangle_buffer_sequence()
+{
+    constexpr size_t num_buffers = 3;
+    for(size_t i = 0; i < num_buffers; ++i) {
+        trimdls.emplace_back();
+    }
 
-    gl::bind_buffer(gl::buffer_bind_target::array, color_buffer);
-    gl::buffer_data(gl::buffer_bind_target::array,
-                    make_span(color).as_const_bytes(),
-                    gl::buffer_usage::stream_draw);
+    it = trimdls.begin();
+}
 
-    gl::bind_buffer(gl::buffer_bind_target::array, normal_buffer);
-    gl::buffer_data(gl::buffer_bind_target::array,
-                    make_span(normals).as_const_bytes(),
-                    gl::buffer_usage::stream_draw);
+jkgm::triangle_buffer_models *jkgm::triangle_buffer_sequence::get_current()
+{
+    return &(*it);
+}
+
+void jkgm::triangle_buffer_sequence::swap_next()
+{
+    ++it;
+    if(it == trimdls.end()) {
+        it = trimdls.begin();
+    }
 }
 
 jkgm::srgb_texture::srgb_texture(size<2, int> dims)

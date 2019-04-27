@@ -43,6 +43,101 @@ namespace jkgm {
     static size<2, int> original_configured_screen_res = make_size(0, 0);
     static box<2, int> actual_display_area = make_box(make_point(0, 0), make_size(0, 0));
 
+    using wglCreateContextAttribsARB_type = HGLRC(WINAPI *)(HDC hDC,
+                                                            HGLRC hShareContext,
+                                                            int const *attribList);
+    static wglCreateContextAttribsARB_type wglCreateContextAttribsARB = nullptr;
+
+    using wglChoosePixelFormatARB_type = BOOL(WINAPI *)(HDC hDC,
+                                                        const int *piAttribIList,
+                                                        const FLOAT *pfAttribFList,
+                                                        UINT nMaxFormats,
+                                                        int *piFormats,
+                                                        UINT *nNumFormats);
+    static wglChoosePixelFormatARB_type wglChoosePixelFormatARB = nullptr;
+
+    // See https://www.opengl.org/registry/specs/ARB/wgl_create_context.txt for all values
+#define WGL_CONTEXT_MAJOR_VERSION_ARB 0x2091
+#define WGL_CONTEXT_MINOR_VERSION_ARB 0x2092
+#define WGL_CONTEXT_PROFILE_MASK_ARB 0x9126
+
+#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB 0x00000001
+
+// See https://www.opengl.org/registry/specs/ARB/wgl_pixel_format.txt for all values
+#define WGL_DRAW_TO_WINDOW_ARB 0x2001
+#define WGL_ACCELERATION_ARB 0x2003
+#define WGL_SUPPORT_OPENGL_ARB 0x2010
+#define WGL_DOUBLE_BUFFER_ARB 0x2011
+#define WGL_PIXEL_TYPE_ARB 0x2013
+#define WGL_COLOR_BITS_ARB 0x2014
+#define WGL_DEPTH_BITS_ARB 0x2022
+#define WGL_STENCIL_BITS_ARB 0x2023
+
+#define WGL_FULL_ACCELERATION_ARB 0x2027
+#define WGL_TYPE_RGBA_ARB 0x202B
+
+    void init_wgl_extensions(HINSTANCE hInstance)
+    {
+        WNDCLASS dummy_class;
+        ZeroMemory(&dummy_class, sizeof(WNDCLASS));
+        dummy_class.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+        dummy_class.lpfnWndProc = DefWindowProc;
+        dummy_class.lpszClassName = L"kernel_wgl_ext_loader";
+
+        if(!RegisterClass(&dummy_class)) {
+            LOG_ERROR("Failed to register WGL extension loader window class");
+            abort();
+        }
+
+        HWND dummy_window = CreateWindowEx(0,
+                                           L"kernel_wgl_ext_loader",
+                                           L"KernelWglExtLoader",
+                                           0,
+                                           CW_USEDEFAULT,
+                                           CW_USEDEFAULT,
+                                           CW_USEDEFAULT,
+                                           CW_USEDEFAULT,
+                                           NULL,
+                                           NULL,
+                                           hInstance,
+                                           NULL);
+
+        if(!dummy_window) {
+            LOG_ERROR("Failed to create WGL extension loader window");
+            abort();
+        }
+
+        HDC hDC = GetDC(dummy_window);
+
+        PIXELFORMATDESCRIPTOR pfd;
+        ZeroMemory(&pfd, sizeof(PIXELFORMATDESCRIPTOR));
+        pfd.nSize = sizeof(pfd);
+        pfd.nVersion = 1;
+        pfd.iPixelType = PFD_TYPE_RGBA;
+        pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+        pfd.cColorBits = 32;
+        pfd.cAlphaBits = 8;
+        pfd.iLayerType = PFD_MAIN_PLANE;
+        pfd.cDepthBits = 24;
+        pfd.cStencilBits = 8;
+
+        int pixel_format = ChoosePixelFormat(hDC, &pfd);
+        SetPixelFormat(hDC, pixel_format, &pfd);
+
+        HGLRC dummy_context = wglCreateContext(hDC);
+        wglMakeCurrent(hDC, dummy_context);
+
+        wglCreateContextAttribsARB =
+            (wglCreateContextAttribsARB_type)wglGetProcAddress("wglCreateContextAttribsARB");
+        wglChoosePixelFormatARB =
+            (wglChoosePixelFormatARB_type)wglGetProcAddress("wglChoosePixelFormatARB");
+
+        wglMakeCurrent(hDC, 0);
+        wglDeleteContext(dummy_context);
+        ReleaseDC(dummy_window, hDC);
+        DestroyWindow(dummy_window);
+    }
+
     LRESULT CALLBACK renderer_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         switch(uMsg) {
@@ -283,9 +378,11 @@ namespace jkgm {
             return real_pos;
         }
 
-        void initialize(HWND parentWnd) override
+        void initialize(HINSTANCE hInstance, HWND parentWnd) override
         {
             materials.create_map("jkgm/materials");
+
+            init_wgl_extensions(hInstance);
 
             hWnd = parentWnd;
 
@@ -311,26 +408,46 @@ namespace jkgm {
 
             hDC = GetDC(hWnd);
 
-            PIXELFORMATDESCRIPTOR pfd;
-            ZeroMemory(&pfd, sizeof(pfd));
+            std::vector<int> pfd_attribs{WGL_DRAW_TO_WINDOW_ARB,
+                                         GL_TRUE,
+                                         WGL_SUPPORT_OPENGL_ARB,
+                                         GL_TRUE,
+                                         WGL_DOUBLE_BUFFER_ARB,
+                                         GL_TRUE,
+                                         WGL_ACCELERATION_ARB,
+                                         WGL_FULL_ACCELERATION_ARB,
+                                         WGL_PIXEL_TYPE_ARB,
+                                         WGL_TYPE_RGBA_ARB,
+                                         WGL_COLOR_BITS_ARB,
+                                         32,
+                                         WGL_DEPTH_BITS_ARB,
+                                         24,
+                                         WGL_STENCIL_BITS_ARB,
+                                         8,
+                                         0};
 
-            pfd.nSize = sizeof(pfd);
-            pfd.nVersion = 1;
-            pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-            pfd.iPixelType = PFD_TYPE_RGBA;
-            pfd.cColorBits = 32;
-            pfd.cAlphaBits = 8;
-            pfd.cDepthBits = 24;
-
-            int pfdid = ChoosePixelFormat(hDC, &pfd);
-            if(pfdid == 0) {
+            int pfdid;
+            UINT num_formats;
+            wglChoosePixelFormatARB(
+                hDC, pfd_attribs.data(), nullptr, /*max formats*/ 1, &pfdid, &num_formats);
+            if(num_formats == 0) {
                 LOG_ERROR("Renderer ChoosePixelFormat failed: ",
                           win32::win32_category().message(GetLastError()));
             }
 
+            PIXELFORMATDESCRIPTOR pfd;
+            DescribePixelFormat(hDC, pfdid, sizeof(pfd), &pfd);
             SetPixelFormat(hDC, pfdid, &pfd);
 
-            hGLRC = wglCreateContext(hDC);
+            std::vector<int> gl_attribs{WGL_CONTEXT_MAJOR_VERSION_ARB,
+                                        3,
+                                        WGL_CONTEXT_MINOR_VERSION_ARB,
+                                        3,
+                                        WGL_CONTEXT_PROFILE_MASK_ARB,
+                                        WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+                                        0};
+
+            hGLRC = wglCreateContextAttribsARB(hDC, NULL, gl_attribs.data());
             wglMakeCurrent(hDC, hGLRC);
 
             if(!gladLoadGL()) {
@@ -599,9 +716,6 @@ namespace jkgm {
 
         void update_hud_texture()
         {
-            gl::enable(gl::capability::blend);
-            gl::disable(gl::capability::depth_test);
-
             ZeroMemory(ogs->hud_texture_data.data(), ogs->hud_texture_data.size());
 
             for(size_t i = 0; i < ddraw1_backbuffer_surface.buffer.size(); ++i) {
@@ -615,14 +729,26 @@ namespace jkgm {
             // Blit texture data into texture
             gl::set_active_texture_unit(0);
             gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->hud_texture);
-            gl::tex_sub_image_2d(
-                gl::texture_bind_target::texture_2d,
-                0,
-                make_box(make_point(0, 0),
-                         make_point(get<x>(internal_scr_res), get<y>(internal_scr_res))),
-                gl::texture_pixel_format::rgba,
-                gl::texture_pixel_type::uint8,
-                make_span(ogs->hud_texture_data).as_const_bytes());
+            gl::tex_image_2d(gl::texture_bind_target::texture_2d,
+                             /*level*/ 0,
+                             /*internal format*/ gl::texture_internal_format::srgb_a8,
+                             internal_scr_res,
+                             gl::texture_pixel_format::rgba,
+                             gl::texture_pixel_type::uint8,
+                             make_span(ogs->hud_texture_data).as_const_bytes());
+
+            for(auto &em : ddraw1_backbuffer_surface.buffer) {
+                em = ddraw1_backbuffer_surface.color_key;
+            }
+        }
+
+        void draw_hud()
+        {
+            gl::enable(gl::capability::blend);
+            gl::disable(gl::capability::depth_test);
+
+            gl::set_active_texture_unit(0);
+            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->hud_texture);
 
             // Render
             gl::use_program(ogs->menu_program);
@@ -631,10 +757,6 @@ namespace jkgm {
             gl::bind_vertex_array(ogs->hudmdl.vao);
             gl::draw_elements(
                 gl::element_type::triangles, ogs->hudmdl.num_indices, gl::index_type::uint32);
-
-            for(auto &em : ddraw1_backbuffer_surface.buffer) {
-                em = ddraw1_backbuffer_surface.color_key;
-            }
         }
 
         void update_current_batch()
@@ -760,38 +882,41 @@ namespace jkgm {
         {
             mdl->maybe_grow_buffers(tb.capacity() * 3);
 
-            int curr_vert = 0;
+            auto *vx = mdl->mmio.data();
             for(auto const &tri : tb) {
-                mdl->pos[curr_vert] = tri.v0.pos;
-                mdl->texcoords[curr_vert] = tri.v0.texcoords;
-                mdl->color[curr_vert] = tri.v0.color;
-                mdl->normals[curr_vert] = tri.normal;
+                vx->pos = tri.v0.pos;
+                vx->texcoords = tri.v0.texcoords;
+                vx->col = tri.v0.color;
+                vx->normal = tri.normal;
 
-                ++curr_vert;
+                ++vx;
 
-                mdl->pos[curr_vert] = tri.v1.pos;
-                mdl->texcoords[curr_vert] = tri.v1.texcoords;
-                mdl->color[curr_vert] = tri.v1.color;
-                mdl->normals[curr_vert] = tri.normal;
+                vx->pos = tri.v1.pos;
+                vx->texcoords = tri.v1.texcoords;
+                vx->col = tri.v1.color;
+                vx->normal = tri.normal;
 
-                ++curr_vert;
+                ++vx;
 
-                mdl->pos[curr_vert] = tri.v2.pos;
-                mdl->texcoords[curr_vert] = tri.v2.texcoords;
-                mdl->color[curr_vert] = tri.v2.color;
-                mdl->normals[curr_vert] = tri.normal;
+                vx->pos = tri.v2.pos;
+                vx->texcoords = tri.v2.texcoords;
+                vx->col = tri.v2.color;
+                vx->normal = tri.normal;
 
-                ++curr_vert;
+                ++vx;
             }
 
-            mdl->num_vertices = curr_vert;
+            mdl->num_vertices = tb.size() * 3;
             mdl->update_buffers();
         }
 
-        void draw_game_opaque_into_gbuffer()
+        void draw_game_opaque_into_gbuffer(triangle_buffer_models *trimdl)
         {
             gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->gbuffer.fbo);
-            gl::clear({gl::clear_flag::depth, gl::clear_flag::color});
+            gl::clear_buffer_depth(1.0f);
+            gl::clear_buffer_color(0, color::zero());
+            gl::clear_buffer_color(1, color::zero());
+            gl::clear_buffer_color(2, color::zero());
 
             // Draw batches
             gl::disable(gl::capability::blend);
@@ -812,17 +937,18 @@ namespace jkgm {
             gl::set_uniform_integer(gl::uniform_location_id(7), 2);
 
             // Draw first pass (opaque world geometry)
-            draw_batch(world_batch, &ogs->world_trimdl, /*force opaque*/ true);
+            draw_batch(world_batch, &trimdl->world_trimdl, /*force opaque*/ true);
 
             // Draw second pass (transparent world geometry with alpha testing)
             draw_batch(
-                world_transparent_batch, &ogs->world_transparent_trimdl, /*force opaque*/ true);
+                world_transparent_batch, &trimdl->world_transparent_trimdl, /*force opaque*/ true);
 
             // Draw fourth pass (opaque gun geometry)
-            draw_batch(gun_batch, &ogs->gun_trimdl, /*force opaque*/ true);
+            draw_batch(gun_batch, &trimdl->gun_trimdl, /*force opaque*/ true);
 
             // Draw fifth pass (transparent gun geometry with alpha testing)
-            draw_batch(gun_transparent_batch, &ogs->gun_transparent_trimdl, /*force opaque*/ true);
+            draw_batch(
+                gun_transparent_batch, &trimdl->gun_transparent_trimdl, /*force opaque*/ true);
         }
 
         void draw_game_ssao_postprocess()
@@ -909,9 +1035,9 @@ namespace jkgm {
                 gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
         }
 
-        void draw_game_gbuffer_pass()
+        void draw_game_gbuffer_pass(triangle_buffer_models *trimdl)
         {
-            draw_game_opaque_into_gbuffer();
+            draw_game_opaque_into_gbuffer(trimdl);
 
             if(the_config->enable_ssao) {
                 draw_game_ssao_postprocess();
@@ -920,7 +1046,7 @@ namespace jkgm {
             draw_game_opaque_composite();
         }
 
-        void draw_game_transparency_pass()
+        void draw_game_transparency_pass(triangle_buffer_models *trimdl)
         {
             gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->screen_renderbuffer.fbo);
 
@@ -946,18 +1072,19 @@ namespace jkgm {
             gl::enable(gl::capability::blend);
             gl::set_depth_mask(false);
             draw_batch(
-                world_transparent_batch, &ogs->world_transparent_trimdl, /*force opaque*/ false);
+                world_transparent_batch, &trimdl->world_transparent_trimdl, /*force opaque*/ false);
 
             // Redraw gun overlay after z-clear
             gl::set_depth_mask(true);
             gl::clear({gl::clear_flag::depth});
 
-            draw_batch(gun_batch, &ogs->gun_trimdl, /*force opaque*/ true);
-            draw_batch(gun_transparent_batch, &ogs->gun_transparent_trimdl, /*force opaque*/ true);
+            draw_batch(gun_batch, &trimdl->gun_trimdl, /*force opaque*/ true);
+            draw_batch(
+                gun_transparent_batch, &trimdl->gun_transparent_trimdl, /*force opaque*/ true);
 
             // Draw gun transparency
             draw_batch(gun_transparent_batch,
-                       &ogs->gun_transparent_trimdl, /*force opaque*/
+                       &trimdl->gun_transparent_trimdl, /*force opaque*/
                        false);
 
             gl::enable(gl::capability::depth_test);
@@ -1135,21 +1262,26 @@ namespace jkgm {
 
         void present_game() override
         {
+            end_frame();
+            update_hud_texture();
+
+            ogs->tribuf.swap_next();
+            auto *trimdl = ogs->tribuf.get_current();
+
             world_batch.sort();
             world_transparent_batch.sort();
             gun_batch.sort();
             gun_transparent_batch.sort();
 
-            fill_buffer(world_batch, &ogs->world_trimdl);
-            fill_buffer(world_transparent_batch, &ogs->world_transparent_trimdl);
-            fill_buffer(gun_batch, &ogs->gun_trimdl);
-            fill_buffer(gun_transparent_batch, &ogs->gun_transparent_trimdl);
+            fill_buffer(world_batch, &trimdl->world_trimdl);
+            fill_buffer(world_transparent_batch, &trimdl->world_transparent_trimdl);
+            fill_buffer(gun_batch, &trimdl->gun_trimdl);
+            fill_buffer(gun_transparent_batch, &trimdl->gun_transparent_trimdl);
 
-            draw_game_gbuffer_pass();
-            draw_game_transparency_pass();
+            draw_game_gbuffer_pass(trimdl);
+            draw_game_transparency_pass(trimdl);
 
-            update_hud_texture();
-            end_frame();
+            draw_hud();
 
             // Reset state:
             is_gun = false;

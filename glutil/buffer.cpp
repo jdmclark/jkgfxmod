@@ -33,6 +33,30 @@ void jkgm::gl::buffer_sub_data(buffer_bind_target target, size_t offset, span<ch
     glBufferSubData(static_cast<GLenum>(target), offset, data.size(), data.data());
 }
 
+void jkgm::gl::clear_buffer_depth(float value)
+{
+    glClearBufferfv(GL_DEPTH, 0, &value);
+}
+
+void jkgm::gl::clear_buffer_color(int drawbuffer, color value)
+{
+    glClearBufferfv(GL_COLOR, drawbuffer, value.data.data());
+}
+
+void *jkgm::gl::detail::map_buffer_range(buffer_bind_target target,
+                                         size_t offset,
+                                         size_t length,
+                                         flag_set<buffer_access> access)
+{
+    return glMapBufferRange(
+        static_cast<GLenum>(target), offset, length, static_cast<GLbitfield>(access));
+}
+
+void jkgm::gl::unmap_buffer(buffer_bind_target target)
+{
+    glUnmapBuffer(static_cast<GLenum>(target));
+}
+
 namespace jkgm::gl {
     static_assert(buffer_bind_target::array == buffer_bind_target(GL_ARRAY_BUFFER));
     static_assert(buffer_bind_target::element_array == buffer_bind_target(GL_ELEMENT_ARRAY_BUFFER));
@@ -40,4 +64,11 @@ namespace jkgm::gl {
     static_assert(buffer_usage::static_draw == buffer_usage(GL_STATIC_DRAW));
     static_assert(buffer_usage::dynamic_draw == buffer_usage(GL_DYNAMIC_DRAW));
     static_assert(buffer_usage::stream_draw == buffer_usage(GL_STREAM_DRAW));
+
+    static_assert(buffer_access::read == buffer_access(GL_MAP_READ_BIT));
+    static_assert(buffer_access::write == buffer_access(GL_MAP_WRITE_BIT));
+    static_assert(buffer_access::invalidate_range == buffer_access(GL_MAP_INVALIDATE_RANGE_BIT));
+    static_assert(buffer_access::invalidate_buffer == buffer_access(GL_MAP_INVALIDATE_BUFFER_BIT));
+    static_assert(buffer_access::flush_explicit == buffer_access(GL_MAP_FLUSH_EXPLICIT_BIT));
+    static_assert(buffer_access::unsynchronized == buffer_access(GL_MAP_UNSYNCHRONIZED_BIT));
 }

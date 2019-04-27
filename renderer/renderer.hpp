@@ -27,7 +27,7 @@ namespace jkgm {
 
         virtual bool is_parallax_enabled() = 0;
 
-        virtual void initialize(HWND parentWnd) = 0;
+        virtual void initialize(HINSTANCE hInstance, HWND parentWnd) = 0;
 
         virtual HRESULT enumerate_devices(LPDDENUMCALLBACKA cb, LPVOID lpContext) = 0;
 

@@ -91,7 +91,6 @@ namespace jkgm {
     public:
         gl::framebuffer fbo;
         gl::texture tex;
-        gl::renderbuffer rbo;
         box<2, int> viewport;
 
         explicit ssao_occlusion_buffer(size<2, int> dims);
@@ -101,7 +100,6 @@ namespace jkgm {
     public:
         gl::framebuffer fbo;
         gl::texture tex;
-        gl::renderbuffer rbo;
         box<2, int> viewport;
 
         explicit post_buffer(size<2, int> dims);
@@ -124,27 +122,47 @@ namespace jkgm {
         hdr_stack();
     };
 
+    struct alignas(32) triangle_buffer_vertex {
+        point<4, float> pos;
+        point<2, float> texcoords;
+        jkgm::color col;
+        direction<3, float> normal;
+    };
+
     class triangle_buffer_model {
     private:
-        gl::buffer pos_buffer;
-        gl::buffer texcoord_buffer;
-        gl::buffer color_buffer;
-        gl::buffer normal_buffer;
+        gl::buffer vbo;
         unsigned int vb_capacity = 0U;
 
     public:
         gl::vertex_array vao;
 
-        std::vector<point<4, float>> pos;
-        std::vector<point<2, float>> texcoords;
-        std::vector<jkgm::color> color;
-        std::vector<direction<3, float>> normals;
+        span<triangle_buffer_vertex> mmio;
         int num_vertices = 0;
 
         triangle_buffer_model();
 
         void maybe_grow_buffers(unsigned int new_capacity);
         void update_buffers();
+    };
+
+    struct triangle_buffer_models {
+        triangle_buffer_model world_trimdl;
+        triangle_buffer_model world_transparent_trimdl;
+        triangle_buffer_model gun_trimdl;
+        triangle_buffer_model gun_transparent_trimdl;
+    };
+
+    class triangle_buffer_sequence {
+    private:
+        std::vector<triangle_buffer_models> trimdls;
+        std::vector<triangle_buffer_models>::iterator it;
+
+    public:
+        triangle_buffer_sequence();
+
+        triangle_buffer_models *get_current();
+        void swap_next();
     };
 
     struct srgb_texture {
@@ -182,10 +200,7 @@ namespace jkgm {
         post_model postmdl;
         overlay_model menumdl;
         hud_model hudmdl;
-        triangle_buffer_model world_trimdl;
-        triangle_buffer_model world_transparent_trimdl;
-        triangle_buffer_model gun_trimdl;
-        triangle_buffer_model gun_transparent_trimdl;
+        triangle_buffer_sequence tribuf;
 
         gl::texture menu_texture;
         std::vector<color_rgba8> menu_texture_data;

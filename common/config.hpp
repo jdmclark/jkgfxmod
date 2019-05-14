@@ -20,6 +20,7 @@ namespace jkgm {
         bool enable_posterized_lighting = false;
         std::string command = "jk.exe";
         std::string data_path = "jkgm";
+        std::optional<std::string> log_path;
     };
 
     std::unique_ptr<config> load_config_file();

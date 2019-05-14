@@ -165,6 +165,22 @@ BOOL WINAPI HookedDeleteObject(HGDIOBJ ho)
     return TrueDeleteObject(ho);
 }
 
+using ChangeDisplaySettingsA_type = LONG(WINAPI *)(DEVMODEA *lpDevMode, DWORD dwFlags);
+static ChangeDisplaySettingsA_type TrueChangeDisplaySettingsA = nullptr;
+LONG WINAPI HookedChangeDisplaySettingsA(DEVMODEA *lpDevMode, DWORD dwFlags)
+{
+    LOG_DEBUG("Suppressing ChangeDisplaySettingsA");
+    return DISP_CHANGE_SUCCESSFUL;
+}
+
+using ChangeDisplaySettingsW_type = LONG(WINAPI *)(DEVMODEW *lpDevMode, DWORD dwFlags);
+static ChangeDisplaySettingsW_type TrueChangeDisplaySettingsW = nullptr;
+LONG WINAPI HookedChangeDisplaySettingsW(DEVMODEW *lpDevMode, DWORD dwFlags)
+{
+    LOG_DEBUG("Called ChangeDisplaySettingsW");
+    return TrueChangeDisplaySettingsW(lpDevMode, dwFlags);
+}
+
 bool attach_hooks()
 {
     DetourRestoreAfterWith();
@@ -203,6 +219,14 @@ bool attach_hooks()
     TrueDeleteObject = (DeleteObject_type)DetourFindFunction("gdi32.dll", "DeleteObject");
     DetourAttach(&(PVOID &)TrueDeleteObject, HookedDeleteObject);
 
+    TrueChangeDisplaySettingsA =
+        (ChangeDisplaySettingsA_type)DetourFindFunction("user32.dll", "ChangeDisplaySettingsA");
+    DetourAttach(&(PVOID &)TrueChangeDisplaySettingsA, HookedChangeDisplaySettingsA);
+
+    TrueChangeDisplaySettingsW =
+        (ChangeDisplaySettingsW_type)DetourFindFunction("user32.dll", "ChangeDisplaySettingsW");
+    DetourAttach(&(PVOID &)TrueChangeDisplaySettingsW, HookedChangeDisplaySettingsW);
+
     LONG error = DetourTransactionCommit();
     return error == NO_ERROR;
 }
@@ -221,6 +245,8 @@ bool detach_hooks()
     DetourDetach(&(PVOID &)TrueSetDIBColorTable, HookedSetDIBColorTable);
     DetourDetach(&(PVOID &)TrueGdiFlush, HookedGdiFlush);
     DetourDetach(&(PVOID &)TrueDeleteObject, HookedDeleteObject);
+    DetourDetach(&(PVOID &)TrueChangeDisplaySettingsA, HookedChangeDisplaySettingsA);
+    DetourDetach(&(PVOID &)TrueChangeDisplaySettingsW, HookedChangeDisplaySettingsW);
 
     LONG error = DetourTransactionCommit();
     return error == NO_ERROR;
@@ -235,6 +261,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID /*lpRese
     if(ul_reason_for_call == DLL_PROCESS_ATTACH) {
         jkgm::setup_default_logging();
         the_config = jkgm::load_config_file();
+
+        if(the_config->log_path.has_value()) {
+            jkgm::add_file_logging(*the_config->log_path);
+        }
+
         the_renderer = jkgm::create_renderer(hModule, the_config.get());
 
         LOG_DEBUG("Attaching renderer to process");

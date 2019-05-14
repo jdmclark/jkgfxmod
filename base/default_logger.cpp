@@ -16,3 +16,10 @@ void jkgm::setup_default_logging()
                                               *maybe_log_file);
     }
 }
+
+void jkgm::add_file_logging(std::string const &path)
+{
+    emplace_log_backend<file_log_backend>(
+        {log_level::error, log_level::warning, log_level::info, log_level::debug, log_level::trace},
+        path);
+}

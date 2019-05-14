@@ -68,6 +68,13 @@ std::unique_ptr<jkgm::config> jkgm::load_config_file()
         if(j.contains("data_path")) {
             j.at("data_path").get_to(rv->data_path);
         }
+
+        if(j.contains("log_path")) {
+            auto const &em = j["log_path"];
+            if(!em.is_null()) {
+                rv->log_path = em;
+            }
+        }
     }
     catch(std::exception const &e) {
         LOG_WARNING("Failed to load configuration file: ", e.what());

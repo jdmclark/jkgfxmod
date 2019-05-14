@@ -28,7 +28,8 @@ ULONG WINAPI jkgm::Direct3D_impl::Release()
 
 HRESULT WINAPI jkgm::Direct3D_impl::Initialize(REFCLSID a)
 {
-    report_unimplemented_function("Direct3D::Initialize");
+    LOG_DEBUG("Called Direct3D::Initialize, but it is a stub in this version of DirectX");
+    return D3D_OK;
 }
 
 HRESULT WINAPI jkgm::Direct3D_impl::EnumDevices(LPD3DENUMDEVICESCALLBACK a, LPVOID b)

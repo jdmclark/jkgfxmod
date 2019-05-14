@@ -6,6 +6,7 @@
 #include <Windows.h>
 #include <detours/detours.h>
 #include <string>
+#include <regex>
 
 namespace {
     constexpr wchar_t const *appname = L"JkGfxMod";
@@ -25,12 +26,18 @@ int APIENTRY wWinMain(HINSTANCE /*hInstance*/,
         jkgm::setup_default_logging();
         auto cfg = jkgm::load_config_file();
 
-        std::wstring cmdbuf = L"jk ";
-        cmdbuf.append(lpCmdLine);
+        std::wstring filtered_cmdline = lpCmdLine;
 
-        if(!cfg->fullscreen) {
-            cmdbuf.append(L" -windowgui");
+        if(cfg->fullscreen) {
+            std::wregex re(L"[/-]windowgui", std::regex_constants::icase);
+            filtered_cmdline = std::regex_replace(filtered_cmdline, re, std::wstring());
         }
+        else {
+            filtered_cmdline.append(L" -windowgui");
+        }
+
+        std::wstring cmdbuf = L"jk ";
+        cmdbuf.append(filtered_cmdline);
 
         STARTUPINFO si;
         ZeroMemory(&si, sizeof(si));

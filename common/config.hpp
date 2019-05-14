@@ -13,6 +13,7 @@ namespace jkgm {
         bool fullscreen = false;
         float hud_scale = 1.0f;
         float max_anisotropy = 2.0f;
+        bool enable_bloom = true;
         bool enable_ssao = true;
         bool enable_parallax = true;
         bool enable_texture_filtering = true;

@@ -481,70 +481,75 @@ namespace jkgm {
         {
             // Compose renderbuffer onto window:
             auto current_wnd_sz = conf_scr_res;
-
-            // Render low pass for bloom
-            gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->screen_postbuffer2.fbo);
-            gl::set_viewport(make_box(make_point(0, 0), current_wnd_sz));
-
-            gl::set_clear_color(solid(colors::black));
-            gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
-
-            gl::use_program(ogs->post_low_pass);
-
-            gl::set_uniform_integer(gl::uniform_location_id(0), 0);
-
-            gl::set_active_texture_unit(0);
-            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->screen_renderbuffer.tex);
-
             gl::bind_vertex_array(ogs->postmdl.vao);
-            gl::draw_elements(
-                gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
 
-            // Blur and down sample:
-            gl::set_active_texture_unit(0);
+            if(the_config->enable_bloom) {
+                // Render low pass for bloom
+                gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->screen_postbuffer2.fbo);
+                gl::set_viewport(make_box(make_point(0, 0), current_wnd_sz));
 
-            gl::texture_view src_tx = ogs->screen_postbuffer2.tex;
+                gl::set_clear_color(solid(colors::black));
+                gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
 
-            gl::use_program(ogs->post_gauss7);
-            gl::set_uniform_integer(gl::uniform_location_id(0), 0);
+                gl::use_program(ogs->post_low_pass);
 
-            auto hdr_vp_size = static_cast<size<2, float>>(current_wnd_sz);
-            float hdr_aspect_ratio = get<x>(hdr_vp_size) / get<y>(hdr_vp_size);
+                gl::set_uniform_integer(gl::uniform_location_id(0), 0);
 
-            for(auto &hdr_stack_em : ogs->bloom_layers.elements) {
-                auto layer_vp_size = static_cast<size<2, float>>(hdr_stack_em.a.viewport.size());
-                gl::set_uniform_vector(gl::uniform_location_id(1),
-                                       make_size(get<x>(layer_vp_size) * hdr_aspect_ratio,
-                                                 get<y>(layer_vp_size)));
+                gl::set_active_texture_unit(0);
+                gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->screen_renderbuffer.tex);
 
-                for(int i = 0; i < hdr_stack_em.num_passes; ++i) {
-                    // Blur horizontally
-                    gl::bind_framebuffer(gl::framebuffer_bind_target::any, hdr_stack_em.b.fbo);
-                    gl::set_viewport(hdr_stack_em.b.viewport);
+                gl::draw_elements(
+                    gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
 
-                    gl::set_clear_color(solid(colors::black));
-                    gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
+                // Blur and down sample:
+                gl::set_active_texture_unit(0);
 
-                    gl::set_uniform_vector(gl::uniform_location_id(2), make_direction(1.0f, 0.0f));
-                    gl::bind_texture(gl::texture_bind_target::texture_2d, src_tx);
-                    gl::draw_elements(gl::element_type::triangles,
-                                      ogs->postmdl.num_indices,
-                                      gl::index_type::uint32);
+                gl::texture_view src_tx = ogs->screen_postbuffer2.tex;
 
-                    // Blur vertically
-                    gl::bind_framebuffer(gl::framebuffer_bind_target::any, hdr_stack_em.a.fbo);
+                gl::use_program(ogs->post_gauss7);
+                gl::set_uniform_integer(gl::uniform_location_id(0), 0);
 
-                    gl::set_clear_color(solid(colors::black));
-                    gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
+                auto hdr_vp_size = static_cast<size<2, float>>(current_wnd_sz);
+                float hdr_aspect_ratio = get<x>(hdr_vp_size) / get<y>(hdr_vp_size);
 
-                    gl::set_uniform_vector(gl::uniform_location_id(2), make_direction(0.0f, 1.0f));
-                    gl::bind_texture(gl::texture_bind_target::texture_2d, hdr_stack_em.b.tex);
-                    gl::draw_elements(gl::element_type::triangles,
-                                      ogs->postmdl.num_indices,
-                                      gl::index_type::uint32);
+                for(auto &hdr_stack_em : ogs->bloom_layers.elements) {
+                    auto layer_vp_size =
+                        static_cast<size<2, float>>(hdr_stack_em.a.viewport.size());
+                    gl::set_uniform_vector(gl::uniform_location_id(1),
+                                           make_size(get<x>(layer_vp_size) * hdr_aspect_ratio,
+                                                     get<y>(layer_vp_size)));
 
-                    // Set up next stage
-                    src_tx = hdr_stack_em.a.tex;
+                    for(int i = 0; i < hdr_stack_em.num_passes; ++i) {
+                        // Blur horizontally
+                        gl::bind_framebuffer(gl::framebuffer_bind_target::any, hdr_stack_em.b.fbo);
+                        gl::set_viewport(hdr_stack_em.b.viewport);
+
+                        gl::set_clear_color(solid(colors::black));
+                        gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
+
+                        gl::set_uniform_vector(gl::uniform_location_id(2),
+                                               make_direction(1.0f, 0.0f));
+                        gl::bind_texture(gl::texture_bind_target::texture_2d, src_tx);
+                        gl::draw_elements(gl::element_type::triangles,
+                                          ogs->postmdl.num_indices,
+                                          gl::index_type::uint32);
+
+                        // Blur vertically
+                        gl::bind_framebuffer(gl::framebuffer_bind_target::any, hdr_stack_em.a.fbo);
+
+                        gl::set_clear_color(solid(colors::black));
+                        gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
+
+                        gl::set_uniform_vector(gl::uniform_location_id(2),
+                                               make_direction(0.0f, 1.0f));
+                        gl::bind_texture(gl::texture_bind_target::texture_2d, hdr_stack_em.b.tex);
+                        gl::draw_elements(gl::element_type::triangles,
+                                          ogs->postmdl.num_indices,
+                                          gl::index_type::uint32);
+
+                        // Set up next stage
+                        src_tx = hdr_stack_em.a.tex;
+                    }
                 }
             }
 
@@ -565,11 +570,21 @@ namespace jkgm {
             gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->screen_renderbuffer.tex);
 
             int curr_em = 1;
-            for(auto &hdr_stack_em : ogs->bloom_layers.elements) {
-                gl::set_uniform_integer(gl::uniform_location_id(curr_em), curr_em);
-                gl::set_active_texture_unit(curr_em);
-                gl::bind_texture(gl::texture_bind_target::texture_2d, hdr_stack_em.a.tex);
-                ++curr_em;
+            if(the_config->enable_bloom) {
+                for(auto &hdr_stack_em : ogs->bloom_layers.elements) {
+                    gl::set_uniform_integer(gl::uniform_location_id(curr_em), curr_em);
+                    gl::set_active_texture_unit(curr_em);
+                    gl::bind_texture(gl::texture_bind_target::texture_2d, hdr_stack_em.a.tex);
+                    ++curr_em;
+                }
+            }
+            else {
+                for(auto &hdr_stack_em : ogs->bloom_layers.elements) {
+                    gl::set_uniform_integer(gl::uniform_location_id(curr_em), curr_em);
+                    gl::set_active_texture_unit(curr_em);
+                    gl::bind_texture(gl::texture_bind_target::texture_2d, gl::default_texture);
+                    ++curr_em;
+                }
             }
 
             curr_em = 5;

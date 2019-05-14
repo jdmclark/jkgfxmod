@@ -41,6 +41,10 @@ std::unique_ptr<jkgm::config> jkgm::load_config_file()
             j.at("max_anisotropy").get_to(rv->max_anisotropy);
         }
 
+        if(j.contains("enable_bloom")) {
+            j.at("enable_bloom").get_to(rv->enable_bloom);
+        }
+
         if(j.contains("enable_ssao")) {
             j.at("enable_ssao").get_to(rv->enable_ssao);
         }

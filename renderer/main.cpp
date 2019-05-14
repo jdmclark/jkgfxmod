@@ -92,6 +92,9 @@ HWND WINAPI HookedCreateWindowExA(DWORD dwExStyle,
     return rv;
 }
 
+static HBITMAP const phony_dibsection_bitmap = (HBITMAP)0x70FFFF10;
+static std::array<char, 640 * 480> phony_dibsection_memory;
+
 using CreateDIBSection_type = HBITMAP(WINAPI *)(HDC hDC,
                                                 BITMAPINFO const *pbmi,
                                                 UINT usage,
@@ -107,9 +110,10 @@ HBITMAP WINAPI HookedCreateDIBSection(HDC hDC,
                                       DWORD offset)
 {
     LOG_DEBUG("CreateDIBSection hook called");
-    auto rv = TrueCreateDIBSection(hDC, pbmi, usage, ppvBits, hSection, offset);
-    the_renderer->set_menu_source(rv, reinterpret_cast<char const *>(*ppvBits));
-    return rv;
+    *ppvBits = phony_dibsection_memory.data();
+    the_renderer->set_menu_source(phony_dibsection_bitmap,
+                                  reinterpret_cast<char const *>(*ppvBits));
+    return phony_dibsection_bitmap;
 }
 
 using GetCursorPos_type = BOOL(WINAPI *)(LPPOINT lpPoint);
@@ -153,7 +157,11 @@ using DeleteObject_type = BOOL(WINAPI *)(HGDIOBJ ho);
 static DeleteObject_type TrueDeleteObject = nullptr;
 BOOL WINAPI HookedDeleteObject(HGDIOBJ ho)
 {
-    the_renderer->maybe_clear_menu_source(ho);
+    if(ho == (HGDIOBJ)phony_dibsection_bitmap) {
+        the_renderer->maybe_clear_menu_source(ho);
+        return TRUE;
+    }
+
     return TrueDeleteObject(ho);
 }
 

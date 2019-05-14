@@ -1497,9 +1497,18 @@ namespace jkgm {
             gl::generate_mipmap(gl::texture_bind_target::texture_2d);
             gl::set_texture_max_anisotropy(gl::texture_bind_target::texture_2d,
                                            std::max(1.0f, the_config->max_anisotropy));
-            gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
-            gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
-                                       gl::min_filter::linear_mipmap_linear);
+            if(the_config->enable_texture_filtering) {
+                gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d,
+                                           gl::mag_filter::linear);
+                gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
+                                           gl::min_filter::linear_mipmap_linear);
+            }
+            else {
+                gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d,
+                                           gl::mag_filter::nearest);
+                gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
+                                           gl::min_filter::nearest_mipmap_linear);
+            }
 
             return rv;
         }
@@ -1589,9 +1598,18 @@ namespace jkgm {
             gl::generate_mipmap(gl::texture_bind_target::texture_2d);
             gl::set_texture_max_anisotropy(gl::texture_bind_target::texture_2d,
                                            std::max(1.0f, the_config->max_anisotropy));
-            gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
-            gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
-                                       gl::min_filter::linear_mipmap_linear);
+            if(the_config->enable_texture_filtering) {
+                gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d,
+                                           gl::mag_filter::linear);
+                gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
+                                           gl::min_filter::linear_mipmap_linear);
+            }
+            else {
+                gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d,
+                                           gl::mag_filter::nearest);
+                gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
+                                           gl::min_filter::nearest_mipmap_linear);
+            }
 
             return rv;
         }

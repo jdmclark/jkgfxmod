@@ -49,6 +49,10 @@ std::unique_ptr<jkgm::config> jkgm::load_config_file()
             j.at("enable_parallax").get_to(rv->enable_parallax);
         }
 
+        if(j.contains("enable_texture_filtering")) {
+            j.at("enable_texture_filtering").get_to(rv->enable_texture_filtering);
+        }
+
         if(j.contains("command")) {
             j.at("command").get_to(rv->command);
         }

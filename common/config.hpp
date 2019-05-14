@@ -15,6 +15,7 @@ namespace jkgm {
         float max_anisotropy = 2.0f;
         bool enable_ssao = true;
         bool enable_parallax = true;
+        bool enable_texture_filtering = true;
         std::string command = "jk.exe";
         std::string data_path = "jkgm";
     };

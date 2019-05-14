@@ -6,5 +6,6 @@
     "max_anisotropy": 2.0,
     "enable_ssao": true,
     "enable_parallax": true,
+    "enable_texture_filtering": true,
     "command": "jk.exe"
 }

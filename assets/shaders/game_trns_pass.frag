@@ -93,7 +93,10 @@ void main()
         albedo_map_sample.a = 1.0;
     }
 
-    vec4 albedo = albedo_map_sample * vp_color * albedo_factor;
+    vec4 posterized_vertex_color = vec4(ceil(vp_color * 64.0)) / 64.0;
+    vec4 vertex_color = mix(vp_color, posterized_vertex_color, features.w);
+
+    vec4 albedo = albedo_map_sample * vertex_color * albedo_factor;
 
     vec3 emissive_map_sample = texture(emissive_map, adj_texcoords).rgb;
     emissive_map_sample = mix(vec3(1.0), emissive_map_sample, features.y);

@@ -16,6 +16,7 @@ namespace jkgm {
         bool enable_ssao = true;
         bool enable_parallax = true;
         bool enable_texture_filtering = true;
+        bool enable_posterized_lighting = false;
         std::string command = "jk.exe";
         std::string data_path = "jkgm";
     };

@@ -7,5 +7,6 @@
     "enable_ssao": true,
     "enable_parallax": true,
     "enable_texture_filtering": true,
+    "enable_posterized_lighting": false,
     "command": "jk.exe"
 }

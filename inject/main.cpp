@@ -12,7 +12,7 @@ namespace {
 
     void show_error_message(wchar_t const *message)
     {
-        MessageBoxW(NULL, message, appname, MB_OK);
+        MessageBoxW(NULL, message, appname, MB_OK | MB_ICONERROR | MB_TASKMODAL);
     }
 }
 

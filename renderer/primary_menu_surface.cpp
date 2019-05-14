@@ -2,6 +2,7 @@
 #include "backbuffer_menu_surface.hpp"
 #include "base/log.hpp"
 #include "dxguids.hpp"
+#include "error_reporter.hpp"
 #include "renderer.hpp"
 
 jkgm::primary_menu_surface::primary_menu_surface(renderer *r)
@@ -165,9 +166,8 @@ HRESULT WINAPI jkgm::primary_menu_surface::GetAttachedSurface(LPDDSCAPS a, LPDIR
         return DD_OK;
     }
 
-    LOG_ERROR(
-        "DirectDrawSurface(primary menu)::GetAttachedSurface(", a->dwCaps, ") unimplemented type");
-    abort();
+    report_unimplemented_function(
+        str(format("DirectDrawSurface(primary menu)::GetAttachedSurface(", a->dwCaps, ")")));
 }
 
 HRESULT WINAPI jkgm::primary_menu_surface::GetBltStatus(DWORD a)

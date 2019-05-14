@@ -33,16 +33,6 @@ void jkgm::gl::buffer_sub_data(buffer_bind_target target, size_t offset, span<ch
     glBufferSubData(static_cast<GLenum>(target), offset, data.size(), data.data());
 }
 
-void jkgm::gl::clear_buffer_depth(float value)
-{
-    glClearBufferfv(GL_DEPTH, 0, &value);
-}
-
-void jkgm::gl::clear_buffer_color(int drawbuffer, color value)
-{
-    glClearBufferfv(GL_COLOR, drawbuffer, value.data.data());
-}
-
 void *jkgm::gl::detail::map_buffer_range(buffer_bind_target target,
                                          size_t offset,
                                          size_t length,

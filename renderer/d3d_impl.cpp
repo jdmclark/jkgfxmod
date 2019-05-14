@@ -1,6 +1,7 @@
 #include "d3d_impl.hpp"
 #include "base/log.hpp"
 #include "dxguids.hpp"
+#include "error_reporter.hpp"
 #include "renderer.hpp"
 
 jkgm::Direct3D_impl::Direct3D_impl(renderer *r)
@@ -10,8 +11,7 @@ jkgm::Direct3D_impl::Direct3D_impl(renderer *r)
 
 HRESULT WINAPI jkgm::Direct3D_impl::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
-    LOG_ERROR("Direct3D::QueryInterface(", to_string(riid), ") unimplemented");
-    abort();
+    report_unimplemented_function(str(format("Direct3D::QueryInterface(", to_string(riid), ")")));
 }
 
 ULONG WINAPI jkgm::Direct3D_impl::AddRef()
@@ -28,8 +28,7 @@ ULONG WINAPI jkgm::Direct3D_impl::Release()
 
 HRESULT WINAPI jkgm::Direct3D_impl::Initialize(REFCLSID a)
 {
-    LOG_ERROR("Direct3D::Initialize unimplemented");
-    abort();
+    report_unimplemented_function("Direct3D::Initialize");
 }
 
 HRESULT WINAPI jkgm::Direct3D_impl::EnumDevices(LPD3DENUMDEVICESCALLBACK a, LPVOID b)
@@ -118,14 +117,12 @@ HRESULT WINAPI jkgm::Direct3D_impl::EnumDevices(LPD3DENUMDEVICESCALLBACK a, LPVO
 
 HRESULT WINAPI jkgm::Direct3D_impl::CreateLight(LPDIRECT3DLIGHT *a, IUnknown *b)
 {
-    LOG_ERROR("Direct3D::CreateLight unimplemented");
-    abort();
+    report_unimplemented_function("Direct3D::CreateLight");
 }
 
 HRESULT WINAPI jkgm::Direct3D_impl::CreateMaterial(LPDIRECT3DMATERIAL *a, IUnknown *b)
 {
-    LOG_ERROR("Direct3D::CreateMaterial unimplemented");
-    abort();
+    report_unimplemented_function("Direct3D::CreateMaterial");
 }
 
 HRESULT WINAPI jkgm::Direct3D_impl::CreateViewport(LPDIRECT3DVIEWPORT *a, IUnknown *b)
@@ -136,6 +133,5 @@ HRESULT WINAPI jkgm::Direct3D_impl::CreateViewport(LPDIRECT3DVIEWPORT *a, IUnkno
 
 HRESULT WINAPI jkgm::Direct3D_impl::FindDevice(LPD3DFINDDEVICESEARCH a, LPD3DFINDDEVICERESULT b)
 {
-    LOG_ERROR("Direct3D::FindDevice unimplemented");
-    abort();
+    report_unimplemented_function("Direct3D::FindDevice");
 }

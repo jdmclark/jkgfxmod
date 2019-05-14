@@ -1,6 +1,7 @@
 #include "ddrawsurface_impl.hpp"
 #include "base/log.hpp"
 #include "dxguids.hpp"
+#include "error_reporter.hpp"
 
 jkgm::DirectDrawSurface_impl::DirectDrawSurface_impl(char const *obj_name)
     : obj_name(obj_name)
@@ -9,21 +10,20 @@ jkgm::DirectDrawSurface_impl::DirectDrawSurface_impl(char const *obj_name)
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
-    LOG_ERROR(
-        "DirectDrawSurface(", obj_name, ")::QueryInterface(", to_string(riid), ") unimplemented");
-    abort();
+    report_unimplemented_function(
+        str(format("DirectDrawSurface(", obj_name, ")::QueryInterface(", to_string(riid), ")")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::AddAttachedSurface(LPDIRECTDRAWSURFACE a)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::AddAttachedSurface unimplemented");
-    abort();
+    report_unimplemented_function(
+        str(format("DirectDrawSurface(", obj_name, ")::AddAttachedSurface")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::AddOverlayDirtyRect(LPRECT a)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::AddOverlayDirtyRect unimplemented");
-    abort();
+    report_unimplemented_function(
+        str(format("DirectDrawSurface(", obj_name, ")::AddOverlayDirtyRect")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::Blt(LPRECT a,
@@ -32,14 +32,12 @@ HRESULT WINAPI jkgm::DirectDrawSurface_impl::Blt(LPRECT a,
                                                  DWORD d,
                                                  LPDDBLTFX e)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::Blt unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::Blt")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::BltBatch(LPDDBLTBATCH a, DWORD b, DWORD c)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::BltBatch unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::BltBatch")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::BltFast(DWORD a,
@@ -48,161 +46,141 @@ HRESULT WINAPI jkgm::DirectDrawSurface_impl::BltFast(DWORD a,
                                                      LPRECT d,
                                                      DWORD e)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::BltFast unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::BltFast")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::DeleteAttachedSurface(DWORD a, LPDIRECTDRAWSURFACE b)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::DeleteAttachedSurface unimplemented");
-    abort();
+    report_unimplemented_function(
+        str(format("DirectDrawSurface(", obj_name, ")::DeleteAttachedSurface")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::EnumAttachedSurfaces(LPVOID a,
                                                                   LPDDENUMSURFACESCALLBACK b)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::EnumAttachedSurfaces unimplemented");
-    abort();
+    report_unimplemented_function(
+        str(format("DirectDrawSurface(", obj_name, ")::EnumAttachedSurfaces")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::EnumOverlayZOrders(DWORD a,
                                                                 LPVOID b,
                                                                 LPDDENUMSURFACESCALLBACK c)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::EnumOverlayZOrders unimplemented");
-    abort();
+    report_unimplemented_function(
+        str(format("DirectDrawSurface(", obj_name, ")::EnumOverlayZOrders")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::Flip(LPDIRECTDRAWSURFACE a, DWORD b)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::Flip unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::Flip")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::GetAttachedSurface(LPDDSCAPS a, LPDIRECTDRAWSURFACE *b)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::GetAttachedSurface unimplemented");
-    abort();
+    report_unimplemented_function(
+        str(format("DirectDrawSurface(", obj_name, ")::GetAttachedSurface")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::GetBltStatus(DWORD a)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::GetBltStatus unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::GetBltStatus")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::GetCaps(LPDDSCAPS a)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::GetCaps unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::GetCaps")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::GetClipper(LPDIRECTDRAWCLIPPER *a)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::GetClipper unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::GetClipper")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::GetColorKey(DWORD a, LPDDCOLORKEY b)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::GetColorKey unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::GetColorKey")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::GetDC(HDC *a)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::GetDC unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::GetDC")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::GetFlipStatus(DWORD a)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::GetFlipStatus unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::GetFlipStatus")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::GetOverlayPosition(LPLONG a, LPLONG b)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::GetOverlayPosition unimplemented");
-    abort();
+    report_unimplemented_function(
+        str(format("DirectDrawSurface(", obj_name, ")::GetOverlayPosition")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::GetPalette(LPDIRECTDRAWPALETTE *a)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::GetPalette unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::GetPalette")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::GetPixelFormat(LPDDPIXELFORMAT a)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::GetPixelFormat unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::GetPixelFormat")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::GetSurfaceDesc(LPDDSURFACEDESC a)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::GetSurfaceDesc unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::GetSurfaceDesc")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::Initialize(LPDIRECTDRAW a, LPDDSURFACEDESC b)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::Initialize unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::Initialize")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::IsLost()
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::IsLost unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::IsLost")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::Lock(LPRECT a, LPDDSURFACEDESC b, DWORD c, HANDLE d)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::Lock unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::Lock")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::ReleaseDC(HDC a)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::ReleaseDC unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::ReleaseDC")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::Restore()
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::Restore unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::Restore")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::SetClipper(LPDIRECTDRAWCLIPPER a)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::SetClipper unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::SetClipper")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::SetColorKey(DWORD a, LPDDCOLORKEY b)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::SetColorKey unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::SetColorKey")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::SetOverlayPosition(LONG a, LONG b)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::SetOverlayPosition unimplemented");
-    abort();
+    report_unimplemented_function(
+        str(format("DirectDrawSurface(", obj_name, ")::SetOverlayPosition")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::SetPalette(LPDIRECTDRAWPALETTE a)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::SetPalette unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::SetPalette")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::Unlock(LPVOID a)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::Unlock unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::Unlock")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::UpdateOverlay(LPRECT a,
@@ -211,18 +189,17 @@ HRESULT WINAPI jkgm::DirectDrawSurface_impl::UpdateOverlay(LPRECT a,
                                                            DWORD d,
                                                            LPDDOVERLAYFX e)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::UpdateOverlay unimplemented");
-    abort();
+    report_unimplemented_function(str(format("DirectDrawSurface(", obj_name, ")::UpdateOverlay")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::UpdateOverlayDisplay(DWORD a)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::UpdateOverlayDisplay unimplemented");
-    abort();
+    report_unimplemented_function(
+        str(format("DirectDrawSurface(", obj_name, ")::UpdateOverlayDisplay")));
 }
 
 HRESULT WINAPI jkgm::DirectDrawSurface_impl::UpdateOverlayZOrder(DWORD a, LPDIRECTDRAWSURFACE b)
 {
-    LOG_ERROR("DirectDrawSurface(", obj_name, ")::UpdateOverlayZOrder unimplemented");
-    abort();
+    report_unimplemented_function(
+        str(format("DirectDrawSurface(", obj_name, ")::UpdateOverlayZOrder")));
 }

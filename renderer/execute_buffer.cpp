@@ -1,6 +1,7 @@
 #include "execute_buffer.hpp"
 #include "base/log.hpp"
 #include "dxguids.hpp"
+#include "error_reporter.hpp"
 
 jkgm::execute_buffer::execute_buffer(size_t bufsz)
     : bufsz(bufsz)
@@ -10,8 +11,8 @@ jkgm::execute_buffer::execute_buffer(size_t bufsz)
 
 HRESULT WINAPI jkgm::execute_buffer::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
-    LOG_ERROR("Direct3DExecuteBuffer::QueryInterface(", to_string(riid), ") unimplemented");
-    abort();
+    report_unimplemented_function(
+        str(format("Direct3DExecuteBuffer::QueryInterface(", to_string(riid), ")")));
 }
 
 ULONG WINAPI jkgm::execute_buffer::AddRef()
@@ -26,8 +27,7 @@ ULONG WINAPI jkgm::execute_buffer::Release()
 
 HRESULT WINAPI jkgm::execute_buffer::Initialize(LPDIRECT3DDEVICE a, LPD3DEXECUTEBUFFERDESC b)
 {
-    LOG_ERROR("Direct3DExecuteBuffer::Initialize unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DExecuteBuffer::Initialize");
 }
 
 HRESULT WINAPI jkgm::execute_buffer::Lock(LPD3DEXECUTEBUFFERDESC a)
@@ -64,12 +64,10 @@ HRESULT WINAPI jkgm::execute_buffer::GetExecuteData(LPD3DEXECUTEDATA a)
 
 HRESULT WINAPI jkgm::execute_buffer::Validate(LPDWORD a, LPD3DVALIDATECALLBACK b, LPVOID c, DWORD d)
 {
-    LOG_ERROR("Direct3DExecuteBuffer::Validate unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DExecuteBuffer::Validate");
 }
 
 HRESULT WINAPI jkgm::execute_buffer::Optimize(DWORD a)
 {
-    LOG_ERROR("Direct3DExecuteBuffer::Optimize unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DExecuteBuffer::Optimize");
 }

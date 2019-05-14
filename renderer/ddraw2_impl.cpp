@@ -1,6 +1,7 @@
 #include "ddraw2_impl.hpp"
 #include "base/log.hpp"
 #include "dxguids.hpp"
+#include "error_reporter.hpp"
 #include "renderer.hpp"
 #include <cassert>
 #include <d3d.h>
@@ -17,8 +18,8 @@ HRESULT WINAPI jkgm::DirectDraw2_impl::QueryInterface(REFIID riid, LPVOID *ppvOb
         return S_OK;
     }
 
-    LOG_ERROR("Called unimplemented DirectDraw2::QueryInterface");
-    abort();
+    report_unimplemented_function(
+        str(format("DirectDraw2::QueryInterface(", to_string(riid), ")")));
 }
 
 ULONG WINAPI jkgm::DirectDraw2_impl::AddRef()
@@ -35,14 +36,12 @@ ULONG WINAPI jkgm::DirectDraw2_impl::Release()
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::Compact()
 {
-    LOG_ERROR("DirectDraw2::Compact unimplemented");
-    abort();
+    report_unimplemented_function("DirectDraw2::Compact");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::CreateClipper(DWORD a, LPDIRECTDRAWCLIPPER *b, IUnknown *c)
 {
-    LOG_ERROR("DirectDraw2::CreateClipper unimplemented");
-    abort();
+    report_unimplemented_function("DirectDraw2::CreateClipper");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::CreatePalette(DWORD a,
@@ -50,23 +49,20 @@ HRESULT WINAPI jkgm::DirectDraw2_impl::CreatePalette(DWORD a,
                                                      LPDIRECTDRAWPALETTE *c,
                                                      IUnknown *d)
 {
-    LOG_ERROR("DirectDraw2::CreatePalette(", a, ") unimplemented");
-    abort();
+    report_unimplemented_function("DirectDraw2::CreatePalette");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::CreateSurface(LPDDSURFACEDESC a,
                                                      LPDIRECTDRAWSURFACE *b,
                                                      IUnknown *c)
 {
-    LOG_ERROR("DirectDraw2::CreateSurface unimplemented");
-    abort();
+    report_unimplemented_function("DirectDraw2::CreateSurface");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::DuplicateSurface(LPDIRECTDRAWSURFACE a,
                                                         LPDIRECTDRAWSURFACE *b)
 {
-    LOG_ERROR("DirectDraw2::DuplicateSurface unimplemented");
-    abort();
+    report_unimplemented_function("DirectDraw2::DuplicateSurface");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::EnumDisplayModes(DWORD a,
@@ -74,8 +70,7 @@ HRESULT WINAPI jkgm::DirectDraw2_impl::EnumDisplayModes(DWORD a,
                                                         LPVOID c,
                                                         LPDDENUMMODESCALLBACK d)
 {
-    LOG_ERROR("DirectDraw2::EnumDisplayModes(", a, ") unimplemented");
-    abort();
+    report_unimplemented_function("DirectDraw2::EnumDisplayModes");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::EnumSurfaces(DWORD a,
@@ -83,68 +78,57 @@ HRESULT WINAPI jkgm::DirectDraw2_impl::EnumSurfaces(DWORD a,
                                                     LPVOID c,
                                                     LPDDENUMSURFACESCALLBACK d)
 {
-    LOG_ERROR("DirectDraw2::EnumSurfaces unimplemented");
-    abort();
+    report_unimplemented_function("DirectDraw2::EnumSurfaces");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::FlipToGDISurface()
 {
-    LOG_ERROR("DirectDraw2::FlipToGDISurface unimplemented");
-    abort();
+    report_unimplemented_function("DirectDraw2::FlipToGDISurface");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::GetCaps(LPDDCAPS a, LPDDCAPS b)
 {
-    LOG_ERROR("DirectDraw2::GetCaps unimplemented");
-    abort();
+    report_unimplemented_function("DirectDraw2::GetCaps");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::GetDisplayMode(LPDDSURFACEDESC a)
 {
-    LOG_ERROR("DirectDraw2::GetDisplayMode unimplemented");
-    abort();
+    report_unimplemented_function("DirectDraw2::GetDisplayMode");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::GetFourCCCodes(LPDWORD a, LPDWORD b)
 {
-    LOG_ERROR("DirectDraw2::GetFourCCCodes unimplemented");
-    abort();
+    report_unimplemented_function("DirectDraw2::GetFourCCCodes");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::GetGDISurface(LPDIRECTDRAWSURFACE *a)
 {
-    LOG_ERROR("DirectDraw2::GetGDISurface unimplemented");
-    abort();
+    report_unimplemented_function("DirectDraw2::GetGDISurface");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::GetMonitorFrequency(LPDWORD a)
 {
-    LOG_ERROR("DirectDraw2::GetMonitorFrequency unimplemented");
-    abort();
+    report_unimplemented_function("DirectDraw2::GetMonitorFrequency");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::GetScanLine(LPDWORD a)
 {
-    LOG_ERROR("DirectDraw2::GetScanLine unimplemented");
-    abort();
+    report_unimplemented_function("DirectDraw2::GetScanLine");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::GetVerticalBlankStatus(LPBOOL a)
 {
-    LOG_ERROR("DirectDraw2::GetVerticalBlankStatus");
-    abort();
+    report_unimplemented_function("DirectDraw2::GetVerticalBlankStatus");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::Initialize(GUID *a)
 {
-    LOG_ERROR("DirectDraw2::Initialize unimplemented");
-    abort();
+    report_unimplemented_function("DirectDraw2::Initialize");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::RestoreDisplayMode()
 {
-    LOG_ERROR("DirectDraw2::RestoreDisplayMode unimplemented");
-    abort();
+    report_unimplemented_function("DirectDraw2::RestoreDisplayMode");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::SetCooperativeLevel(HWND a, DWORD b)
@@ -156,8 +140,8 @@ HRESULT WINAPI jkgm::DirectDraw2_impl::SetCooperativeLevel(HWND a, DWORD b)
         LOG_DEBUG("DirectDraw2::SetCooperativeLevel(Normal)");
     }
     else {
-        LOG_DEBUG("DirectDraw2::SetCooperativeLevel(Unknown ", b, ")");
-        abort();
+        report_unimplemented_function(
+            str(format("DirectDraw2::SetCooperativeLevel(Unknown ", b, ")")));
     }
 
     return DD_OK;
@@ -165,15 +149,12 @@ HRESULT WINAPI jkgm::DirectDraw2_impl::SetCooperativeLevel(HWND a, DWORD b)
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::SetDisplayMode(DWORD a, DWORD b, DWORD c, DWORD d, DWORD e)
 {
-    LOG_ERROR(
-        "DirectDraw2::SetDisplayMode(", a, ", ", b, ", ", c, ", ", d, ", ", e, ") unimplemented");
-    abort();
+    report_unimplemented_function("DirectDraw2::SetDisplayMode");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::WaitForVerticalBlank(DWORD a, HANDLE b)
 {
-    LOG_ERROR("DirectDraw2::WaitForVerticalBlank unimplemented");
-    abort();
+    report_unimplemented_function("DirectDraw2::WaitForVerticalBlank");
 }
 
 HRESULT WINAPI jkgm::DirectDraw2_impl::GetAvailableVidMem(LPDDSCAPS a, LPDWORD b, LPDWORD c)

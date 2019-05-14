@@ -38,9 +38,6 @@ namespace jkgm::gl {
     void buffer_data(buffer_bind_target target, span<char const> data, buffer_usage usage);
     void buffer_sub_data(buffer_bind_target target, size_t offset, span<char const> data);
 
-    void clear_buffer_depth(float value);
-    void clear_buffer_color(int drawbuffer, color value);
-
     namespace detail {
         void *map_buffer_range(buffer_bind_target target,
                                size_t offset,

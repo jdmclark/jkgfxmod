@@ -1,6 +1,7 @@
 #include "d3dviewport_impl.hpp"
 #include "base/log.hpp"
 #include "dxguids.hpp"
+#include "error_reporter.hpp"
 
 jkgm::Direct3DViewport_impl::Direct3DViewport_impl(renderer *r)
     : r(r)
@@ -9,8 +10,8 @@ jkgm::Direct3DViewport_impl::Direct3DViewport_impl(renderer *r)
 
 HRESULT WINAPI jkgm::Direct3DViewport_impl::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
-    LOG_ERROR("Direct3DViewport::QueryInterface(", to_string(riid), ") unimplemented");
-    abort();
+    report_unimplemented_function(
+        str(format("Direct3DViewport::QueryInterface(", to_string(riid), ")")));
 }
 
 ULONG WINAPI jkgm::Direct3DViewport_impl::AddRef()
@@ -27,8 +28,7 @@ ULONG WINAPI jkgm::Direct3DViewport_impl::Release()
 
 HRESULT WINAPI jkgm::Direct3DViewport_impl::Initialize(LPDIRECT3D a)
 {
-    LOG_ERROR("Direct3DViewport::Initialize unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DViewport::Initialize");
 }
 
 HRESULT WINAPI jkgm::Direct3DViewport_impl::GetViewport(LPD3DVIEWPORT a)
@@ -48,60 +48,52 @@ HRESULT WINAPI jkgm::Direct3DViewport_impl::TransformVertices(DWORD a,
                                                               DWORD c,
                                                               LPDWORD d)
 {
-    LOG_ERROR("Direct3DViewport::TransformVertices unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DViewport::TransformVertices");
 }
 
 HRESULT WINAPI jkgm::Direct3DViewport_impl::LightElements(DWORD a, LPD3DLIGHTDATA b)
 {
-    LOG_ERROR("Direct3DViewport::LightElements unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DViewport::LightElements");
 }
 
 HRESULT WINAPI jkgm::Direct3DViewport_impl::SetBackground(D3DMATERIALHANDLE a)
 {
-    LOG_ERROR("Direct3DViewport::SetBackground unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DViewport::SetBackground");
 }
 
 HRESULT WINAPI jkgm::Direct3DViewport_impl::GetBackground(LPD3DMATERIALHANDLE a, LPBOOL b)
 {
-    LOG_ERROR("Direct3DViewport::GetBackground unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DViewport::GetBackground");
 }
 
 HRESULT WINAPI jkgm::Direct3DViewport_impl::SetBackgroundDepth(LPDIRECTDRAWSURFACE a)
 {
-    LOG_ERROR("Direct3DViewport::SetBackgroundDepth unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DViewport::SetBackgroundDepth");
 }
 
 HRESULT WINAPI jkgm::Direct3DViewport_impl::GetBackgroundDepth(LPDIRECTDRAWSURFACE *a, LPBOOL b)
 {
-    LOG_ERROR("Direct3DViewport::GetBackgroundDepth unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DViewport::GetBackgroundDepth");
 }
 
 HRESULT WINAPI jkgm::Direct3DViewport_impl::Clear(DWORD a, LPD3DRECT b, DWORD c)
 {
-    LOG_ERROR("Direct3DViewport::Clear unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DViewport::Clear");
 }
 
 HRESULT WINAPI jkgm::Direct3DViewport_impl::AddLight(LPDIRECT3DLIGHT a)
 {
-    LOG_ERROR("Direct3DViewport::AddLight unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DViewport::AddLight");
 }
 
 HRESULT WINAPI jkgm::Direct3DViewport_impl::DeleteLight(LPDIRECT3DLIGHT a)
 {
-    LOG_ERROR("Direct3DViewport::DeleteLight unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DViewport::DeleteLight");
 }
 
-HRESULT WINAPI jkgm::Direct3DViewport_impl::NextLight(LPDIRECT3DLIGHT a, LPDIRECT3DLIGHT *b, DWORD c)
+HRESULT WINAPI jkgm::Direct3DViewport_impl::NextLight(LPDIRECT3DLIGHT a,
+                                                      LPDIRECT3DLIGHT *b,
+                                                      DWORD c)
 {
-    LOG_ERROR("Direct3DViewport::NextLight unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DViewport::NextLight");
 }

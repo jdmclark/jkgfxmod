@@ -1,0 +1,3 @@
+LIBRARY RENDERER
+EXPORTS
+    DetourFinishHelperProcess @1

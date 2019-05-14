@@ -2,6 +2,7 @@
 #include "base/log.hpp"
 #include "base/span.hpp"
 #include "common/config.hpp"
+#include "error_reporter.hpp"
 #include "renderer.hpp"
 #include <Windows.h>
 #include <detours/detours.h>
@@ -156,12 +157,6 @@ BOOL WINAPI HookedDeleteObject(HGDIOBJ ho)
     return TrueDeleteObject(ho);
 }
 
-__declspec(dllexport) BOOL WINAPI export_workaround()
-{
-    // Detours seems to require at least one export in order to properly link the DLL
-    return TRUE;
-}
-
 bool attach_hooks()
 {
     DetourRestoreAfterWith();
@@ -212,15 +207,15 @@ bool detach_hooks()
     // Detach injected functions
     DetourDetach(&(PVOID &)TrueDirectDrawCreate, HookedDirectDrawCreate);
     DetourDetach(&(PVOID &)TrueDirectDrawEnumerateA, HookedDirectDrawEnumerateA);
+    DetourDetach(&(PVOID &)TrueCreateWindowExA, HookedCreateWindowExA);
+    DetourDetach(&(PVOID &)TrueGetCursorPos, HookedGetCursorPos);
+    DetourDetach(&(PVOID &)TrueCreateDIBSection, HookedCreateDIBSection);
+    DetourDetach(&(PVOID &)TrueSetDIBColorTable, HookedSetDIBColorTable);
+    DetourDetach(&(PVOID &)TrueGdiFlush, HookedGdiFlush);
+    DetourDetach(&(PVOID &)TrueDeleteObject, HookedDeleteObject);
 
     LONG error = DetourTransactionCommit();
     return error == NO_ERROR;
-}
-
-constexpr wchar_t const *appname = L"JkGfxMod";
-void show_error_message(wchar_t const *message)
-{
-    MessageBoxW(NULL, message, appname, MB_OK);
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID /*lpReserved*/)
@@ -238,7 +233,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID /*lpRese
 
         if(!attach_hooks()) {
             LOG_ERROR("Failed to commit Detours hook transaction");
-            show_error_message(L"Failed to install renderer");
+            jkgm::report_error_message(
+                "Critical failure: JkGfxMod failed to attach to this application");
             return FALSE;
         }
 

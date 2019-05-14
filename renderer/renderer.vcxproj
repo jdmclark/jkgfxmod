@@ -29,6 +29,7 @@
     <ClCompile Include="d3ddevice_impl.cpp" />
     <ClCompile Include="d3dtexture_impl.cpp" />
     <ClCompile Include="ddrawsurface_impl.cpp" />
+    <ClCompile Include="error_reporter.cpp" />
     <ClCompile Include="execute_buffer.cpp" />
     <ClCompile Include="d3dviewport_impl.cpp" />
     <ClCompile Include="d3d_impl.cpp" />
@@ -54,6 +55,7 @@
     <ClInclude Include="d3ddevice_impl.hpp" />
     <ClInclude Include="d3dtexture_impl.hpp" />
     <ClInclude Include="ddrawsurface_impl.hpp" />
+    <ClInclude Include="error_reporter.hpp" />
     <ClInclude Include="execute_buffer.hpp" />
     <ClInclude Include="d3dviewport_impl.hpp" />
     <ClInclude Include="d3d_impl.hpp" />
@@ -73,6 +75,9 @@
     <ClInclude Include="triangle_batch.hpp" />
     <ClInclude Include="vidmem_texture.hpp" />
     <ClInclude Include="zbuffer_surface.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="exports.def" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
@@ -130,6 +135,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -156,6 +162,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

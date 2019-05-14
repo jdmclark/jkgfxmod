@@ -1,6 +1,7 @@
 #include "sysmem_texture.hpp"
 #include "base/log.hpp"
 #include "dxguids.hpp"
+#include "error_reporter.hpp"
 
 jkgm::sysmem_texture::sysmem_texture(sysmem_texture_surface *surf)
     : Direct3DTexture_impl("sysmem")
@@ -31,14 +32,13 @@ void jkgm::sysmem_texture_surface::set_surface_desc(DDSURFACEDESC const &desc)
 {
     // Basic sanity checking
     if(desc.lpSurface != nullptr) {
-        LOG_ERROR("DirectDraw::CreateSurface(sysmem texture) call passes a buffer, which is not "
-                  "implemented");
-        abort();
+        report_unimplemented_function(
+            "DirectDraw::CreateSurface(sysmem texture) with a creation-time buffer");
     }
 
     if(desc.ddpfPixelFormat.dwRGBBitCount != 16) {
-        LOG_ERROR("DirectDraw::CreateSurface(sysmem texture) call specifies a non-16 bit texture");
-        abort();
+        report_unimplemented_function(
+            "DirectDraw::CreateSurface(sysmem texture) for a non-16 bit texture");
     }
 
     this->desc = desc;

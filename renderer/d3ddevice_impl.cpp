@@ -1,6 +1,7 @@
 #include "d3ddevice_impl.hpp"
 #include "base/log.hpp"
 #include "dxguids.hpp"
+#include "error_reporter.hpp"
 #include "renderer.hpp"
 
 jkgm::Direct3DDevice_impl::Direct3DDevice_impl(renderer *r)
@@ -10,8 +11,8 @@ jkgm::Direct3DDevice_impl::Direct3DDevice_impl(renderer *r)
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
-    LOG_ERROR("Direct3DDevice::QueryInterface(", to_string(riid), ") unimplemented");
-    abort();
+    report_unimplemented_function(
+        str(format("Direct3DDevice::QueryInterface(", to_string(riid), ")")));
 }
 
 ULONG WINAPI jkgm::Direct3DDevice_impl::AddRef()
@@ -28,21 +29,18 @@ ULONG WINAPI jkgm::Direct3DDevice_impl::Release()
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::Initialize(LPDIRECT3D a, LPGUID b, LPD3DDEVICEDESC c)
 {
-    LOG_ERROR("Direct3DDevice::Initialize unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DDevice::Initialize");
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::GetCaps(LPD3DDEVICEDESC, LPD3DDEVICEDESC)
 {
-    LOG_ERROR("Direct3DDevice::GetCaps unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DDevice::GetCaps");
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::SwapTextureHandles(LPDIRECT3DTEXTURE a,
                                                              LPDIRECT3DTEXTURE b)
 {
-    LOG_ERROR("Direct3DDevice::SwapTextureHandles unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DDevice::SwapTextureHandles");
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::CreateExecuteBuffer(LPD3DEXECUTEBUFFERDESC a,
@@ -50,9 +48,8 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::CreateExecuteBuffer(LPD3DEXECUTEBUFFER
                                                               IUnknown *c)
 {
     if(a->lpData != NULL) {
-        LOG_ERROR("Direct3DDevice::CreateExecuteBuffer: received data at creation time, which is "
-                  "unsupported");
-        abort();
+        report_unimplemented_function(
+            str(format("Direct3DDevice::CreateExecuteBuffer with creation time data")));
     }
 
     *b = r->create_direct3dexecutebuffer(a->dwBufferSize);
@@ -61,8 +58,7 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::CreateExecuteBuffer(LPD3DEXECUTEBUFFER
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::GetStats(LPD3DSTATS a)
 {
-    LOG_ERROR("Direct3DDevice::GetStats unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DDevice::GetStats");
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::Execute(LPDIRECT3DEXECUTEBUFFER a,
@@ -80,16 +76,14 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::AddViewport(LPDIRECT3DVIEWPORT a)
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::DeleteViewport(LPDIRECT3DVIEWPORT a)
 {
-    LOG_ERROR("Direct3DDevice::DeleteViewport unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DDevice::DeleteViewport");
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::NextViewport(LPDIRECT3DVIEWPORT a,
                                                        LPDIRECT3DVIEWPORT *b,
                                                        DWORD c)
 {
-    LOG_ERROR("Direct3DDevice::NextViewport unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DDevice::NextViewport");
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::Pick(LPDIRECT3DEXECUTEBUFFER a,
@@ -97,14 +91,12 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::Pick(LPDIRECT3DEXECUTEBUFFER a,
                                                DWORD c,
                                                LPD3DRECT d)
 {
-    LOG_ERROR("Direct3DDevice::Pick unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DDevice::Pick");
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::GetPickRecords(LPDWORD a, LPD3DPICKRECORD b)
 {
-    LOG_ERROR("Direct3DDevice::GetPickRecords unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DDevice::GetPickRecords");
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::EnumTextureFormats(LPD3DENUMTEXTUREFORMATSCALLBACK a,
@@ -171,26 +163,22 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::EnumTextureFormats(LPD3DENUMTEXTUREFOR
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::CreateMatrix(LPD3DMATRIXHANDLE a)
 {
-    LOG_ERROR("Direct3DDevice::CreateMatrix unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DDevice::CreateMatrix");
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::SetMatrix(D3DMATRIXHANDLE a, const LPD3DMATRIX b)
 {
-    LOG_ERROR("Direct3DDevice::SetMatrix unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DDevice::SetMatrix");
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::GetMatrix(D3DMATRIXHANDLE a, LPD3DMATRIX b)
 {
-    LOG_ERROR("Direct3DDevice::GetMatrix unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DDevice::GetMatrix");
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::DeleteMatrix(D3DMATRIXHANDLE a)
 {
-    LOG_ERROR("Direct3DDevice::DeleteMatrix unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DDevice::DeleteMatrix");
 }
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::BeginScene()
@@ -207,6 +195,5 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::EndScene()
 
 HRESULT WINAPI jkgm::Direct3DDevice_impl::GetDirect3D(LPDIRECT3D *a)
 {
-    LOG_ERROR("Direct3DDevice::GetDirect3D unimplemented");
-    abort();
+    report_unimplemented_function("Direct3DDevice::GetDirect3D");
 }

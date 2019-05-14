@@ -84,6 +84,9 @@
     <ClCompile Include="triangle_batch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="error_reporter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ddraw_impl.hpp">
@@ -155,5 +158,13 @@
     <ClInclude Include="renderer_fwd.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="error_reporter.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="exports.def">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

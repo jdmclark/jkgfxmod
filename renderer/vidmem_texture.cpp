@@ -4,6 +4,7 @@
 #include "base/md5.hpp"
 #include "common/image.hpp"
 #include "dxguids.hpp"
+#include "error_reporter.hpp"
 #include "math/color_conv.hpp"
 #include "sysmem_texture.hpp"
 
@@ -34,8 +35,7 @@ HRESULT WINAPI jkgm::vidmem_texture::Load(LPDIRECT3DTEXTURE a)
     // Copy the input texture to the OpenGL surface
     auto *cast_tex = dynamic_cast<sysmem_texture *>(a);
     if(!cast_tex) {
-        LOG_ERROR("Direct3DTexture(vidmem)::Load passed a non-sysmem texture");
-        abort();
+        report_unimplemented_function("Direct3DTexture(vidmem)::Load with a non-sysmem texture");
     }
 
     // Reset material to default state
@@ -149,9 +149,7 @@ void jkgm::vidmem_texture_surface::set_surface_desc(DDSURFACEDESC const &desc)
 {
     // Basic sanity checking
     if(desc.lpSurface != nullptr) {
-        LOG_ERROR("DirectDraw::CreateSurface(vidmem texture) call passes a buffer, which is not "
-                  "implemented");
-        abort();
+        report_unimplemented_function("DirectDraw::CreateSurface(vidmem texture) with contents");
     }
 
     this->desc = desc;

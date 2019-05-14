@@ -67,6 +67,9 @@ namespace jkgm::gl {
 
     framebuffer_status check_framebuffer_status(framebuffer_bind_target target);
 
+    void clear_buffer_depth(float value);
+    void clear_buffer_color(int drawbuffer, color value);
+
     namespace detail {
         void draw_buffers_span(span<enum_type const> bufs);
     }

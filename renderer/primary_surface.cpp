@@ -1,6 +1,7 @@
 #include "primary_surface.hpp"
 #include "base/log.hpp"
 #include "dxguids.hpp"
+#include "error_reporter.hpp"
 #include "renderer.hpp"
 
 jkgm::primary_surface::primary_surface(renderer *r)
@@ -41,9 +42,8 @@ HRESULT WINAPI jkgm::primary_surface::GetAttachedSurface(LPDDSCAPS a, LPDIRECTDR
         return DD_OK;
     }
 
-    LOG_ERROR("DirectDrawSurface(primary)::GetAttachedSurface unimplemented surface type ",
-              a->dwCaps);
-    abort();
+    report_unimplemented_function(
+        str(format("DirectDrawSurface(primary)::GetAttachedSurface(", a->dwCaps, ")")));
 }
 
 HRESULT WINAPI jkgm::primary_surface::GetBltStatus(DWORD a)

@@ -1,6 +1,7 @@
 #include "ddrawpalette_impl.hpp"
 #include "base/log.hpp"
 #include "dxguids.hpp"
+#include "error_reporter.hpp"
 #include "math/color_conv.hpp"
 #include "renderer.hpp"
 
@@ -21,8 +22,8 @@ void jkgm::DirectDrawPalette_impl::recompute_palette()
 
 HRESULT WINAPI jkgm::DirectDrawPalette_impl::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
-    LOG_ERROR("DirectDrawPalette::QueryInterface(", to_string(riid), ") unimplemented");
-    abort();
+    report_unimplemented_function(
+        str(format("DirectDrawPalette::QueryInterface(", to_string(riid), ")")));
 }
 
 ULONG WINAPI jkgm::DirectDrawPalette_impl::AddRef()
@@ -39,20 +40,17 @@ ULONG WINAPI jkgm::DirectDrawPalette_impl::Release()
 
 HRESULT WINAPI jkgm::DirectDrawPalette_impl::GetCaps(LPDWORD a)
 {
-    LOG_ERROR("DirectDrawPalette::GetCaps unimplemented");
-    abort();
+    report_unimplemented_function("DirectDrawPalette::GetCaps");
 }
 
 HRESULT WINAPI jkgm::DirectDrawPalette_impl::GetEntries(DWORD a, DWORD b, DWORD c, LPPALETTEENTRY d)
 {
-    LOG_ERROR("DirectDrawPalette::GetEntries unimplemented");
-    abort();
+    report_unimplemented_function("DirectDrawPalette::GetEntries");
 }
 
 HRESULT WINAPI jkgm::DirectDrawPalette_impl::Initialize(LPDIRECTDRAW a, DWORD b, LPPALETTEENTRY d)
 {
-    LOG_ERROR("DirectDrawPalette::Initialize unimplemented");
-    abort();
+    report_unimplemented_function("DirectDrawPalette::Initialize");
 }
 
 HRESULT WINAPI jkgm::DirectDrawPalette_impl::SetEntries(DWORD a, DWORD b, DWORD c, LPPALETTEENTRY d)

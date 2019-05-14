@@ -40,6 +40,16 @@ jkgm::gl::framebuffer_status jkgm::gl::check_framebuffer_status(framebuffer_bind
     return framebuffer_status(glCheckFramebufferStatus(static_cast<GLenum>(target)));
 }
 
+void jkgm::gl::clear_buffer_depth(float value)
+{
+    glClearBufferfv(GL_DEPTH, 0, &value);
+}
+
+void jkgm::gl::clear_buffer_color(int drawbuffer, color value)
+{
+    glClearBufferfv(GL_COLOR, drawbuffer, value.data.data());
+}
+
 void jkgm::gl::detail::draw_buffers_span(span<enum_type const> bufs)
 {
     glDrawBuffers(bufs.size(), bufs.data());

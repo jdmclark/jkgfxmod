@@ -14,6 +14,7 @@
 #include "ddraw2_impl.hpp"
 #include "ddraw_impl.hpp"
 #include "ddrawpalette_impl.hpp"
+#include "error_reporter.hpp"
 #include "execute_buffer.hpp"
 #include "glad/glad.h"
 #include "glutil/buffer.hpp"
@@ -85,7 +86,8 @@ namespace jkgm {
         dummy_class.lpszClassName = L"kernel_wgl_ext_loader";
 
         if(!RegisterClass(&dummy_class)) {
-            LOG_ERROR("Failed to register WGL extension loader window class");
+            report_error_message("JkGfxMod could not initialize OpenGL.\n\nDetails: Failed to "
+                                 "register WGL extension loader window class");
             abort();
         }
 
@@ -103,7 +105,8 @@ namespace jkgm {
                                            NULL);
 
         if(!dummy_window) {
-            LOG_ERROR("Failed to create WGL extension loader window");
+            report_error_message("JkGfxMod could not initialize OpenGL.\n\nDetails: Failed to "
+                                 "create WGL extension loader window");
             abort();
         }
 
@@ -1144,15 +1147,14 @@ namespace jkgm {
                         auto const *payload = (D3DPROCESSVERTICES const *)cmd_span.data();
                         if(payload->dwFlags != D3DPROCESSVERTICES_COPY || payload->wStart != 0 ||
                            payload->wDest != 0) {
-                            LOG_ERROR("Unimplemented process vertices opcode ignored: ",
-                                      payload->dwFlags,
-                                      " ",
-                                      payload->dwCount,
-                                      " ",
-                                      payload->wStart,
-                                      " ",
-                                      payload->wDest);
-                            abort();
+                            report_unimplemented_function(str(format("Process vertices opcode: ",
+                                                                     payload->dwFlags,
+                                                                     " ",
+                                                                     payload->dwCount,
+                                                                     " ",
+                                                                     payload->wStart,
+                                                                     " ",
+                                                                     payload->wDest)));
                         }
                     } break;
 

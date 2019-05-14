@@ -29,7 +29,6 @@
     <ClCompile Include="d3ddevice_impl.cpp" />
     <ClCompile Include="d3dtexture_impl.cpp" />
     <ClCompile Include="ddrawsurface_impl.cpp" />
-    <ClCompile Include="error_reporter.cpp" />
     <ClCompile Include="execute_buffer.cpp" />
     <ClCompile Include="d3dviewport_impl.cpp" />
     <ClCompile Include="d3d_impl.cpp" />
@@ -55,7 +54,6 @@
     <ClInclude Include="d3ddevice_impl.hpp" />
     <ClInclude Include="d3dtexture_impl.hpp" />
     <ClInclude Include="ddrawsurface_impl.hpp" />
-    <ClInclude Include="error_reporter.hpp" />
     <ClInclude Include="execute_buffer.hpp" />
     <ClInclude Include="d3dviewport_impl.hpp" />
     <ClInclude Include="d3d_impl.hpp" />

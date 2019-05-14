@@ -1,7 +1,7 @@
 #include "execute_buffer.hpp"
 #include "base/log.hpp"
+#include "common/error_reporter.hpp"
 #include "dxguids.hpp"
-#include "error_reporter.hpp"
 
 jkgm::execute_buffer::execute_buffer(size_t bufsz)
     : bufsz(bufsz)

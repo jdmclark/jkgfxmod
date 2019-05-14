@@ -2,9 +2,9 @@
 #include "base/file_block.hpp"
 #include "base/log.hpp"
 #include "base/md5.hpp"
+#include "common/error_reporter.hpp"
 #include "common/image.hpp"
 #include "dxguids.hpp"
-#include "error_reporter.hpp"
 #include "math/color_conv.hpp"
 #include "sysmem_texture.hpp"
 

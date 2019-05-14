@@ -1,7 +1,7 @@
 #include "d3dviewport_impl.hpp"
 #include "base/log.hpp"
+#include "common/error_reporter.hpp"
 #include "dxguids.hpp"
-#include "error_reporter.hpp"
 
 jkgm::Direct3DViewport_impl::Direct3DViewport_impl(renderer *r)
     : r(r)

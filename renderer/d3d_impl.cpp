@@ -1,7 +1,7 @@
 #include "d3d_impl.hpp"
 #include "base/log.hpp"
+#include "common/error_reporter.hpp"
 #include "dxguids.hpp"
-#include "error_reporter.hpp"
 #include "renderer.hpp"
 
 jkgm::Direct3D_impl::Direct3D_impl(renderer *r)

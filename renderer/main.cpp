@@ -2,7 +2,7 @@
 #include "base/log.hpp"
 #include "base/span.hpp"
 #include "common/config.hpp"
-#include "error_reporter.hpp"
+#include "common/error_reporter.hpp"
 #include "renderer.hpp"
 #include <Windows.h>
 #include <detours/detours.h>

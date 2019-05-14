@@ -3,6 +3,7 @@
 #include "base/log.hpp"
 #include "base/memory_block.hpp"
 #include "base/string_search.hpp"
+#include "error_reporter.hpp"
 #include "json_incl.hpp"
 
 void jkgm::material_map::add_metadata(fs::path const &metadata_file)
@@ -90,8 +91,14 @@ void jkgm::material_map::create_map(fs::path const &materials_dir)
                 add_metadata(md_path);
             }
             catch(std::exception const &e) {
-                LOG_ERROR(
+                LOG_WARNING(
                     "Failed to load materials from ", md_path.generic_string(), ": ", e.what());
+                report_warning_message(
+                    str(format("JkGfxMod could not load the material pack \"",
+                               dir_iter->path().filename().generic_string(),
+                               "\". The directory either does not contain a material pack, or the "
+                               "material pack is corrupt.\n\nDetails: ",
+                               e.what())));
             }
         }
     }

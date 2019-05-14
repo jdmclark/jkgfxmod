@@ -1,7 +1,7 @@
 #include "primary_surface.hpp"
 #include "base/log.hpp"
+#include "common/error_reporter.hpp"
 #include "dxguids.hpp"
-#include "error_reporter.hpp"
 #include "renderer.hpp"
 
 jkgm::primary_surface::primary_surface(renderer *r)

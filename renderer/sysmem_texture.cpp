@@ -1,7 +1,7 @@
 #include "sysmem_texture.hpp"
 #include "base/log.hpp"
+#include "common/error_reporter.hpp"
 #include "dxguids.hpp"
-#include "error_reporter.hpp"
 
 jkgm::sysmem_texture::sysmem_texture(sysmem_texture_surface *surf)
     : Direct3DTexture_impl("sysmem")

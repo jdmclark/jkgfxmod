@@ -2,22 +2,44 @@
 #include "base/file_stream.hpp"
 #include "base/log.hpp"
 #include "base/memory_block.hpp"
+#include "common/error_reporter.hpp"
 #include <random>
 
 jkgm::gl::shader jkgm::compile_shader_from_file(fs::path const &filename, gl::shader_type type)
 {
+    diagnostic_context dc(filename.generic_string());
     gl::shader rv(type);
 
-    auto fs = make_file_input_stream(filename);
     memory_block mb;
-    memory_output_block mob(&mb);
-    fs->copy_to(&mob);
+
+    try {
+        auto fs = make_file_input_stream(filename);
+        memory_output_block mob(&mb);
+        fs->copy_to(&mob);
+    }
+    catch(std::exception const &e) {
+        LOG_ERROR("Failed to load shader: ", e.what());
+        report_error_message(str(format("JkGfxMod could not open an essential file and cannot "
+                                        "continue.\n\nDetails: Error while opening ",
+                                        filename.generic_string(),
+                                        "\n",
+                                        e.what())));
+        abort();
+    }
 
     gl::shader_source(rv, make_string_span(""), make_span(mb.str()));
     gl::compile_shader(rv);
     if(!gl::get_shader_compile_status(rv)) {
-        LOG_ERROR(
-            "Failed to compile ", filename.generic_string(), ": ", gl::get_shader_info_log(rv));
+        auto err_str = gl::get_shader_info_log(rv);
+        LOG_ERROR("Failed to compile shader: ", err_str);
+        report_error_message(str(format(
+            "JkGfxMod failed to compile an essential shader. This may have happened because your "
+            "graphics device does not support OpenGL 3.3, because the shader file has been "
+            "incorrectly modified, or because of a bug in JkGfxMod.\n\nDetails: Failed to compile ",
+            filename.generic_string(),
+            "\n",
+            err_str)));
+        abort();
     }
 
     return rv;
@@ -37,7 +59,16 @@ void jkgm::link_program_from_files(std::string const &name,
     gl::link_program(*prog);
 
     if(!gl::get_program_link_status(*prog)) {
+        auto err_str = gl::get_program_info_log(*prog);
         LOG_ERROR("Failed to link program ", name, ": ", gl::get_program_info_log(*prog));
+        report_error_message(str(format(
+            "JkGfxMod failed to link an essential shader. This may have happened because your "
+            "graphics device does not support OpenGL 3.3, because the shader files have been "
+            "incorrectly modified, or because of a bug in JkGfxMod.\n\nDetails: Failed to link ",
+            name,
+            "\n",
+            err_str)));
+        abort();
     }
 }
 
@@ -561,43 +592,45 @@ jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res,
 {
     LOG_DEBUG("Loading OpenGL assets");
 
+    fs::path data_root(the_config->data_path);
+
     link_program_from_files(
-        "menu", &menu_program, "jkgm/shaders/menu.vert", "jkgm/shaders/menu.frag");
+        "menu", &menu_program, data_root / "shaders/menu.vert", data_root / "shaders/menu.frag");
 
     link_program_from_files("game_opaque_pass",
                             &game_opaque_pass_program,
-                            "jkgm/shaders/game.vert",
-                            "jkgm/shaders/game_opaque_pass.frag");
+                            data_root / "shaders/game.vert",
+                            data_root / "shaders/game_opaque_pass.frag");
     link_program_from_files("game_post_ssao",
                             &game_post_ssao_program,
-                            "jkgm/shaders/postprocess.vert",
-                            "jkgm/shaders/post_ssao.frag");
+                            data_root / "shaders/postprocess.vert",
+                            data_root / "shaders/post_ssao.frag");
     link_program_from_files("game_post_opaque_composite",
                             &game_post_opaque_composite_program,
-                            "jkgm/shaders/postprocess.vert",
-                            "jkgm/shaders/post_opaque_composite.frag");
+                            data_root / "shaders/postprocess.vert",
+                            data_root / "shaders/post_opaque_composite.frag");
 
     link_program_from_files("game_transparency_pass",
                             &game_transparency_pass_program,
-                            "jkgm/shaders/game.vert",
-                            "jkgm/shaders/game_trns_pass.frag");
+                            data_root / "shaders/game.vert",
+                            data_root / "shaders/game_trns_pass.frag");
 
     link_program_from_files("post_gauss3",
                             &post_gauss3,
-                            "jkgm/shaders/postprocess.vert",
-                            "jkgm/shaders/post_gauss3.frag");
+                            data_root / "shaders/postprocess.vert",
+                            data_root / "shaders/post_gauss3.frag");
     link_program_from_files("post_gauss7",
                             &post_gauss7,
-                            "jkgm/shaders/postprocess.vert",
-                            "jkgm/shaders/post_gauss7.frag");
+                            data_root / "shaders/postprocess.vert",
+                            data_root / "shaders/post_gauss7.frag");
     link_program_from_files("post_low_pass",
                             &post_low_pass,
-                            "jkgm/shaders/postprocess.vert",
-                            "jkgm/shaders/post_low_pass.frag");
+                            data_root / "shaders/postprocess.vert",
+                            data_root / "shaders/post_low_pass.frag");
     link_program_from_files("post_to_srgb",
                             &post_to_srgb,
-                            "jkgm/shaders/postprocess.vert",
-                            "jkgm/shaders/post_to_srgb.frag");
+                            data_root / "shaders/postprocess.vert",
+                            data_root / "shaders/post_to_srgb.frag");
 
     gl::bind_texture(gl::texture_bind_target::texture_2d, menu_texture);
     gl::tex_image_2d(gl::texture_bind_target::texture_2d,

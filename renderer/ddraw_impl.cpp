@@ -1,7 +1,7 @@
 #include "ddraw_impl.hpp"
 #include "base/log.hpp"
+#include "common/error_reporter.hpp"
 #include "dxguids.hpp"
-#include "error_reporter.hpp"
 #include "renderer.hpp"
 #include <cassert>
 #include <d3d.h>

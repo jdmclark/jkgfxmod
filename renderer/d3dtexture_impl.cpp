@@ -1,7 +1,7 @@
 #include "d3dtexture_impl.hpp"
 #include "base/log.hpp"
+#include "common/error_reporter.hpp"
 #include "dxguids.hpp"
-#include "error_reporter.hpp"
 
 jkgm::Direct3DTexture_impl::Direct3DTexture_impl(char const *obj_name)
     : obj_name(obj_name)

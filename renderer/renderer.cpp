@@ -6,6 +6,7 @@
 #include "base/log.hpp"
 #include "base/memory_block.hpp"
 #include "base/win32.hpp"
+#include "common/error_reporter.hpp"
 #include "common/image.hpp"
 #include "common/material_map.hpp"
 #include "d3d_impl.hpp"
@@ -14,7 +15,6 @@
 #include "ddraw2_impl.hpp"
 #include "ddraw_impl.hpp"
 #include "ddrawpalette_impl.hpp"
-#include "error_reporter.hpp"
 #include "execute_buffer.hpp"
 #include "glad/glad.h"
 #include "glutil/buffer.hpp"
@@ -383,7 +383,7 @@ namespace jkgm {
 
         void initialize(HINSTANCE hInstance, HWND parentWnd) override
         {
-            materials.create_map("jkgm/materials");
+            materials.create_map(fs::path(the_config->data_path) / "materials");
 
             init_wgl_extensions(hInstance);
 

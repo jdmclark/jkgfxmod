@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.hpp" />
+    <ClInclude Include="error_reporter.hpp" />
     <ClInclude Include="image.hpp" />
     <ClInclude Include="json.hpp" />
     <ClInclude Include="json_incl.hpp" />
@@ -22,6 +23,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="config.cpp" />
+    <ClCompile Include="error_reporter.cpp" />
     <ClCompile Include="image.cpp" />
     <ClCompile Include="material.cpp" />
     <ClCompile Include="material_map.cpp" />

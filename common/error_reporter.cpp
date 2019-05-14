@@ -13,11 +13,24 @@ namespace {
                     appname,
                     MB_OK | MB_ICONERROR | MB_TASKMODAL);
     }
+
+    void warning_dialog(std::string_view message)
+    {
+        MessageBoxW(NULL,
+                    jkgm::utf8_to_native(message).c_str(),
+                    appname,
+                    MB_OK | MB_ICONWARNING | MB_TASKMODAL);
+    }
 }
 
 void jkgm::report_error_message(std::string_view msg)
 {
     error_dialog(msg);
+}
+
+void jkgm::report_warning_message(std::string_view msg)
+{
+    warning_dialog(msg);
 }
 
 void jkgm::report_unimplemented_function(std::string_view function_name)

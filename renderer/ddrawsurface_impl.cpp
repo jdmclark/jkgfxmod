@@ -1,7 +1,7 @@
 #include "ddrawsurface_impl.hpp"
 #include "base/log.hpp"
+#include "common/error_reporter.hpp"
 #include "dxguids.hpp"
-#include "error_reporter.hpp"
 
 jkgm::DirectDrawSurface_impl::DirectDrawSurface_impl(char const *obj_name)
     : obj_name(obj_name)

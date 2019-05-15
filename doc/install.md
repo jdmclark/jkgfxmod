@@ -66,6 +66,8 @@ This installation method will allow you to use JkGfxMod with the Steam overlay a
 
 * Obtain the original CD-ROM version 1.0 `jkm.exe`
     * This is required; the Steam executable does not work with JkGfxMod
+* Apply a no-CD patch to `jkm.exe`
+    * This is required unless you have a CD-ROM drive and the original games
 * Rename the above `jkm.exe` file `jkmoriginal.exe`
 * Put `jkmoriginal.exe` in your Steam `Jedi Knight Mysteries of the Sith` app directory
 * Extract the distribution package into your Steam `Jedi Knight Mysteries of the Sith` app directory

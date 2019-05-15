@@ -21,7 +21,7 @@ JkGfxMod makes Jedi Knight: Dark Forces II look better and run on new computers.
 
 ## Limitations
 
-This is an alpha release. Please report any issues you encounter.
+This is a beta release. Please report any issues you encounter.
 
 ## Using JkGfxMod
 

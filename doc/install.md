@@ -18,7 +18,7 @@ Installation instructions vary depending on the game version. Please follow the 
 ### Jedi Knight (CD-ROM)
 
 * Extract the distribution package into your Jedi Knight directory
-* Edit the config file: `jkgm.json`
+* [Edit the config file](config.md): `jkgm.json`
     * You must specify your desired resolution in this file
     * Your desktop color depth is used automatically and does not need to be configured
 * Run `inject.exe` from your Jedi Knight directory
@@ -37,7 +37,7 @@ This installation method will allow you to use JkGfxMod with the Steam overlay a
 * Put `jkoriginal.exe` in your Steam `Star Wars Jedi Knight` app directory
 * Extract the distribution package into your Steam `Star Wars Jedi Knight` app directory
 * Rename `inject.exe` to `JediKnight.exe`
-* Edit the config file: `jkgm.json`
+* [Edit the config file](config.md): `jkgm.json`
     * Change the `command` configuration option to `jkoriginal.exe`
     * You must also specify your desired resolution in this file
     * Your desktop color depth is used automatically and does not need to be configured
@@ -58,7 +58,7 @@ This installation method will allow you to use JkGfxMod from GOG Galaxy.
 * Extract the distribution package into your `Star Wars Jedi Knight - Dark Forces 2` app directory
 * Rename `JKStart.exe` to `JKStartOld.exe`
 * Rename `inject.exe` to `JKStart.exe`
-* Edit the config file: `jkgm.json`
+* [Edit the config file](config.md): `jkgm.json`
     * Change the `command` configuration option to `jkoriginal.exe`
     * You must also specify your desired resolution in this file
     * Your desktop color depth is used automatically and does not need to be configured
@@ -73,7 +73,7 @@ Installation is now complete. You can run Jedi Knight with JkGfxMod by running J
 ### Mysteries of the Sith (CD-ROM)
 
 * Extract the distribution package into your Mysteries of the Sith directory
-* Edit the config file: `jkgm.json`
+* [Edit the config file](config.md): `jkgm.json`
     * Change the `command` configuration option to `jkm.exe`
     * You must also specify your desired resolution in this file
     * Your desktop color depth is used automatically and does not need to be configured
@@ -95,7 +95,7 @@ This installation method will allow you to use JkGfxMod with the Steam overlay a
 * Put `jkmoriginal.exe` in your Steam `Jedi Knight Mysteries of the Sith` app directory
 * Extract the distribution package into your Steam `Jedi Knight Mysteries of the Sith` app directory
 * Rename `inject.exe` to `JediKnightM.exe`
-* Edit the config file: `jkgm.json`
+* [Edit the config file](config.md): `jkgm.json`
     * Change the `command` configuration option to `jkmoriginal.exe`
     * You must also specify your desired resolution in this file
     * Your desktop color depth is used automatically and does not need to be configured
@@ -118,7 +118,7 @@ This installation method will allow you to use JkGfxMod from GOG Galaxy.
 * Extract the distribution package into your `Star Wars Jedi Knight - Mysteries of the Sith` app directory
 * Rename `JKMStart.exe` to `JKMStartOld.exe`
 * Rename `inject.exe` to `JKMStart.exe`
-* Edit the config file: `jkgm.json`
+* [Edit the config file](config.md): `jkgm.json`
     * Change the `command` configuration option to `jkmoriginal.exe`
     * You must also specify your desired resolution in this file
     * Your desktop color depth is used automatically and does not need to be configured

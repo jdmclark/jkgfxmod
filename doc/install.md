@@ -21,6 +21,7 @@ Installation instructions vary depending on the game version. Please follow the 
 * Edit the config file: `jkgm.json`
     * You must specify your desired resolution in this file
     * Your desktop color depth is used automatically and does not need to be configured
+    * See the [configuration guide](config.md) for more information
 * Run `inject.exe` from your Jedi Knight directory
 * Enable hardware acceleration in the display options
     * The Jedi Knight display options screen is hard-coded to say 16-bit color. Ignore this. JkGfxMod will always use your desktop color depth.
@@ -41,6 +42,7 @@ This installation method will allow you to use JkGfxMod with the Steam overlay a
     * Change the `command` configuration option to `jkoriginal.exe`
     * You must also specify your desired resolution in this file
     * Your desktop color depth is used automatically and does not need to be configured
+    * See the [configuration guide](config.md) for more information
 * Run Jedi Knight from Steam
 * Enable hardware acceleration in the display options
     * The Jedi Knight display options screen is hard-coded to say 16-bit color. Ignore this. JkGfxMod will always use your desktop color depth.
@@ -62,6 +64,7 @@ This installation method will allow you to use JkGfxMod from GOG Galaxy.
     * Change the `command` configuration option to `jkoriginal.exe`
     * You must also specify your desired resolution in this file
     * Your desktop color depth is used automatically and does not need to be configured
+    * See the [configuration guide](config.md) for more information
 * Run Jedi Knight from GOG Galaxy
 * Enable hardware acceleration in the display options
     * The Jedi Knight display options screen is hard-coded to say 16-bit color. Ignore this. JkGfxMod will always use your desktop color depth.
@@ -77,6 +80,7 @@ Installation is now complete. You can run Jedi Knight with JkGfxMod by running J
     * Change the `command` configuration option to `jkm.exe`
     * You must also specify your desired resolution in this file
     * Your desktop color depth is used automatically and does not need to be configured
+    * See the [configuration guide](config.md) for more information
 * Run `inject.exe` from your Mysteries of the Sith directory
 * Enable hardware acceleration in the display options
     * The Mysteries of the Sith display options screen is hard-coded to say 16-bit color. Ignore this. JkGfxMod will always use your desktop color depth.
@@ -99,6 +103,7 @@ This installation method will allow you to use JkGfxMod with the Steam overlay a
     * Change the `command` configuration option to `jkmoriginal.exe`
     * You must also specify your desired resolution in this file
     * Your desktop color depth is used automatically and does not need to be configured
+    * See the [configuration guide](config.md) for more information
 * Run Mysteries of the Sith from Steam
 * Enable hardware acceleration in the display options
     * The Mysteries of the Sith display options screen is hard-coded to say 16-bit color. Ignore this. JkGfxMod will always use your desktop color depth.
@@ -122,6 +127,7 @@ This installation method will allow you to use JkGfxMod from GOG Galaxy.
     * Change the `command` configuration option to `jkmoriginal.exe`
     * You must also specify your desired resolution in this file
     * Your desktop color depth is used automatically and does not need to be configured
+    * See the [configuration guide](config.md) for more information
 * Run Mysteries of the Sith from GOG Galaxy
 * Enable hardware acceleration in the display options
     * The Mysteries of the Sith display options screen is hard-coded to say 16-bit color. Ignore this. JkGfxMod will always use your desktop color depth.

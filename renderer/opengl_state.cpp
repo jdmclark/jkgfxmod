@@ -18,28 +18,24 @@ jkgm::gl::shader jkgm::compile_shader_from_file(fs::path const &filename, gl::sh
         fs->copy_to(&mob);
     }
     catch(std::exception const &e) {
-        LOG_ERROR("Failed to load shader: ", e.what());
-        report_error_message(str(format("JkGfxMod could not open an essential file and cannot "
+        report_fatal_message(str(format("JkGfxMod could not open an essential file and cannot "
                                         "continue.\n\nDetails: Error while opening ",
                                         filename.generic_string(),
                                         "\n",
                                         e.what())));
-        abort();
     }
 
     gl::shader_source(rv, make_string_span(""), make_span(mb.str()));
     gl::compile_shader(rv);
     if(!gl::get_shader_compile_status(rv)) {
         auto err_str = gl::get_shader_info_log(rv);
-        LOG_ERROR("Failed to compile shader: ", err_str);
-        report_error_message(str(format(
+        report_fatal_message(str(format(
             "JkGfxMod failed to compile an essential shader. This may have happened because your "
             "graphics device does not support OpenGL 3.3, because the shader file has been "
             "incorrectly modified, or because of a bug in JkGfxMod.\n\nDetails: Failed to compile ",
             filename.generic_string(),
             "\n",
             err_str)));
-        abort();
     }
 
     return rv;
@@ -60,15 +56,13 @@ void jkgm::link_program_from_files(std::string const &name,
 
     if(!gl::get_program_link_status(*prog)) {
         auto err_str = gl::get_program_info_log(*prog);
-        LOG_ERROR("Failed to link program ", name, ": ", gl::get_program_info_log(*prog));
-        report_error_message(str(format(
+        report_fatal_message(str(format(
             "JkGfxMod failed to link an essential shader. This may have happened because your "
             "graphics device does not support OpenGL 3.3, because the shader files have been "
             "incorrectly modified, or because of a bug in JkGfxMod.\n\nDetails: Failed to link ",
             name,
             "\n",
             err_str)));
-        abort();
     }
 }
 

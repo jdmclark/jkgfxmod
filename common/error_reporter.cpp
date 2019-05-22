@@ -23,13 +23,22 @@ namespace {
     }
 }
 
+void jkgm::report_fatal_message(std::string_view msg)
+{
+    LOG_ERROR(msg);
+    error_dialog(msg);
+    abort();
+}
+
 void jkgm::report_error_message(std::string_view msg)
 {
+    LOG_ERROR(msg);
     error_dialog(msg);
 }
 
 void jkgm::report_warning_message(std::string_view msg)
 {
+    LOG_WARNING(msg);
     warning_dialog(msg);
 }
 

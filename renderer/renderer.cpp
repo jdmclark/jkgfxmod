@@ -86,9 +86,11 @@ namespace jkgm {
         dummy_class.lpszClassName = L"kernel_wgl_ext_loader";
 
         if(!RegisterClass(&dummy_class)) {
-            report_error_message("JkGfxMod could not initialize OpenGL.\n\nDetails: Failed to "
-                                 "register WGL extension loader window class");
-            abort();
+            report_fatal_message(
+                str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: Failed to register "
+                           "WGL extension loader window class (",
+                           win32::win32_category().message(GetLastError()),
+                           ")")));
         }
 
         HWND dummy_window = CreateWindowEx(0,
@@ -105,9 +107,10 @@ namespace jkgm {
                                            NULL);
 
         if(!dummy_window) {
-            report_error_message("JkGfxMod could not initialize OpenGL.\n\nDetails: Failed to "
-                                 "create WGL extension loader window");
-            abort();
+            report_fatal_message(str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: "
+                                            "Failed to create WGL extension loader window (",
+                                            win32::win32_category().message(GetLastError()),
+                                            ")")));
         }
 
         HDC hDC = GetDC(dummy_window);
@@ -128,12 +131,33 @@ namespace jkgm {
         SetPixelFormat(hDC, pixel_format, &pfd);
 
         HGLRC dummy_context = wglCreateContext(hDC);
+        if(dummy_context == NULL) {
+            report_fatal_message(str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: "
+                                            "Failed to create WGL extension loader context (",
+                                            win32::win32_category().message(GetLastError()),
+                                            ")")));
+        }
+
         wglMakeCurrent(hDC, dummy_context);
 
         wglCreateContextAttribsARB =
             (wglCreateContextAttribsARB_type)wglGetProcAddress("wglCreateContextAttribsARB");
+        if(wglCreateContextAttribsARB == NULL) {
+            report_fatal_message(
+                str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: Failed to acquire "
+                           "wglCreateContextAttribsARB extension (",
+                           win32::win32_category().message(GetLastError()),
+                           ")")));
+        }
+
         wglChoosePixelFormatARB =
             (wglChoosePixelFormatARB_type)wglGetProcAddress("wglChoosePixelFormatARB");
+        if(wglChoosePixelFormatARB == NULL) {
+            report_fatal_message(str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: "
+                                            "Failed to acquire wglChoosePixelFormatARB extension (",
+                                            win32::win32_category().message(GetLastError()),
+                                            ")")));
+        }
 
         wglMakeCurrent(hDC, 0);
         wglDeleteContext(dummy_context);
@@ -403,7 +427,15 @@ namespace jkgm {
                 dm.dmPelsHeight = get<y>(conf_scr_res);
                 dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
 
-                ChangeDisplaySettings(&dm, CDS_FULLSCREEN);
+                auto rv = ChangeDisplaySettings(&dm, CDS_FULLSCREEN);
+                if(rv != DISP_CHANGE_SUCCESSFUL) {
+                    report_fatal_message(str(format(
+                        "JkGfxMod could not change the display to the configured resolution. This "
+                        "may have happened because your graphics device does not support the "
+                        "configured resolution, or due to an implementation bug in "
+                        "JkGfxMod.\n\nDetails: ChangeDisplaySettings returned ",
+                        rv)));
+                }
 
                 MoveWindow(
                     hWnd, 0, 0, get<x>(conf_scr_res), get<y>(conf_scr_res), /*repaint*/ TRUE);
@@ -431,11 +463,19 @@ namespace jkgm {
 
             int pfdid;
             UINT num_formats;
-            wglChoosePixelFormatARB(
+            bool cpf_res = wglChoosePixelFormatARB(
                 hDC, pfd_attribs.data(), nullptr, /*max formats*/ 1, &pfdid, &num_formats);
+            if(!cpf_res) {
+                report_fatal_message(
+                    str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: "
+                               "Call to wglChoosePixelFormatARB failed unexpectedly (returned",
+                               GetLastError(),
+                               ")")));
+            }
+
             if(num_formats == 0) {
-                LOG_ERROR("Renderer ChoosePixelFormat failed: ",
-                          win32::win32_category().message(GetLastError()));
+                report_fatal_message("JkGfxMod could not initialize OpenGL.\n\nDetails: Failed to "
+                                     "find suitable pixel format.");
             }
 
             PIXELFORMATDESCRIPTOR pfd;
@@ -449,12 +489,20 @@ namespace jkgm {
                                         WGL_CONTEXT_PROFILE_MASK_ARB,
                                         WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
                                         0};
-
             hGLRC = wglCreateContextAttribsARB(hDC, NULL, gl_attribs.data());
+
+            if(hGLRC == NULL) {
+                report_fatal_message(str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: "
+                                                "Failed to create OpenGL context (returned ",
+                                                GetLastError(),
+                                                ")")));
+            }
+
             wglMakeCurrent(hDC, hGLRC);
 
             if(!gladLoadGL()) {
-                LOG_ERROR("Failed to load GLAD");
+                report_fatal_message("JkGfxMod could not initialize OpenGL.\n\nDetails: Failed to "
+                                     "load extensions (gladLoadGL)");
             }
 
             ShowWindow(hWnd, SW_SHOW);

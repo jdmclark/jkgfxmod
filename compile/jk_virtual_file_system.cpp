@@ -42,10 +42,12 @@ namespace {
         if(fs::exists(base_path) && fs::is_directory(base_path)) {
             for(fs::directory_iterator dir_iter(base_path); dir_iter != fs::directory_iterator();
                 ++dir_iter) {
-                if(fs::is_regular_file(dir_iter->status()) &&
-                   jkgm::iequal(dir_iter->path().extension().generic_string(),
-                                std::string_view(".gob"))) {
-                    load_gob(dir_iter->path(), map, ctrs);
+                if(fs::is_regular_file(dir_iter->status())) {
+                    auto ext = dir_iter->path().extension().generic_string();
+                    if(jkgm::iequal(ext, std::string_view(".gob")) ||
+                       jkgm::iequal(ext, std::string_view(".goo"))) {
+                        load_gob(dir_iter->path(), map, ctrs);
+                    }
                 }
             }
         }

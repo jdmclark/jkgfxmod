@@ -542,13 +542,14 @@ namespace jkgm {
             LOG_INFO("Loading colormaps...");
             std::vector<std::string> colormap_names;
             for(auto const &em : vfs->list_files()) {
-                if(std::get<0>(em).find(".cmp") != std::string::npos) {
+                if(iends_with(std::get<0>(em), ".cmp")) {
                     colormap_names.push_back(std::get<0>(em));
                 }
             }
 
             std::vector<std::unique_ptr<colormap>> colormaps;
             for(auto const &em : colormap_names) {
+                LOG_INFO(em);
                 diagnostic_context dc(em);
                 try {
                     auto f = vfs->open(em);

@@ -164,7 +164,8 @@ namespace {
     void list_from_dir(std::map<std::string, std::string> &out_map, fs::path const &base_path)
     {
         if(fs::exists(base_path) && fs::is_directory(base_path)) {
-            for(fs::directory_iterator dir_iter(base_path); dir_iter != fs::directory_iterator();
+            for(fs::recursive_directory_iterator dir_iter(base_path);
+                dir_iter != fs::recursive_directory_iterator();
                 ++dir_iter) {
                 if(fs::is_regular_file(dir_iter->status())) {
                     auto p = dir_iter->path();

@@ -5,6 +5,7 @@
 
 namespace jkgm {
     bool begins_with(std::string_view searched, std::string_view prefix);
+    bool iends_with(std::string_view searched, std::string_view suffix);
 
     template <class LeftRngT, class RightRngT>
     bool iequal(LeftRngT const &left, RightRngT const &right)

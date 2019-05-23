@@ -350,7 +350,7 @@ jkgm::render_gbuffer::render_gbuffer(size<2, int> dims, render_depthbuffer *rbo)
     gl::bind_texture(gl::texture_bind_target::texture_2d, depth_nrm_tex);
     gl::tex_image_2d(gl::texture_bind_target::texture_2d,
                      /*level*/ 0,
-                     gl::texture_internal_format::rgba16f,
+                     gl::texture_internal_format::rgba32f,
                      dims,
                      gl::texture_pixel_format::rgba,
                      gl::texture_pixel_type::float32,
@@ -609,10 +609,10 @@ jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res,
                             data_root / "shaders/game.vert",
                             data_root / "shaders/game_trns_pass.frag");
 
-    link_program_from_files("post_gauss3",
-                            &post_gauss3,
+    link_program_from_files("post_box4",
+                            &post_box4,
                             data_root / "shaders/postprocess.vert",
-                            data_root / "shaders/post_gauss3.frag");
+                            data_root / "shaders/post_box4.frag");
     link_program_from_files("post_gauss7",
                             &post_gauss7,
                             data_root / "shaders/postprocess.vert",
@@ -666,6 +666,7 @@ jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res,
 
     if(the_config->enable_ssao) {
         ssao_occlusionbuffer = std::make_unique<ssao_occlusion_buffer>(screen_res);
+        ssao_occlusionbuffer2 = std::make_unique<ssao_occlusion_buffer>(screen_res);
 
         std::uniform_real_distribution<float> ssao_noise_dist(0.0f, 1.0f);
         std::default_random_engine generator;

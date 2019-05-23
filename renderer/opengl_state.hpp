@@ -192,7 +192,7 @@ namespace jkgm {
 
         gl::program game_transparency_pass_program;
 
-        gl::program post_gauss3;
+        gl::program post_box4;
         gl::program post_gauss7;
         gl::program post_low_pass;
         gl::program post_to_srgb;
@@ -209,6 +209,7 @@ namespace jkgm {
         std::vector<color_rgba8> hud_texture_data;
 
         std::unique_ptr<ssao_occlusion_buffer> ssao_occlusionbuffer;
+        std::unique_ptr<ssao_occlusion_buffer> ssao_occlusionbuffer2;
         std::unique_ptr<gl::texture> ssao_noise_texture;
 
         render_depthbuffer shared_depthbuffer;

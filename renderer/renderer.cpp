@@ -1032,7 +1032,7 @@ namespace jkgm {
         void draw_game_ssao_postprocess()
         {
             // Compute SSAO:
-            gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->ssao_occlusionbuffer->fbo);
+            gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->ssao_occlusionbuffer2->fbo);
             gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
 
             gl::use_program(ogs->game_post_ssao_program);
@@ -1054,30 +1054,19 @@ namespace jkgm {
                 gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
 
             // Blur SSAO:
-            gl::use_program(ogs->post_gauss3);
-            gl::set_uniform_integer(gl::uniform_location_id(0), 0);
-
-            auto hdr_vp_size =
-                static_cast<size<2, float>>(ogs->screen_renderbuffer.viewport.size());
-            gl::set_uniform_vector(gl::uniform_location_id(1), hdr_vp_size);
-
-            // - Horizontal:
-            gl::set_uniform_vector(gl::uniform_location_id(2), make_direction(1.0f, 0.0f));
-
-            gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->screen_postbuffer1.fbo);
-            gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
-
-            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->ssao_occlusionbuffer->tex);
-            gl::draw_elements(
-                gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
-
-            // - Vertical:
-            gl::set_uniform_vector(gl::uniform_location_id(2), make_direction(0.0f, 1.0f));
+            gl::use_program(ogs->post_box4);
 
             gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->ssao_occlusionbuffer->fbo);
             gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
 
-            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->screen_postbuffer1.tex);
+            gl::set_uniform_integer(gl::uniform_location_id(1), 1);
+            gl::set_active_texture_unit(1);
+            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->gbuffer.depth_nrm_tex);
+
+            gl::set_uniform_integer(gl::uniform_location_id(0), 0);
+            gl::set_active_texture_unit(0);
+            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->ssao_occlusionbuffer2->tex);
+
             gl::draw_elements(
                 gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
         }

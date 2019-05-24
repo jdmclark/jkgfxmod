@@ -273,159 +273,6 @@ jkgm::hud_model::hud_model(size<2, int> scr_res,
     num_indices = indices.size();
 }
 
-jkgm::render_depthbuffer::render_depthbuffer(size<2, int> dims)
-    : viewport(make_point(0, 0), dims)
-{
-    gl::bind_renderbuffer(rbo);
-    gl::renderbuffer_storage(gl::renderbuffer_format::depth, dims);
-}
-
-jkgm::render_buffer::render_buffer(size<2, int> dims, render_depthbuffer *rbo)
-    : viewport(make_point(0, 0), dims)
-{
-    gl::bind_framebuffer(gl::framebuffer_bind_target::any, fbo);
-
-    // Set up color texture:
-    gl::bind_texture(gl::texture_bind_target::texture_2d, tex);
-    gl::tex_image_2d(gl::texture_bind_target::texture_2d,
-                     /*level*/ 0,
-                     gl::texture_internal_format::rgba16f,
-                     dims,
-                     gl::texture_pixel_format::rgba,
-                     gl::texture_pixel_type::float32,
-                     span<char const>(nullptr, 0U));
-    gl::set_texture_max_level(gl ::texture_bind_target::texture_2d, 0U);
-    gl::framebuffer_texture(
-        gl::framebuffer_bind_target::any, gl::framebuffer_attachment::color0, tex, 0);
-
-    // Set up real depth buffer:
-    gl::framebuffer_renderbuffer(
-        gl::framebuffer_bind_target::any, gl::framebuffer_attachment::depth, rbo->rbo);
-
-    // Finish:
-    gl::draw_buffers(gl::draw_buffer::color0);
-
-    auto fbs = gl::check_framebuffer_status(gl::framebuffer_bind_target::any);
-    if(gl::check_framebuffer_status(gl::framebuffer_bind_target::any) !=
-       gl::framebuffer_status::complete) {
-        gl::log_errors();
-        LOG_ERROR("Failed to create render framebuffer: ", static_cast<int>(fbs));
-    }
-
-    gl::bind_framebuffer(gl::framebuffer_bind_target::any, gl::default_framebuffer);
-}
-
-jkgm::render_gbuffer::render_gbuffer(size<2, int> dims, render_depthbuffer *rbo)
-    : viewport(make_point(0, 0), dims)
-{
-    gl::bind_framebuffer(gl::framebuffer_bind_target::any, fbo);
-
-    // Set up color texture:
-    gl::bind_texture(gl::texture_bind_target::texture_2d, color_tex);
-    gl::tex_image_2d(gl::texture_bind_target::texture_2d,
-                     /*level*/ 0,
-                     gl::texture_internal_format::rgba16f,
-                     dims,
-                     gl::texture_pixel_format::rgba,
-                     gl::texture_pixel_type::float32,
-                     span<char const>(nullptr, 0U));
-    gl::set_texture_max_level(gl ::texture_bind_target::texture_2d, 0U);
-    gl::framebuffer_texture(
-        gl::framebuffer_bind_target::any, gl::framebuffer_attachment::color0, color_tex, 0);
-
-    // Set up emissive texture:
-    gl::bind_texture(gl::texture_bind_target::texture_2d, emissive_tex);
-    gl::tex_image_2d(gl::texture_bind_target::texture_2d,
-                     /*level*/ 0,
-                     gl::texture_internal_format::rgba16f,
-                     dims,
-                     gl::texture_pixel_format::rgba,
-                     gl::texture_pixel_type::float32,
-                     span<char const>(nullptr, 0U));
-    gl::set_texture_max_level(gl ::texture_bind_target::texture_2d, 0U);
-    gl::framebuffer_texture(
-        gl::framebuffer_bind_target::any, gl::framebuffer_attachment::color1, emissive_tex, 0);
-
-    // Set up depth normal texture:
-    gl::bind_texture(gl::texture_bind_target::texture_2d, depth_nrm_tex);
-    gl::tex_image_2d(gl::texture_bind_target::texture_2d,
-                     /*level*/ 0,
-                     gl::texture_internal_format::rgba32f,
-                     dims,
-                     gl::texture_pixel_format::rgba,
-                     gl::texture_pixel_type::float32,
-                     make_span((char const *)nullptr, 0U));
-    gl::set_texture_max_level(gl::texture_bind_target::texture_2d, 0U);
-    gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
-    gl::set_texture_min_filter(gl::texture_bind_target::texture_2d, gl::min_filter::linear);
-    gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
-                              gl::texture_direction::s,
-                              gl::texture_wrap_mode::clamp_to_border);
-    gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
-                              gl::texture_direction::t,
-                              gl::texture_wrap_mode::clamp_to_border);
-    gl::set_texture_border_color(gl::texture_bind_target::texture_2d,
-                                 color(0.0f, 0.0f, 1.0f, std::numeric_limits<float>::lowest()));
-    gl::framebuffer_texture(gl::framebuffer_bind_target::any,
-                            gl::framebuffer_attachment::color2,
-                            depth_nrm_tex,
-                            /*level*/ 0);
-
-    // Set up real depth buffer:
-    gl::framebuffer_renderbuffer(
-        gl::framebuffer_bind_target::any, gl::framebuffer_attachment::depth, rbo->rbo);
-
-    // Finish:
-    gl::draw_buffers(gl::draw_buffer::color0, gl::draw_buffer::color1, gl::draw_buffer::color2);
-
-    auto fbs = gl::check_framebuffer_status(gl::framebuffer_bind_target::any);
-    if(gl::check_framebuffer_status(gl::framebuffer_bind_target::any) !=
-       gl::framebuffer_status::complete) {
-        gl::log_errors();
-        LOG_ERROR("Failed to create render framebuffer: ", static_cast<int>(fbs));
-    }
-
-    gl::bind_framebuffer(gl::framebuffer_bind_target::any, gl::default_framebuffer);
-}
-
-jkgm::ssao_occlusion_buffer::ssao_occlusion_buffer(size<2, int> dims)
-    : viewport(make_point(0, 0), dims)
-{
-    gl::bind_framebuffer(gl::framebuffer_bind_target::any, fbo);
-
-    gl::bind_texture(gl::texture_bind_target::texture_2d, tex);
-    gl::tex_image_2d(gl::texture_bind_target::texture_2d,
-                     /*level*/ 0,
-                     gl::texture_internal_format::r16f,
-                     dims,
-                     gl::texture_pixel_format::red,
-                     gl::texture_pixel_type::float32,
-                     span<char const>(nullptr, 0U));
-    gl::set_texture_max_level(gl::texture_bind_target::texture_2d, 0U);
-    gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
-    gl::set_texture_min_filter(gl::texture_bind_target::texture_2d, gl::min_filter::linear);
-    gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
-                              gl::texture_direction::s,
-                              gl::texture_wrap_mode::clamp_to_edge);
-    gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
-                              gl::texture_direction::t,
-                              gl::texture_wrap_mode::clamp_to_edge);
-
-    gl::framebuffer_texture(
-        gl::framebuffer_bind_target::any, gl::framebuffer_attachment::color0, tex, 0);
-
-    gl::draw_buffers(gl::draw_buffer::color0);
-
-    auto fbs = gl::check_framebuffer_status(gl::framebuffer_bind_target::any);
-    if(gl::check_framebuffer_status(gl::framebuffer_bind_target::any) !=
-       gl::framebuffer_status::complete) {
-        gl::log_errors();
-        LOG_ERROR("Failed to create SSAO framebuffer: ", static_cast<int>(fbs));
-    }
-
-    gl::bind_framebuffer(gl::framebuffer_bind_target::any, gl::default_framebuffer);
-}
-
 jkgm::post_buffer::post_buffer(size<2, int> dims)
     : viewport(make_point(0, 0), dims)
 {
@@ -562,27 +409,14 @@ void jkgm::triangle_buffer_sequence::swap_next()
     }
 }
 
-jkgm::srgb_texture::srgb_texture(size<2, int> dims)
-    : dims(dims)
-{
-}
-
-jkgm::linear_texture::linear_texture(size<2, int> dims)
-    : dims(dims)
-{
-}
-
 jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res,
                                                size<2, int> internal_screen_res,
                                                box<2, int> actual_scr_area,
                                                config const *the_config)
     : menumdl(screen_res, actual_scr_area)
     , hudmdl(screen_res, internal_screen_res, actual_scr_area, the_config->hud_scale)
-    , shared_depthbuffer(screen_res)
-    , screen_renderbuffer(screen_res, &shared_depthbuffer)
     , screen_postbuffer1(screen_res)
     , screen_postbuffer2(screen_res)
-    , gbuffer(screen_res, &shared_depthbuffer)
 {
     LOG_DEBUG("Loading OpenGL assets");
 
@@ -663,31 +497,4 @@ jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res,
                               gl::texture_wrap_mode::clamp_to_edge);
 
     hud_texture_data.resize(volume(internal_screen_res), color_rgba8::zero());
-
-    if(the_config->enable_ssao) {
-        ssao_occlusionbuffer = std::make_unique<ssao_occlusion_buffer>(screen_res);
-        ssao_occlusionbuffer2 = std::make_unique<ssao_occlusion_buffer>(screen_res);
-
-        std::uniform_real_distribution<float> ssao_noise_dist(0.0f, 1.0f);
-        std::default_random_engine generator;
-        std::vector<point<2, float>> ssao_noise;
-        ssao_noise.reserve(16);
-        for(size_t i = 0; i < 16; ++i) {
-            ssao_noise.push_back(normalize(make_point(ssao_noise_dist(generator) * 2.0f - 1.0f,
-                                                      ssao_noise_dist(generator) * 2.0f - 1.0f)));
-        }
-
-        ssao_noise_texture = std::make_unique<gl::texture>();
-        gl::bind_texture(gl::texture_bind_target::texture_2d, *ssao_noise_texture);
-        gl::tex_image_2d(gl::texture_bind_target::texture_2d,
-                         /*level*/ 0,
-                         gl::texture_internal_format::rg32f,
-                         make_size(4, 4),
-                         gl::texture_pixel_format::rg,
-                         gl::texture_pixel_type::float32,
-                         make_span(ssao_noise).as_const_bytes());
-        gl::set_texture_max_level(gl::texture_bind_target::texture_2d, 0);
-        gl::set_texture_min_filter(gl::texture_bind_target::texture_2d, gl::min_filter::nearest);
-        gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::nearest);
-    }
 }

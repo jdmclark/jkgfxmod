@@ -56,46 +56,6 @@ namespace jkgm {
                   float scale);
     };
 
-    class render_depthbuffer {
-    public:
-        gl::renderbuffer rbo;
-
-        box<2, int> viewport;
-
-        explicit render_depthbuffer(size<2, int> dims);
-    };
-
-    class render_buffer {
-    public:
-        gl::framebuffer fbo;
-        gl::texture tex;
-
-        box<2, int> viewport;
-
-        render_buffer(size<2, int> dims, render_depthbuffer *rbo);
-    };
-
-    class render_gbuffer {
-    public:
-        gl::framebuffer fbo;
-        gl::texture color_tex;
-        gl::texture emissive_tex;
-        gl::texture depth_nrm_tex;
-
-        box<2, int> viewport;
-
-        render_gbuffer(size<2, int> dims, render_depthbuffer *rbo);
-    };
-
-    class ssao_occlusion_buffer {
-    public:
-        gl::framebuffer fbo;
-        gl::texture tex;
-        box<2, int> viewport;
-
-        explicit ssao_occlusion_buffer(size<2, int> dims);
-    };
-
     class post_buffer {
     public:
         gl::framebuffer fbo;
@@ -165,24 +125,6 @@ namespace jkgm {
         void swap_next();
     };
 
-    struct srgb_texture {
-        size<2, int> dims;
-        gl::texture handle;
-        int refct = 0;
-        std::optional<fs::path> origin_filename;
-
-        explicit srgb_texture(size<2, int> dims);
-    };
-
-    struct linear_texture {
-        size<2, int> dims;
-        gl::texture handle;
-        int refct = 0;
-        std::optional<fs::path> origin_filename;
-
-        explicit linear_texture(size<2, int> dims);
-    };
-
     struct opengl_state {
         gl::program menu_program;
 
@@ -208,25 +150,10 @@ namespace jkgm {
         gl::texture hud_texture;
         std::vector<color_rgba8> hud_texture_data;
 
-        std::unique_ptr<ssao_occlusion_buffer> ssao_occlusionbuffer;
-        std::unique_ptr<ssao_occlusion_buffer> ssao_occlusionbuffer2;
-        std::unique_ptr<gl::texture> ssao_noise_texture;
-
-        render_depthbuffer shared_depthbuffer;
-
-        render_buffer screen_renderbuffer;
         post_buffer screen_postbuffer1;
         post_buffer screen_postbuffer2;
 
-        render_gbuffer gbuffer;
-
         hdr_stack bloom_layers;
-
-        std::vector<srgb_texture> srgb_textures;
-        std::map<fs::path, size_t> file_to_srgb_texture_map;
-
-        std::vector<linear_texture> linear_textures;
-        std::map<fs::path, size_t> file_to_linear_texture_map;
 
         opengl_state(size<2, int> screen_res,
                      size<2, int> internal_screen_res,

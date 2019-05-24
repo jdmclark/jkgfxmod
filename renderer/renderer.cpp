@@ -8,7 +8,6 @@
 #include "base/win32.hpp"
 #include "common/error_reporter.hpp"
 #include "common/image.hpp"
-#include "common/material_map.hpp"
 #include "d3d_impl.hpp"
 #include "d3ddevice_impl.hpp"
 #include "d3dviewport_impl.hpp"
@@ -31,13 +30,16 @@
 #include "opengl_state.hpp"
 #include "primary_menu_surface.hpp"
 #include "primary_surface.hpp"
+#include "renderer_ao.hpp"
+#include "renderer_compositor.hpp"
+#include "renderer_screen.hpp"
 #include "sysmem_texture.hpp"
+#include "texture_cache.hpp"
 #include "triangle_batch.hpp"
 #include "vidmem_texture.hpp"
 #include "zbuffer_surface.hpp"
 #include <Windows.h>
 #include <chrono>
-#include <random>
 
 namespace jkgm {
     static WNDPROC original_wkernel_wndproc = nullptr;
@@ -272,7 +274,6 @@ namespace jkgm {
     class renderer_impl : public renderer {
     private:
         config const *the_config;
-        material_map materials;
 
         renderer_mode mode = renderer_mode::menu;
         size<2, int> conf_scr_res;
@@ -308,6 +309,9 @@ namespace jkgm {
         HGLRC hGLRC;
 
         std::unique_ptr<opengl_state> ogs;
+        std::unique_ptr<renderer_compositor> frame_compositor;
+        std::unique_ptr<renderer_ao> frame_ao;
+        std::unique_ptr<renderer_screen> frame_screen;
 
         HGDIOBJ indexed_bitmap_dc = NULL;
         char const *indexed_bitmap_source = nullptr;
@@ -329,8 +333,6 @@ namespace jkgm {
         triangle_batch *current_triangle_batch = &world_batch;
 
         material_instance_id current_material = material_instance_id(0U);
-
-        std::vector<point<3, float>> ssao_kernel;
 
     public:
         explicit renderer_impl(HINSTANCE dll_instance, config const *the_config)
@@ -357,21 +359,6 @@ namespace jkgm {
 
             menu_prev_ticks = std::chrono::high_resolution_clock::now();
             menu_curr_ticks = menu_prev_ticks;
-
-            std::uniform_real_distribution<float> ssao_sample_dist(0.0f, 1.0f);
-            std::default_random_engine generator;
-
-            ssao_kernel.reserve(16);
-            for(size_t i = 0; i < 16; ++i) {
-                float scale = (float)i / 16;
-                scale *= scale;
-                scale = lerp(0.1f, 1.0f, scale);
-                ssao_kernel.push_back(
-                    normalize(point<3, float>(ssao_sample_dist(generator) * 2.0f - 1.0f,
-                                              ssao_sample_dist(generator) * 2.0f - 1.0f,
-                                              ssao_sample_dist(generator))) *
-                    ssao_sample_dist(generator) * scale);
-            }
         }
 
         void set_renderer_mode(renderer_mode mode) override
@@ -407,8 +394,6 @@ namespace jkgm {
 
         void initialize(HINSTANCE hInstance, HWND parentWnd) override
         {
-            materials.create_map(fs::path(the_config->data_path) / "materials");
-
             init_wgl_extensions(hInstance);
 
             hWnd = parentWnd;
@@ -514,135 +499,25 @@ namespace jkgm {
 
             ogs = std::make_unique<opengl_state>(
                 conf_scr_res, internal_scr_res, actual_display_area, the_config);
+            texture_cache = create_texture_cache(the_config);
+            frame_compositor = create_renderer_compositor(the_config);
+            frame_ao = create_renderer_ao(the_config, conf_scr_res);
+            frame_screen = create_renderer_screen(the_config, conf_scr_res);
             begin_frame();
         }
 
         void begin_frame()
         {
             gl::set_active_texture_unit(0);
-            gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->screen_renderbuffer.fbo);
-            gl::set_viewport(ogs->screen_renderbuffer.viewport);
-            gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
+            frame_screen->begin_frame();
         }
 
         void end_frame()
         {
             // Compose renderbuffer onto window:
-            auto current_wnd_sz = conf_scr_res;
-            gl::bind_vertex_array(ogs->postmdl.vao);
-
-            if(the_config->enable_bloom) {
-                // Render low pass for bloom
-                gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->screen_postbuffer2.fbo);
-                gl::set_viewport(make_box(make_point(0, 0), current_wnd_sz));
-
-                gl::set_clear_color(solid(colors::black));
-                gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
-
-                gl::use_program(ogs->post_low_pass);
-
-                gl::set_uniform_integer(gl::uniform_location_id(0), 0);
-
-                gl::set_active_texture_unit(0);
-                gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->screen_renderbuffer.tex);
-
-                gl::draw_elements(
-                    gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
-
-                // Blur and down sample:
-                gl::set_active_texture_unit(0);
-
-                gl::texture_view src_tx = ogs->screen_postbuffer2.tex;
-
-                gl::use_program(ogs->post_gauss7);
-                gl::set_uniform_integer(gl::uniform_location_id(0), 0);
-
-                auto hdr_vp_size = static_cast<size<2, float>>(current_wnd_sz);
-                float hdr_aspect_ratio = get<x>(hdr_vp_size) / get<y>(hdr_vp_size);
-
-                for(auto &hdr_stack_em : ogs->bloom_layers.elements) {
-                    auto layer_vp_size =
-                        static_cast<size<2, float>>(hdr_stack_em.a.viewport.size());
-                    gl::set_uniform_vector(gl::uniform_location_id(1),
-                                           make_size(get<x>(layer_vp_size) * hdr_aspect_ratio,
-                                                     get<y>(layer_vp_size)));
-
-                    for(int i = 0; i < hdr_stack_em.num_passes; ++i) {
-                        // Blur horizontally
-                        gl::bind_framebuffer(gl::framebuffer_bind_target::any, hdr_stack_em.b.fbo);
-                        gl::set_viewport(hdr_stack_em.b.viewport);
-
-                        gl::set_clear_color(solid(colors::black));
-                        gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
-
-                        gl::set_uniform_vector(gl::uniform_location_id(2),
-                                               make_direction(1.0f, 0.0f));
-                        gl::bind_texture(gl::texture_bind_target::texture_2d, src_tx);
-                        gl::draw_elements(gl::element_type::triangles,
-                                          ogs->postmdl.num_indices,
-                                          gl::index_type::uint32);
-
-                        // Blur vertically
-                        gl::bind_framebuffer(gl::framebuffer_bind_target::any, hdr_stack_em.a.fbo);
-
-                        gl::set_clear_color(solid(colors::black));
-                        gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
-
-                        gl::set_uniform_vector(gl::uniform_location_id(2),
-                                               make_direction(0.0f, 1.0f));
-                        gl::bind_texture(gl::texture_bind_target::texture_2d, hdr_stack_em.b.tex);
-                        gl::draw_elements(gl::element_type::triangles,
-                                          ogs->postmdl.num_indices,
-                                          gl::index_type::uint32);
-
-                        // Set up next stage
-                        src_tx = hdr_stack_em.a.tex;
-                    }
-                }
-            }
-
-            gl::bind_framebuffer(gl::framebuffer_bind_target::any, gl::default_framebuffer);
-            gl::set_viewport(make_box(make_point(0, 0), current_wnd_sz));
-
-            gl::set_clear_color(solid(colors::black));
-            gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
-            gl::disable(gl::capability::depth_test);
-            gl::disable(gl::capability::cull_face);
-
-            // Copy to front buffer while converting to srgb
-            gl::use_program(ogs->post_to_srgb);
-
-            gl::set_uniform_integer(gl::uniform_location_id(0), 0);
-
-            gl::set_active_texture_unit(0);
-            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->screen_renderbuffer.tex);
-
-            int curr_em = 1;
-            if(the_config->enable_bloom) {
-                for(auto &hdr_stack_em : ogs->bloom_layers.elements) {
-                    gl::set_uniform_integer(gl::uniform_location_id(curr_em), curr_em);
-                    gl::set_active_texture_unit(curr_em);
-                    gl::bind_texture(gl::texture_bind_target::texture_2d, hdr_stack_em.a.tex);
-                    ++curr_em;
-                }
-            }
-            else {
-                for(auto &hdr_stack_em : ogs->bloom_layers.elements) {
-                    gl::set_uniform_integer(gl::uniform_location_id(curr_em), curr_em);
-                    gl::set_active_texture_unit(curr_em);
-                    gl::bind_texture(gl::texture_bind_target::texture_2d, gl::default_texture);
-                    ++curr_em;
-                }
-            }
-
-            curr_em = 5;
-            for(auto &hdr_stack_em : ogs->bloom_layers.elements) {
-                gl::set_uniform_float(gl::uniform_location_id(curr_em), hdr_stack_em.weight);
-                ++curr_em;
-            }
-
-            gl::draw_elements(
-                gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
+            frame_screen->end_frame();
+            frame_compositor->end_frame(
+                ogs.get(), conf_scr_res, frame_screen->get_resolved_final_texture());
 
             SwapBuffers(hDC);
 
@@ -876,17 +751,17 @@ namespace jkgm {
 
                 gl::texture_view albedo_map = gl::default_texture;
                 if(mat->albedo_map.has_value()) {
-                    albedo_map = at(ogs->srgb_textures, *mat->albedo_map).handle;
+                    albedo_map = texture_cache->get_texture_handle(*mat->albedo_map);
                 }
 
                 gl::texture_view emissive_map = gl::default_texture;
                 if(mat->emissive_map.has_value()) {
-                    emissive_map = at(ogs->srgb_textures, *mat->emissive_map).handle;
+                    emissive_map = texture_cache->get_texture_handle(*mat->emissive_map);
                 }
 
                 gl::texture_view displacement_map = gl::default_texture;
                 if(mat->displacement_map.has_value()) {
-                    displacement_map = at(ogs->linear_textures, *mat->displacement_map).handle;
+                    displacement_map = texture_cache->get_texture_handle(*mat->displacement_map);
                 }
 
                 gl::set_active_texture_unit(2);
@@ -985,12 +860,6 @@ namespace jkgm {
 
         void draw_game_opaque_into_gbuffer(triangle_buffer_models *trimdl, bool posterize_lighting)
         {
-            gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->gbuffer.fbo);
-            gl::clear_buffer_depth(1.0f);
-            gl::clear_buffer_color(0, color::zero());
-            gl::clear_buffer_color(1, color::zero());
-            gl::clear_buffer_color(2, color::zero());
-
             // Draw batches
             gl::disable(gl::capability::blend);
             gl::enable(gl::capability::depth_test);
@@ -1029,52 +898,8 @@ namespace jkgm {
                        posterize_lighting);
         }
 
-        void draw_game_ssao_postprocess()
-        {
-            // Compute SSAO:
-            gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->ssao_occlusionbuffer2->fbo);
-            gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
-
-            gl::use_program(ogs->game_post_ssao_program);
-            gl::set_uniform_integer(gl::uniform_location_id(0), 0);
-            gl::set_uniform_integer(gl::uniform_location_id(1), 1);
-
-            for(size_t i = 0; i < ssao_kernel.size(); ++i) {
-                gl::set_uniform_vector(gl::uniform_location_id(2 + i), ssao_kernel[i]);
-            }
-
-            gl::set_active_texture_unit(1);
-            gl::bind_texture(gl::texture_bind_target::texture_2d, *ogs->ssao_noise_texture);
-
-            gl::set_active_texture_unit(0);
-            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->gbuffer.depth_nrm_tex);
-
-            gl::bind_vertex_array(ogs->postmdl.vao);
-            gl::draw_elements(
-                gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
-
-            // Blur SSAO:
-            gl::use_program(ogs->post_box4);
-
-            gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->ssao_occlusionbuffer->fbo);
-            gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
-
-            gl::set_uniform_integer(gl::uniform_location_id(1), 1);
-            gl::set_active_texture_unit(1);
-            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->gbuffer.depth_nrm_tex);
-
-            gl::set_uniform_integer(gl::uniform_location_id(0), 0);
-            gl::set_active_texture_unit(0);
-            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->ssao_occlusionbuffer2->tex);
-
-            gl::draw_elements(
-                gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
-        }
-
         void draw_game_opaque_composite()
         {
-            gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->screen_renderbuffer.fbo);
-            gl::clear({gl::clear_flag::color});
             gl::disable(gl::capability::depth_test);
 
             gl::use_program(ogs->game_post_opaque_composite_program);
@@ -1083,19 +908,15 @@ namespace jkgm {
             gl::set_uniform_integer(gl::uniform_location_id(2), 2);
 
             gl::set_active_texture_unit(2);
-            if(the_config->enable_ssao) {
-                gl::bind_texture(gl::texture_bind_target::texture_2d,
-                                 ogs->ssao_occlusionbuffer->tex);
-            }
-            else {
-                gl::bind_texture(gl::texture_bind_target::texture_2d, gl::default_texture);
-            }
+            gl::bind_texture(gl::texture_bind_target::texture_2d, frame_ao->get_ssao_texture());
 
             gl::set_active_texture_unit(1);
-            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->gbuffer.emissive_tex);
+            gl::bind_texture(gl::texture_bind_target::texture_2d,
+                             frame_screen->get_resolved_emissive_texture());
 
             gl::set_active_texture_unit(0);
-            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->gbuffer.color_tex);
+            gl::bind_texture(gl::texture_bind_target::texture_2d,
+                             frame_screen->get_resolved_color_texture());
 
             gl::bind_vertex_array(ogs->postmdl.vao);
             gl::draw_elements(
@@ -1104,18 +925,21 @@ namespace jkgm {
 
         void draw_game_gbuffer_pass(triangle_buffer_models *trimdl, bool posterize_lighting)
         {
+            frame_screen->begin_opaque_pass();
             draw_game_opaque_into_gbuffer(trimdl, posterize_lighting);
+            frame_screen->end_opaque_pass();
 
-            if(the_config->enable_ssao) {
-                draw_game_ssao_postprocess();
-            }
+            frame_ao->update_ssao_texture(ogs.get(),
+                                          frame_screen->get_resolved_depth_normal_texture());
 
+            frame_screen->begin_compose_opaque_pass();
             draw_game_opaque_composite();
+            frame_screen->end_compose_opaque_pass();
         }
 
         void draw_game_transparency_pass(triangle_buffer_models *trimdl, bool posterize_lighting)
         {
-            gl::bind_framebuffer(gl::framebuffer_bind_target::any, ogs->screen_renderbuffer.fbo);
+            frame_screen->begin_transparency_pass();
 
             // Draw batches
             gl::disable(gl::capability::blend);
@@ -1503,213 +1327,6 @@ namespace jkgm {
             auto *rv = get_matching_buffer();
             rv->AddRef();
             return rv;
-        }
-
-        std::optional<material const *> get_replacement_material(md5 const &sig) override
-        {
-            return materials.get_material(sig);
-        }
-
-        std::optional<srgb_texture_id> get_existing_free_srgb_texture(size<2, int> const &dims)
-        {
-            for(size_t i = 0; i < ogs->srgb_textures.size(); ++i) {
-                auto &em = ogs->srgb_textures[i];
-                if(em.refct <= 0 && em.dims == dims) {
-                    // This texture is a match. Clean it up before returning.
-                    if(em.origin_filename.has_value()) {
-                        ogs->file_to_srgb_texture_map.erase(*em.origin_filename);
-                    }
-
-                    em.refct = 0;
-
-                    return srgb_texture_id(i);
-                }
-            }
-
-            return std::nullopt;
-        }
-
-        srgb_texture_id create_srgb_texture_from_buffer(size<2, int> const &dims,
-                                                        span<char const> data) override
-        {
-            auto existing_buf = get_existing_free_srgb_texture(dims);
-            if(existing_buf.has_value()) {
-                // Matching texture already exists. Refill it.
-                auto &em = at(ogs->srgb_textures, *existing_buf);
-                gl::bind_texture(gl::texture_bind_target::texture_2d, em.handle);
-                gl::tex_sub_image_2d(gl::texture_bind_target::texture_2d,
-                                     0,
-                                     make_box(make_point(0, 0), dims),
-                                     gl::texture_pixel_format::rgba,
-                                     gl::texture_pixel_type::uint8,
-                                     data);
-                gl::generate_mipmap(gl::texture_bind_target::texture_2d);
-
-                ++em.refct;
-                return *existing_buf;
-            }
-
-            // Create new texture
-            srgb_texture_id rv(ogs->srgb_textures.size());
-            ogs->srgb_textures.emplace_back(dims);
-
-            auto &em = ogs->srgb_textures.back();
-            em.refct = 1;
-
-            gl::bind_texture(gl::texture_bind_target::texture_2d, em.handle);
-            gl::tex_image_2d(gl::texture_bind_target::texture_2d,
-                             /*level*/ 0,
-                             gl::texture_internal_format::srgb_a8,
-                             dims,
-                             gl::texture_pixel_format::rgba,
-                             gl::texture_pixel_type::uint8,
-                             data);
-            gl::generate_mipmap(gl::texture_bind_target::texture_2d);
-            gl::set_texture_max_anisotropy(gl::texture_bind_target::texture_2d,
-                                           std::max(1.0f, the_config->max_anisotropy));
-            if(the_config->enable_texture_filtering) {
-                gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d,
-                                           gl::mag_filter::linear);
-                gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
-                                           gl::min_filter::linear_mipmap_linear);
-            }
-            else {
-                gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d,
-                                           gl::mag_filter::nearest);
-                gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
-                                           gl::min_filter::nearest_mipmap_linear);
-            }
-
-            return rv;
-        }
-
-        srgb_texture_id get_srgb_texture_from_filename(fs::path const &file) override
-        {
-            auto it = ogs->file_to_srgb_texture_map.find(file);
-            if(it != ogs->file_to_srgb_texture_map.end()) {
-                // Image file already loaded
-                srgb_texture_id rv(it->second);
-                ++at(ogs->srgb_textures, rv).refct;
-                return rv;
-            }
-
-            auto fs = make_file_input_block(file);
-            auto img = load_image(fs.get());
-
-            auto rv = create_srgb_texture_from_buffer(img->dimensions,
-                                                      make_span(img->data).as_const_bytes());
-
-            auto &em = at(ogs->srgb_textures, rv);
-            em.origin_filename = file;
-            ogs->file_to_srgb_texture_map.emplace(file, rv.get());
-
-            return rv;
-        }
-
-        void release_srgb_texture(srgb_texture_id id) override
-        {
-            --at(ogs->srgb_textures, id).refct;
-        }
-
-        std::optional<linear_texture_id> get_existing_free_linear_texture(size<2, int> const &dims)
-        {
-            for(size_t i = 0; i < ogs->linear_textures.size(); ++i) {
-                auto &em = ogs->linear_textures[i];
-                if(em.refct <= 0 && em.dims == dims) {
-                    // This texture is a match. Clean it up before returning.
-                    if(em.origin_filename.has_value()) {
-                        ogs->file_to_linear_texture_map.erase(*em.origin_filename);
-                    }
-
-                    em.refct = 0;
-
-                    return linear_texture_id(i);
-                }
-            }
-
-            return std::nullopt;
-        }
-
-        linear_texture_id create_linear_texture_from_buffer(size<2, int> const &dims,
-                                                            span<char const> data)
-        {
-            auto existing_buf = get_existing_free_linear_texture(dims);
-            if(existing_buf.has_value()) {
-                // Matching texture already exists. Refill it.
-                auto &em = at(ogs->linear_textures, *existing_buf);
-                gl::bind_texture(gl::texture_bind_target::texture_2d, em.handle);
-                gl::tex_sub_image_2d(gl::texture_bind_target::texture_2d,
-                                     0,
-                                     make_box(make_point(0, 0), dims),
-                                     gl::texture_pixel_format::rgba,
-                                     gl::texture_pixel_type::uint8,
-                                     data);
-                gl::generate_mipmap(gl::texture_bind_target::texture_2d);
-
-                ++em.refct;
-                return *existing_buf;
-            }
-
-            // Create new texture
-            linear_texture_id rv(ogs->linear_textures.size());
-            ogs->linear_textures.emplace_back(dims);
-
-            auto &em = ogs->linear_textures.back();
-            em.refct = 1;
-
-            gl::bind_texture(gl::texture_bind_target::texture_2d, em.handle);
-            gl::tex_image_2d(gl::texture_bind_target::texture_2d,
-                             /*level*/ 0,
-                             gl::texture_internal_format::rgba,
-                             dims,
-                             gl::texture_pixel_format::rgba,
-                             gl::texture_pixel_type::uint8,
-                             data);
-            gl::generate_mipmap(gl::texture_bind_target::texture_2d);
-            gl::set_texture_max_anisotropy(gl::texture_bind_target::texture_2d,
-                                           std::max(1.0f, the_config->max_anisotropy));
-            if(the_config->enable_texture_filtering) {
-                gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d,
-                                           gl::mag_filter::linear);
-                gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
-                                           gl::min_filter::linear_mipmap_linear);
-            }
-            else {
-                gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d,
-                                           gl::mag_filter::nearest);
-                gl::set_texture_min_filter(gl::texture_bind_target::texture_2d,
-                                           gl::min_filter::nearest_mipmap_linear);
-            }
-
-            return rv;
-        }
-
-        linear_texture_id get_linear_texture_from_filename(fs::path const &file) override
-        {
-            auto it = ogs->file_to_linear_texture_map.find(file);
-            if(it != ogs->file_to_linear_texture_map.end()) {
-                // Image file already loaded
-                linear_texture_id rv(it->second);
-                ++at(ogs->linear_textures, rv).refct;
-                return rv;
-            }
-
-            auto fs = make_file_input_block(file);
-            auto img = load_image(fs.get());
-
-            auto rv = create_linear_texture_from_buffer(img->dimensions,
-                                                        make_span(img->data).as_const_bytes());
-
-            auto &em = at(ogs->linear_textures, rv);
-            em.origin_filename = file;
-            ogs->file_to_linear_texture_map.emplace(file, rv.get());
-
-            return rv;
-        }
-
-        void release_linear_texture(linear_texture_id id) override
-        {
-            --at(ogs->linear_textures, id).refct;
         }
     };
 }

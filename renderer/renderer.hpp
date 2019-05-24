@@ -15,10 +15,14 @@
 #include <memory>
 
 namespace jkgm {
+    class texture_cache;
+
     enum class renderer_mode { menu, ingame };
 
     class renderer {
     public:
+        std::unique_ptr<texture_cache> texture_cache;
+
         virtual ~renderer() = default;
 
         virtual void set_renderer_mode(renderer_mode mode) = 0;
@@ -63,15 +67,6 @@ namespace jkgm {
             get_directdraw_vidmem_texture_surface(DDSURFACEDESC const &desc) = 0;
 
         virtual IDirectDrawPalette *get_directdraw_palette(span<PALETTEENTRY const> entries) = 0;
-
-        virtual std::optional<material const *> get_replacement_material(md5 const &sig) = 0;
-
-        virtual srgb_texture_id create_srgb_texture_from_buffer(size<2, int> const &dims,
-                                                                span<char const> data) = 0;
-        virtual srgb_texture_id get_srgb_texture_from_filename(fs::path const &file) = 0;
-        virtual linear_texture_id get_linear_texture_from_filename(fs::path const &file) = 0;
-        virtual void release_srgb_texture(srgb_texture_id id) = 0;
-        virtual void release_linear_texture(linear_texture_id id) = 0;
     };
 
     std::unique_ptr<renderer> create_renderer(HINSTANCE dll_instance, config const *the_config);

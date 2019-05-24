@@ -7,6 +7,7 @@
 #include "dxguids.hpp"
 #include "math/color_conv.hpp"
 #include "sysmem_texture.hpp"
+#include "texture_cache.hpp"
 
 jkgm::vidmem_texture::vidmem_texture(vidmem_texture_surface *surf)
     : Direct3DTexture_impl("vidmem")
@@ -55,22 +56,23 @@ HRESULT WINAPI jkgm::vidmem_texture::Load(LPDIRECT3DTEXTURE a)
     auto sig = mh.finish();
     LOG_DEBUG("Loaded texture with signature ", static_cast<std::string>(sig));
 
-    auto repl_map = surf->r->get_replacement_material(sig);
+    auto repl_map = surf->r->texture_cache->get_replacement_material(sig);
 
     if(repl_map.has_value()) {
         LOG_DEBUG("Found replacement");
         if((*repl_map)->albedo_map.has_value()) {
-            surf->albedo_map = surf->r->get_srgb_texture_from_filename(*(*repl_map)->albedo_map);
+            surf->albedo_map =
+                surf->r->texture_cache->get_srgb_texture_from_filename(*(*repl_map)->albedo_map);
         }
 
         if((*repl_map)->emissive_map.has_value()) {
             surf->emissive_map =
-                surf->r->get_srgb_texture_from_filename(*(*repl_map)->emissive_map);
+                surf->r->texture_cache->get_srgb_texture_from_filename(*(*repl_map)->emissive_map);
         }
 
         if((*repl_map)->displacement_map.has_value()) {
-            surf->displacement_map =
-                surf->r->get_linear_texture_from_filename(*(*repl_map)->displacement_map);
+            surf->displacement_map = surf->r->texture_cache->get_linear_texture_from_filename(
+                *(*repl_map)->displacement_map);
         }
 
         surf->albedo_factor = (*repl_map)->albedo_factor;
@@ -106,7 +108,7 @@ HRESULT WINAPI jkgm::vidmem_texture::Load(LPDIRECT3DTEXTURE a)
         ++in_em;
     }
 
-    surf->albedo_map = surf->r->create_srgb_texture_from_buffer(
+    surf->albedo_map = surf->r->texture_cache->create_srgb_texture_from_buffer(
         make_size((int)src->desc.dwWidth, (int)src->desc.dwHeight),
         make_span(src->conv_buffer).as_const_bytes());
 
@@ -124,17 +126,17 @@ jkgm::vidmem_texture_surface::vidmem_texture_surface(renderer *r, material_insta
 void jkgm::vidmem_texture_surface::clear()
 {
     if(albedo_map.has_value()) {
-        r->release_srgb_texture(*albedo_map);
+        r->texture_cache->release_srgb_texture(*albedo_map);
         albedo_map.reset();
     }
 
     if(emissive_map.has_value()) {
-        r->release_srgb_texture(*emissive_map);
+        r->texture_cache->release_srgb_texture(*emissive_map);
         emissive_map.reset();
     }
 
     if(displacement_map.has_value()) {
-        r->release_linear_texture(*displacement_map);
+        r->texture_cache->release_linear_texture(*displacement_map);
         displacement_map.reset();
     }
 

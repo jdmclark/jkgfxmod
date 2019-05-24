@@ -16,7 +16,9 @@ namespace jkgm::gl {
         blend = 0x0BE2,
         cull_face = 0x0B44,
         depth_test = 0x0B71,
-        framebuffer_srgb = 0x8DB9
+        framebuffer_srgb = 0x8DB9,
+        multisample = 0x809D,
+        sample_shading = 0x8C36
     };
 
     enum class face_mode : enum_type { front = 0x0404, back = 0x0405, front_and_back = 0x0408 };
@@ -47,6 +49,7 @@ namespace jkgm::gl {
     void set_depth_function(comparison_function func);
     void set_depth_mask(bool enable);
     void set_face_cull_mode(face_mode mode);
+    void set_min_sample_shading_factor(float f);
     void set_polygon_mode(face_mode fm, polygon_mode pm);
     void set_viewport(box<2, int> vp);
 

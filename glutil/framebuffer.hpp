@@ -93,4 +93,6 @@ namespace jkgm::gl {
     void framebuffer_renderbuffer(framebuffer_bind_target target,
                                   framebuffer_attachment attachment,
                                   renderbuffer_view buf);
+
+    void read_buffer(framebuffer_attachment target);
 }

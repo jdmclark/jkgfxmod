@@ -4,6 +4,10 @@
     "fullscreen": true,
     "hud_scale": 1.0,
     "max_anisotropy": 2.0,
+    "antialiasing": {
+        "type": "MSAA",
+        "samples": 2
+    },
     "enable_bloom": true,
     "enable_ssao": true,
     "enable_parallax": true,

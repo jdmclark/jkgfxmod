@@ -41,6 +41,24 @@ std::unique_ptr<jkgm::config> jkgm::load_config_file()
             j.at("max_anisotropy").get_to(rv->max_anisotropy);
         }
 
+        if(j.contains("antialiasing")) {
+            auto const &em = j["antialiasing"];
+            if(!em.is_null()) {
+                antialiasing_config aa;
+                aa.type = em.at("type").get_to(aa.type);
+
+                if(em.contains("samples")) {
+                    em.at("samples").get_to(aa.samples);
+                }
+
+                if(em.contains("min_sample_factor")) {
+                    em.at("min_sample_factor").get_to(aa.min_sample_factor);
+                }
+
+                rv->antialiasing = aa;
+            }
+        }
+
         if(j.contains("enable_bloom")) {
             j.at("enable_bloom").get_to(rv->enable_bloom);
         }

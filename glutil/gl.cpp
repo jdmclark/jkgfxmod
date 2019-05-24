@@ -42,6 +42,11 @@ void jkgm::gl::set_face_cull_mode(face_mode mode)
     glCullFace(static_cast<GLenum>(mode));
 }
 
+void jkgm::gl::set_min_sample_shading_factor(float f)
+{
+    glMinSampleShadingARB(f);
+}
+
 void jkgm::gl::set_polygon_mode(face_mode fm, polygon_mode pm)
 {
     glPolygonMode(static_cast<GLenum>(fm), static_cast<GLenum>(pm));
@@ -74,6 +79,8 @@ namespace jkgm::gl {
     static_assert(capability::cull_face == capability(GL_CULL_FACE));
     static_assert(capability::depth_test == capability(GL_DEPTH_TEST));
     static_assert(capability::framebuffer_srgb == capability(GL_FRAMEBUFFER_SRGB));
+    static_assert(capability::multisample == capability(GL_MULTISAMPLE));
+    static_assert(capability::sample_shading == capability(GL_SAMPLE_SHADING_ARB));
 
     static_assert(clear_flag::color == clear_flag(GL_COLOR_BUFFER_BIT));
     static_assert(clear_flag::depth == clear_flag(GL_DEPTH_BUFFER_BIT));

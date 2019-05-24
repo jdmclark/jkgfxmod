@@ -84,6 +84,11 @@ void jkgm::gl::framebuffer_renderbuffer(framebuffer_bind_target target,
         static_cast<GLenum>(target), static_cast<GLenum>(attachment), GL_RENDERBUFFER, *buf);
 }
 
+void jkgm::gl::read_buffer(framebuffer_attachment attachment)
+{
+    glReadBuffer(static_cast<GLenum>(attachment));
+}
+
 namespace jkgm::gl {
     static_assert(draw_buffer::none == draw_buffer(GL_NONE));
     static_assert(draw_buffer::front_left == draw_buffer(GL_FRONT_LEFT));

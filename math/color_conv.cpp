@@ -3,6 +3,11 @@
 #include <array>
 
 namespace {
+    float gamma18_to_linear_em(float em)
+    {
+        return std::pow(em, 1.8f);
+    }
+
     float srgb_to_linear_em(float em)
     {
         if(em <= 0.04045f) {
@@ -31,6 +36,14 @@ namespace {
          65,  69,  73,  77,  81,  85,  89,  93,  97,  101, 105, 109, 113, 117, 121, 125,
          130, 134, 138, 142, 146, 150, 154, 158, 162, 166, 170, 174, 178, 182, 186, 190,
          194, 198, 202, 206, 210, 215, 219, 223, 227, 231, 235, 239, 243, 247, 251, 255}};
+}
+
+jkgm::color jkgm::gamma18_to_linear(color input)
+{
+    return color(gamma18_to_linear_em(get<r>(input)),
+                 gamma18_to_linear_em(get<g>(input)),
+                 gamma18_to_linear_em(get<b>(input)),
+                 get<a>(input));
 }
 
 jkgm::color jkgm::srgb_to_linear(color input)

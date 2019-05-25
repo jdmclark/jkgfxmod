@@ -1111,35 +1111,36 @@ namespace jkgm {
                         auto const &v2 = vertex_span.data()[payload->v2];
                         auto const &v3 = vertex_span.data()[payload->v3];
 
-                        auto c1 = srgb_to_linear(
-                            to_float_color(color_rgba8((uint8_t)RGBA_GETRED(v1.color),
-                                                       (uint8_t)RGBA_GETGREEN(v1.color),
-                                                       (uint8_t)RGBA_GETBLUE(v1.color),
-                                                       (uint8_t)RGBA_GETALPHA(v1.color))));
-                        auto c2 = srgb_to_linear(
-                            to_float_color(color_rgba8((uint8_t)RGBA_GETRED(v2.color),
-                                                       (uint8_t)RGBA_GETGREEN(v2.color),
-                                                       (uint8_t)RGBA_GETBLUE(v2.color),
-                                                       (uint8_t)RGBA_GETALPHA(v2.color))));
-                        auto c3 = srgb_to_linear(
-                            to_float_color(color_rgba8((uint8_t)RGBA_GETRED(v3.color),
-                                                       (uint8_t)RGBA_GETGREEN(v3.color),
-                                                       (uint8_t)RGBA_GETBLUE(v3.color),
-                                                       (uint8_t)RGBA_GETALPHA(v3.color))));
+                        auto sc1 = to_float_color(color_rgba8((uint8_t)RGBA_GETRED(v1.color),
+                                                              (uint8_t)RGBA_GETGREEN(v1.color),
+                                                              (uint8_t)RGBA_GETBLUE(v1.color),
+                                                              (uint8_t)RGBA_GETALPHA(v1.color)));
+                        auto sc2 = to_float_color(color_rgba8((uint8_t)RGBA_GETRED(v2.color),
+                                                              (uint8_t)RGBA_GETGREEN(v2.color),
+                                                              (uint8_t)RGBA_GETBLUE(v2.color),
+                                                              (uint8_t)RGBA_GETALPHA(v2.color)));
+                        auto sc3 = to_float_color(color_rgba8((uint8_t)RGBA_GETRED(v3.color),
+                                                              (uint8_t)RGBA_GETGREEN(v3.color),
+                                                              (uint8_t)RGBA_GETBLUE(v3.color),
+                                                              (uint8_t)RGBA_GETALPHA(v3.color)));
+
+                        auto c1 = gamma18_to_linear(extend(get<rgb>(sc1) * get<a>(sc1), get<a>(sc1)));
+                        auto c2 = gamma18_to_linear(extend(get<rgb>(sc2) * get<a>(sc2), get<a>(sc2)));
+                        auto c3 = gamma18_to_linear(extend(get<rgb>(sc3) * get<a>(sc3), get<a>(sc3)));
 
                         current_triangle_batch->insert(triangle(
                             triangle_vertex(
                                 d3dtl_to_point(internal_scr_res_scale_f, internal_scr_offset_f, v1),
                                 make_point(v1.tu, v1.tv),
-                                extend(get<rgb>(c1) * get<a>(c1), get<a>(c1))),
+                                c1),
                             triangle_vertex(
                                 d3dtl_to_point(internal_scr_res_scale_f, internal_scr_offset_f, v2),
                                 make_point(v2.tu, v2.tv),
-                                extend(get<rgb>(c2) * get<a>(c2), get<a>(c2))),
+                                c2),
                             triangle_vertex(
                                 d3dtl_to_point(internal_scr_res_scale_f, internal_scr_offset_f, v3),
                                 make_point(v3.tu, v3.tv),
-                                extend(get<rgb>(c3) * get<a>(c3), get<a>(c3))),
+                                c3),
                             current_material));
                     } break;
 

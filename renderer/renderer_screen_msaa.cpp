@@ -204,14 +204,10 @@ void jkgm::renderer_screen_msaa::begin_opaque_pass()
     gl::clear_buffer_color(1, color::zero());
     gl::clear_buffer_color(2, color::zero());
     gl::clear_buffer_depth(1.0f);
-
-    gl::enable(gl::capability::multisample);
 }
 
 void jkgm::renderer_screen_msaa::end_opaque_pass()
 {
-    gl::disable(gl::capability::multisample);
-
     gl::bind_framebuffer(gl::framebuffer_bind_target::read, screen_gbuffer.fbo);
 
     gl::bind_framebuffer(gl::framebuffer_bind_target::draw, gbuffer_color_resolve.fbo);
@@ -262,13 +258,9 @@ void jkgm::renderer_screen_msaa::end_compose_opaque_pass() {}
 void jkgm::renderer_screen_msaa::begin_transparency_pass()
 {
     gl::bind_framebuffer(gl::framebuffer_bind_target::any, screen_buffer.fbo);
-    gl::enable(gl::capability::multisample);
 }
 
-void jkgm::renderer_screen_msaa::end_transparency_pass()
-{
-    gl::disable(gl::capability::multisample);
-}
+void jkgm::renderer_screen_msaa::end_transparency_pass() {}
 
 void jkgm::renderer_screen_msaa::end_frame()
 {

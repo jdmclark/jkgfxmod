@@ -3,6 +3,7 @@
 #include "color.hpp"
 
 namespace jkgm {
+    color gamma18_to_linear(color input);
     color srgb_to_linear(color input);
     color linear_to_srgb(color input);
 

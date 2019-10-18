@@ -28,10 +28,14 @@ void main()
     vec4 bloom_samp = vec4(0.0);
     float bloom_sum = 0.0;
 
-    for(int i = 0; i < num_bloom_layers; ++i) {
-        bloom_samp += texture(bloom_fbuf[i], vp_texcoords) * bloom_weight[i];
-        bloom_sum += bloom_weight[i];
-    }
+    bloom_samp += texture(bloom_fbuf[0], vp_texcoords) * bloom_weight[0];
+    bloom_sum += bloom_weight[0];
+    bloom_samp += texture(bloom_fbuf[1], vp_texcoords) * bloom_weight[1];
+    bloom_sum += bloom_weight[1];
+    bloom_samp += texture(bloom_fbuf[2], vp_texcoords) * bloom_weight[2];
+    bloom_sum += bloom_weight[2];
+    bloom_samp += texture(bloom_fbuf[3], vp_texcoords) * bloom_weight[3];
+    bloom_sum += bloom_weight[3];
 
     vec3 combined_color = samp.rgb + (bloom_samp.rgb / (bloom_sum));
     out_color = vec4(color_to_srgb(combined_color), samp.a);

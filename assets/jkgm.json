@@ -2,6 +2,7 @@
     "resolution": [ 1024, 768 ],
     "internal_resolution": null,
     "fullscreen": true,
+    "correct_menu_aspect_ratio": true,
     "hud_scale": 1.0,
     "max_anisotropy": 2.0,
     "antialiasing": {

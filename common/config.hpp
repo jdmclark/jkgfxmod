@@ -17,6 +17,7 @@ namespace jkgm {
         std::tuple<int, int> resolution = std::make_tuple(640, 480);
         std::optional<std::tuple<int, int>> internal_resolution;
         bool fullscreen = false;
+        bool correct_menu_aspect_ratio = true;
         float hud_scale = 1.0f;
         float max_anisotropy = 2.0f;
         std::optional<antialiasing_config> antialiasing;

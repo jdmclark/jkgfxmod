@@ -33,6 +33,10 @@ std::unique_ptr<jkgm::config> jkgm::load_config_file()
             j.at("fullscreen").get_to(rv->fullscreen);
         }
 
+        if(j.contains("correct_menu_aspect_ratio")) {
+            j.at("correct_menu_aspect_ratio").get_to(rv->correct_menu_aspect_ratio);
+        }
+
         if(j.contains("hud_scale")) {
             j.at("hud_scale").get_to(rv->hud_scale);
         }

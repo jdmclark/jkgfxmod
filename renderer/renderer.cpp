@@ -403,7 +403,7 @@ namespace jkgm {
 
         size<2, int> get_internal_screen_resolution() override
         {
-            return actual_display_area.size();
+            return internal_scr_res;
         }
 
         bool is_parallax_enabled() override

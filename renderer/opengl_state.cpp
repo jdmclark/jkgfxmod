@@ -153,18 +153,6 @@ jkgm::hud_model::hud_model(size<2, int> scr_res,
     // Theoretically there may be overlap between reticles and the rest of the HUD, but it is not
     // convenient to avoid scaling these unintentionally.
 
-    auto console_tc = make_box(make_point(0, 0), make_size(get<x>(int_scr_res), 64));
-
-    auto health_tc = make_box(make_point(0, get<y>(int_scr_res) - 64), make_size(64, 64));
-    auto ammo_tc =
-        make_box(make_point(get<x>(int_scr_res) - 64, get<y>(int_scr_res) - 64), make_size(64, 64));
-
-    auto select_tc = make_box(make_point(64, get<y>(int_scr_res) - 64),
-                              make_size(get<x>(int_scr_res) - 128, 64));
-
-    auto rest_tc =
-        make_box(make_point(0, 64), make_size(get<x>(int_scr_res), get<y>(int_scr_res) - 128));
-
     std::vector<point<2, float>> points;
     points.reserve(20);
 
@@ -174,19 +162,24 @@ jkgm::hud_model::hud_model(size<2, int> scr_res,
     std::vector<uint32_t> indices;
     indices.reserve(30);
 
+    auto actual_scr_area_f = static_cast<box<2, float>>(actual_scr_area);
+    auto actual_scr_size_f = actual_scr_area_f.size();
+    auto int_scr_res_f = static_cast<size<2, float>>(int_scr_res);
+    auto scr_res_f = static_cast<size<2, float>>(scr_res);
+    float scr_scale_x = get<x>(actual_scr_size_f) / get<x>(int_scr_res_f);
+    float scr_scale_y = get<y>(actual_scr_size_f) / get<y>(int_scr_res_f);
+
     auto cast_scr_point_to_ndc = [&](point<2, float> const &pt) {
         // Convert to physical screen coordinates:
-        auto adj_pt =
-            pt + static_cast<direction<2, float>>(actual_scr_area.start - make_point(0, 0));
+        auto adj_pt = make_point(get<x>(pt) * scr_scale_x, get<y>(pt) * scr_scale_y) +
+                      static_cast<direction<2, float>>(actual_scr_area.start - make_point(0, 0));
 
         // Scale screen point into NDC:
-        auto w = 2.0f / static_cast<float>(get<x>(scr_res));
-        auto h = 2.0f / static_cast<float>(get<y>(scr_res));
+        auto w = 2.0f / get<x>(scr_res_f);
+        auto h = 2.0f / get<y>(scr_res_f);
 
         return make_point((get<x>(adj_pt) * w) - 1.0f, (get<y>(adj_pt) * h) - 1.0f);
     };
-
-    auto int_scr_res_f = static_cast<size<2, float>>(int_scr_res);
 
     auto convert_tc_box = [&](box<2, int> tcs) {
         float x0 = get<x>(tcs.start) / get<x>(int_scr_res_f);
@@ -223,24 +216,45 @@ jkgm::hud_model::hud_model(size<2, int> scr_res,
         indices.push_back(base + 3);
     };
 
-    auto actual_scr_area_f = static_cast<box<2, float>>(actual_scr_area);
-    auto actual_scr_size_f = actual_scr_area_f.size();
+    // Extract sprites from the origin HUD:
+    auto console_tc = make_box(make_point(64, 0), make_size(get<x>(int_scr_res) - 128, 64));
+    auto tl_tc = make_box(make_point(0, 0), make_size(64, 64));
+    auto tr_tc = make_box(make_point(get<x>(int_scr_res) - 64, 0), make_size(64, 64));
 
+    auto health_tc = make_box(make_point(0, get<y>(int_scr_res) - 64), make_size(64, 64));
+    auto ammo_tc =
+        make_box(make_point(get<x>(int_scr_res) - 64, get<y>(int_scr_res) - 64), make_size(64, 64));
+
+    auto select_tc = make_box(make_point(64, get<y>(int_scr_res) - 64),
+                              make_size(get<x>(int_scr_res) - 128, 64));
+
+    auto rest_tc =
+        make_box(make_point(0, 64), make_size(get<x>(int_scr_res), get<y>(int_scr_res) - 128));
+
+    // Add sprites to the output HUD. Output coordinates are relative to the virtual screen:
     add_sprite(make_box(make_point(0.0f, 64.0f),
-                        make_size(get<x>(actual_scr_size_f), get<y>(actual_scr_size_f) - 128.0f)),
+                        make_size(get<x>(int_scr_res_f), get<y>(int_scr_res_f) - 128.0f)),
                rest_tc);
 
     auto sel_sz = make_size(get<x>(int_scr_res_f) - 128.0f, 64.0f) * scale;
-    auto sel_off = (get<x>(actual_scr_size_f) - get<x>(sel_sz)) * 0.5f;
+    auto sel_off = (get<x>(int_scr_res_f) - get<x>(sel_sz)) * 0.5f;
     add_sprite(make_box(make_point(sel_off, 0.0f), sel_sz), select_tc);
 
     auto con_sz = make_size(get<x>(int_scr_res_f), 64.0f) * scale;
-    auto con_off = (get<x>(actual_scr_size_f) - get<x>(con_sz)) * 0.5f;
-    add_sprite(make_box(make_point(con_off, get<y>(actual_scr_size_f) - get<y>(con_sz)), con_sz),
+    auto con_off = (get<x>(int_scr_res_f) - get<x>(con_sz)) * 0.5f;
+    add_sprite(make_box(make_point(con_off, get<y>(int_scr_res_f) - get<y>(con_sz)), con_sz),
                console_tc);
 
+    add_sprite(make_box(make_point(0.0f, get<y>(int_scr_res_f) - 64.0f * scale),
+                        make_size(64.0f, 64.0f) * scale),
+               tl_tc);
+    add_sprite(make_box(make_point(get<x>(int_scr_res_f) - 64.0f * scale,
+                                   get<y>(int_scr_res_f) - 64.0f * scale),
+                        make_size(64.0f, 64.0f) * scale),
+               tr_tc);
+
     add_sprite(make_box(make_point(0.0f, 0.0f), make_size(64.0f, 64.0f) * scale), health_tc);
-    add_sprite(make_box(make_point(get<x>(actual_scr_size_f) - 64.0f * scale, 0.0f),
+    add_sprite(make_box(make_point(get<x>(int_scr_res_f) - 64.0f * scale, 0.0f),
                         make_size(64.0f, 64.0f) * scale),
                ammo_tc);
 

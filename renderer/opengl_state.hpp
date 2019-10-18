@@ -39,7 +39,7 @@ namespace jkgm {
         gl::buffer ib;
         unsigned int num_indices = 6U;
 
-        overlay_model(size<2, int> scr_res, box<2, int> actual_scr_area);
+        overlay_model(size<2, int> scr_res, box<2, int> actual_menu_area);
     };
 
     class hud_model {
@@ -158,6 +158,7 @@ namespace jkgm {
         opengl_state(size<2, int> screen_res,
                      size<2, int> internal_screen_res,
                      box<2, int> actual_screen_area,
+                     box<2, int> actual_menu_area,
                      config const *the_config);
     };
 }

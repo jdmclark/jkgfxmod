@@ -93,15 +93,15 @@ jkgm::post_model::post_model()
                     gl::buffer_usage::static_draw);
 }
 
-jkgm::overlay_model::overlay_model(size<2, int> scr_res, box<2, int> actual_scr_area)
+jkgm::overlay_model::overlay_model(size<2, int> scr_res, box<2, int> actual_menu_area)
 {
     auto w = 2.0f / static_cast<float>(get<x>(scr_res));
     auto h = 2.0f / static_cast<float>(get<y>(scr_res));
 
-    float x0 = (get<x>(actual_scr_area.start) * w) - 1.0f;
-    float x1 = (get<x>(actual_scr_area.stop) * w) - 1.0f;
-    float y0 = (get<y>(actual_scr_area.start) * h) - 1.0f;
-    float y1 = (get<y>(actual_scr_area.stop) * h) - 1.0f;
+    float x0 = (get<x>(actual_menu_area.start) * w) - 1.0f;
+    float x1 = (get<x>(actual_menu_area.stop) * w) - 1.0f;
+    float y0 = (get<y>(actual_menu_area.start) * h) - 1.0f;
+    float y1 = (get<y>(actual_menu_area.stop) * h) - 1.0f;
 
     gl::bind_vertex_array(vao);
 
@@ -412,8 +412,9 @@ void jkgm::triangle_buffer_sequence::swap_next()
 jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res,
                                                size<2, int> internal_screen_res,
                                                box<2, int> actual_scr_area,
+                                               box<2, int> actual_menu_area,
                                                config const *the_config)
-    : menumdl(screen_res, actual_scr_area)
+    : menumdl(screen_res, actual_menu_area)
     , hudmdl(screen_res, internal_screen_res, actual_scr_area, the_config->hud_scale)
     , screen_postbuffer1(screen_res)
     , screen_postbuffer2(screen_res)

@@ -44,7 +44,7 @@
 namespace jkgm {
     static WNDPROC original_wkernel_wndproc = nullptr;
     static size<2, int> original_configured_screen_res = make_size(0, 0);
-    static box<2, int> actual_display_area = make_box(make_point(0, 0), make_size(0, 0));
+    static box<2, int> actual_menu_area = make_box(make_point(0, 0), make_size(0, 0));
 
     using wglCreateContextAttribsARB_type = HGLRC(WINAPI *)(HDC hDC,
                                                             HGLRC hShareContext,
@@ -207,12 +207,12 @@ namespace jkgm {
             auto xPos = (int16_t)lParam;
             auto yPos = (int16_t)(lParam >> 16);
 
-            auto d = actual_display_area.size();
+            auto d = actual_menu_area.size();
             auto wscale = 640.0f / static_cast<float>(get<x>(d));
             auto hscale = 480.0f / static_cast<float>(get<y>(d));
 
-            xPos = (int16_t)((float)(xPos - get<x>(actual_display_area.start)) * wscale);
-            yPos = (int16_t)((float)(yPos - get<y>(actual_display_area.start)) * hscale);
+            xPos = (int16_t)((float)(xPos - get<x>(actual_menu_area.start)) * wscale);
+            yPos = (int16_t)((float)(yPos - get<y>(actual_menu_area.start)) * hscale);
 
             lParam = (((LPARAM)yPos << 16) | (LPARAM)xPos);
 
@@ -260,6 +260,37 @@ namespace jkgm {
                         make_size(get<x>(conf_scr_res), height_if_width_fit));
     }
 
+    static box<2, int> make_internal_menu_area(size<2, int> conf_scr_res,
+                                               size<2, int> internal_scr_res,
+                                               bool correct_aspect_ratio)
+    {
+        if(!correct_aspect_ratio) {
+            return make_internal_scr_area(conf_scr_res, internal_scr_res);
+        }
+
+        int menu_w = 0;
+        int menu_h = 0;
+
+        constexpr float aspect = 4.0f / 3.0f;
+        int w_if_h_fit = (int)((float)get<y>(conf_scr_res) * aspect);
+        if(w_if_h_fit > get<x>(conf_scr_res)) {
+            // Menu is too tall. Fit to width instead.
+            int h_if_w_fit = (int)((float)get<x>(conf_scr_res) / aspect);
+            menu_w = get<x>(conf_scr_res);
+            menu_h = h_if_w_fit;
+        }
+        else {
+            menu_w = w_if_h_fit;
+            menu_h = get<y>(conf_scr_res);
+        }
+
+        // Center the menu virtual screen in the physical screen
+        int menu_off_x = (get<x>(conf_scr_res) - menu_w) / 2;
+        int menu_off_y = (get<y>(conf_scr_res) - menu_h) / 2;
+
+        return make_box(make_point(menu_off_x, menu_off_y), make_size(menu_w, menu_h));
+    }
+
     static direction<2, float> make_internal_scr_offset_f(size<2, int> conf_scr_res,
                                                           box<2, int> actual_display_area)
     {
@@ -281,6 +312,7 @@ namespace jkgm {
         size<2, int> internal_scr_res;
         size<2, float> internal_scr_res_scale_f;
         box<2, int> actual_display_area;
+        box<2, int> actual_menu_area;
         direction<2, float> internal_scr_offset_f;
 
         DirectDraw_impl ddraw1;
@@ -303,10 +335,10 @@ namespace jkgm {
         std::vector<std::unique_ptr<vidmem_texture_surface>> vidmem_texture_surfaces;
         std::vector<std::unique_ptr<execute_buffer>> execute_buffers;
 
-        HINSTANCE dll_instance;
-        HWND hWnd;
-        HDC hDC;
-        HGLRC hGLRC;
+        HINSTANCE dll_instance = NULL;
+        HWND hWnd = NULL;
+        HDC hDC = NULL;
+        HGLRC hGLRC = NULL;
 
         std::unique_ptr<opengl_state> ogs;
         std::unique_ptr<renderer_compositor> frame_compositor;
@@ -341,6 +373,9 @@ namespace jkgm {
             , internal_scr_res(make_internal_scr_res(the_config))
             , internal_scr_res_scale_f(make_internal_scr_res_scale_f(conf_scr_res))
             , actual_display_area(make_internal_scr_area(conf_scr_res, internal_scr_res))
+            , actual_menu_area(make_internal_menu_area(conf_scr_res,
+                                                       internal_scr_res,
+                                                       the_config->correct_menu_aspect_ratio))
             , internal_scr_offset_f(make_internal_scr_offset_f(conf_scr_res, actual_display_area))
             , ddraw1(this)
             , ddraw2(this)
@@ -379,14 +414,14 @@ namespace jkgm {
         point<2, int> get_cursor_pos(point<2, int> real_pos) override
         {
             if(mode == renderer_mode::menu) {
-                auto d = actual_display_area.size();
+                auto d = actual_menu_area.size();
                 auto wscale = 640.0f / static_cast<float>(get<x>(d));
                 auto hscale = 480.0f / static_cast<float>(get<y>(d));
 
                 // Stretch the point into 640x480
                 return make_point(
-                    (int)((float)(get<x>(real_pos) - get<x>(actual_display_area.start)) * wscale),
-                    (int)((float)(get<y>(real_pos) - get<y>(actual_display_area.start)) * hscale));
+                    (int)((float)(get<x>(real_pos) - get<x>(actual_menu_area.start)) * wscale),
+                    (int)((float)(get<y>(real_pos) - get<y>(actual_menu_area.start)) * hscale));
             }
 
             return real_pos;
@@ -402,7 +437,7 @@ namespace jkgm {
             SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG)&renderer_wndproc);
 
             original_configured_screen_res = conf_scr_res;
-            jkgm::actual_display_area = actual_display_area;
+            jkgm::actual_menu_area = actual_menu_area;
 
             if(the_config->fullscreen) {
                 DEVMODE dm;
@@ -498,7 +533,7 @@ namespace jkgm {
             SwapBuffers(hDC);
 
             ogs = std::make_unique<opengl_state>(
-                conf_scr_res, internal_scr_res, actual_display_area, the_config);
+                conf_scr_res, internal_scr_res, actual_display_area, actual_menu_area, the_config);
             texture_cache = create_texture_cache(the_config);
             frame_compositor = create_renderer_compositor(the_config);
             frame_ao = create_renderer_ao(the_config, conf_scr_res);
@@ -1124,9 +1159,12 @@ namespace jkgm {
                                                               (uint8_t)RGBA_GETBLUE(v3.color),
                                                               (uint8_t)RGBA_GETALPHA(v3.color)));
 
-                        auto c1 = gamma18_to_linear(extend(get<rgb>(sc1) * get<a>(sc1), get<a>(sc1)));
-                        auto c2 = gamma18_to_linear(extend(get<rgb>(sc2) * get<a>(sc2), get<a>(sc2)));
-                        auto c3 = gamma18_to_linear(extend(get<rgb>(sc3) * get<a>(sc3), get<a>(sc3)));
+                        auto c1 =
+                            gamma18_to_linear(extend(get<rgb>(sc1) * get<a>(sc1), get<a>(sc1)));
+                        auto c2 =
+                            gamma18_to_linear(extend(get<rgb>(sc2) * get<a>(sc2), get<a>(sc2)));
+                        auto c3 =
+                            gamma18_to_linear(extend(get<rgb>(sc3) * get<a>(sc3), get<a>(sc3)));
 
                         current_triangle_batch->insert(triangle(
                             triangle_vertex(

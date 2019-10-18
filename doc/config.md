@@ -3,8 +3,8 @@
 | Variable | Explanation | Syntax | Default value |
 |----------------|------------------------------|--------|---------------|
 | **resolution** | What resolution to output at. | ordered pair (`[ x, y ]`) | `[ 1024, 768 ]` |
-| **internal_resolution** | What resolution to render at. Note that using a [custom resolution](https://pcgamingwiki.com/wiki/Glossary:Custom_resolution) is preferable when possible.| ordered pair, or `null` to use the same resolution as output | `null` |
 | **fullscreen** | Select whether to use fullscreen or Windowed mode. | boolean<br/>(`true` for fullscreen, or `false` for windowed) |
+| **correct_game_aspect_ratio** | Select whether the game should use a 4:3 aspect ratio. | boolean<br/>(`true` for a 4:3 aspect ratio, or `false` to fill the screen) | `false` |
 | **correct_menu_aspect_ratio** | Select whether menus and cutscenes should be stretched to fill the screen. | boolean<br/>(`true` for the original aspect ratio, or `false` for stretched) | `true` |
 | **hud_scale** | Upscale the HUD to avoid tiny HUD at high resolutions. Use whole integers for best results. | decimal<br/>(ex: 2.0 = 200% scaling) | Default: `1.0` |
 | **max_anisotropy** | Level of [anisotropic filtering](https://en.wikipedia.org/wiki/Anisotropic_filtering) to use. Can be used even when `enable_texture_filtering` is set to false. | decimal (values taken from [ARB_texture_filter_anisotropic](https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_texture_filter_anisotropic.txt)): `1.0` to disable,<br/> `2.0` for 2x,<br/> `4.0` for 4x,<br/> `8.0` for 8x,<br/> `16.0` for 16x | Default: `2.0` |

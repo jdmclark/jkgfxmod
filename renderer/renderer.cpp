@@ -226,9 +226,18 @@ namespace jkgm {
 
     static size<2, int> make_internal_scr_res(config const *the_config)
     {
-        if(the_config->internal_resolution.has_value()) {
-            return make_size(std::get<0>(*the_config->internal_resolution),
-                             std::get<1>(*the_config->internal_resolution));
+        if(the_config->correct_game_aspect_ratio) {
+            // The game will be rendered in a best-fit virtual screen with a 4:3 aspect ratio
+            constexpr float aspect = 4.0f / 3.0f;
+
+            int w_if_h_fit = (int)((float)std::get<1>(the_config->resolution) * aspect);
+            if(w_if_h_fit > std::get<0>(the_config->resolution)) {
+                // Virtual screen is too tall. Fit to width instead.
+                int h_if_w_fit = (int)((float)std::get<0>(the_config->resolution) / aspect);
+                return make_size(std::get<0>(the_config->resolution), h_if_w_fit);
+            }
+
+            return make_size(w_if_h_fit, std::get<1>(the_config->resolution));
         }
 
         return make_size(std::get<0>(the_config->resolution), std::get<1>(the_config->resolution));

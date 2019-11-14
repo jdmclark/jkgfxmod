@@ -13,4 +13,4 @@ jobs:
     - name: Enable Developer Command Prompt
       uses: ilammy/msvc-dev-cmd@v1.0.0
     - name: Build
-      run: MSBuild.exe -t:Build -p:Configuration=Release -p:Platform=Win32 jkgfxmod.sln
+      run: MSBuild.exe -t:Build -p:Configuration=Release -p:Platform=x86 jkgfxmod.sln

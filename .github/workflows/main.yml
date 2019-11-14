@@ -1,0 +1,16 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+    - name: Enable Developer Command Prompt
+      uses: ilammy/msvc-dev-cmd@v1.0.0
+    - name: Build
+      run: MSBuild.exe -t:Build -p:Configuration=Release -p:Platform=x86 jkgfxmod.sln

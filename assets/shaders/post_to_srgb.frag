@@ -11,15 +11,6 @@ in vec2 vp_texcoords;
 
 layout(location = 0) out vec4 out_color;
 
-vec3 color_to_srgb(vec3 c)
-{
-    bvec3 cutoff = greaterThan(c, vec3(0.0031308));
-    vec3 linear_version = 12.92 * c;
-    vec3 exp_version = 1.055 * pow(c, vec3(1.0 / 2.4)) - vec3(0.055);
-
-    return mix(linear_version, exp_version, cutoff);
-}
-
 void main()
 {
     ivec2 sc = ivec2(gl_FragCoord.xy);
@@ -38,5 +29,5 @@ void main()
     bloom_sum += bloom_weight[3];
 
     vec3 combined_color = samp.rgb + (bloom_samp.rgb / (bloom_sum));
-    out_color = vec4(color_to_srgb(combined_color), samp.a);
+    out_color = vec4(combined_color, samp.a);
 }

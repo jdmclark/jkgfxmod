@@ -536,6 +536,8 @@ namespace jkgm {
 
             ShowWindow(hWnd, SW_SHOW);
 
+            gl::enable(gl::capability::framebuffer_srgb);
+
             gl::set_clear_color(solid(colors::black));
             gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
 

@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <type_traits>
 
 #define MAKE_ID_TYPE(x, type)                                                                      \
     class x##_id_tag {                                                                             \
@@ -15,6 +16,8 @@ namespace jkgm {
         UT value;
 
     public:
+        using value_type = UT;
+
         id() = delete;
 
         explicit constexpr id(UT value) noexcept
@@ -77,11 +80,6 @@ namespace jkgm {
 }
 
 namespace std {
-    template <class TagT, class UT>
-    struct underlying_type<::jkgm::id<TagT, UT>> {
-        using type = UT;
-    };
-
     template <class TagT, class UT>
     struct hash<::jkgm::id<TagT, UT>> {
     private:

@@ -2,6 +2,13 @@
 
 ## User specific files
 *.user
+*.nupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+.nuget.props
+.nuget.targets
+project.lock.json
+project.assets.json
 
 ## Build results
 [Dd]ebug/

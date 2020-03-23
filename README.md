@@ -33,6 +33,7 @@ Please follow the [installation guide](doc/install.md) for your version of the g
 
 Copy the material pack directory to the `jkgm/materials` directory in your Jedi Knight directory.
 
+**Note:** If you properly install an optional material pack and the textures are not showing up, try setting the brightness slider all the way to min.  The brightness slider can be found in Setup → Display → Brightness.
 
 ## Creating material packs (optional)
 

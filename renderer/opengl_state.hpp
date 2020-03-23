@@ -111,6 +111,7 @@ namespace jkgm {
         triangle_buffer_model world_transparent_trimdl;
         triangle_buffer_model gun_trimdl;
         triangle_buffer_model gun_transparent_trimdl;
+        triangle_buffer_model overlay_trimdl;
     };
 
     class triangle_buffer_sequence {

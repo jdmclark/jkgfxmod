@@ -337,6 +337,7 @@ namespace jkgm {
         zbuffer_surface ddraw1_zbuffer_surface;
         offscreen_surface ddraw1_offscreen_surface;
         offscreen_menu_surface ddraw1_offscreen_menu_surface;
+        offscreen_menu_surface ddraw1_offscreen_credit_surface;
 
         DirectDrawPalette_impl ddraw1_palette;
 
@@ -1310,6 +1311,12 @@ namespace jkgm {
         IDirectDrawSurface *get_directdraw_offscreen_surface(DDSURFACEDESC const &desc) override
         {
             if(mode == renderer_mode::menu) {
+                if(desc.dwHeight == 64) {
+                    // JK uses a 64-pixel tall secondary surface for drawing the credit scroll.
+                    ddraw1_offscreen_credit_surface.set_surface_desc(desc);
+                    return &ddraw1_offscreen_credit_surface;
+                }
+
                 ddraw1_offscreen_menu_surface.set_surface_desc(desc);
                 return &ddraw1_offscreen_menu_surface;
             }

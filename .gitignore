@@ -14,6 +14,7 @@ project.assets.json
 [Dd]ebug/
 [Rr]elease/
 x86/
+config/obj
 
 ## Caches
 .vs/

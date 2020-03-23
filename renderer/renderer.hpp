@@ -35,6 +35,9 @@ namespace jkgm {
 
         virtual HRESULT enumerate_devices(LPDDENUMCALLBACKA cb, LPVOID lpContext) = 0;
 
+        virtual void show_directplay_dialog() = 0;
+        virtual void restore_from_directplay_dialog() = 0;
+
         virtual void set_menu_palette(UINT start, span<RGBQUAD const> entries) = 0;
         virtual void set_menu_source(HGDIOBJ ho, char const *indexed_bitmap) = 0;
         virtual void maybe_clear_menu_source(HGDIOBJ ho) = 0;

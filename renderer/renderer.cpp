@@ -570,6 +570,16 @@ namespace jkgm {
             begin_frame();
         }
 
+        void show_directplay_dialog() override
+        {
+            ShowWindow(hWnd, SW_HIDE);
+        }
+
+        void restore_from_directplay_dialog() override
+        {
+            ShowWindow(hWnd, SW_SHOW);
+        }
+
         HRESULT enumerate_devices(LPDDENUMCALLBACKA cb, LPVOID lpContext) override
         {
             // Emit only a single device, the default system device

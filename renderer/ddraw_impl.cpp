@@ -144,7 +144,9 @@ HRESULT WINAPI jkgm::DirectDraw_impl::EnumSurfaces(DWORD a,
 
 HRESULT WINAPI jkgm::DirectDraw_impl::FlipToGDISurface()
 {
-    report_unimplemented_function("DirectDraw::FlipToGDISurface");
+    LOG_DEBUG("DirectDraw::FlipToGDISurface");
+    r->show_directplay_dialog();
+    return DD_OK;
 }
 
 HRESULT WINAPI jkgm::DirectDraw_impl::GetCaps(LPDDCAPS a, LPDDCAPS b)
@@ -201,6 +203,7 @@ HRESULT WINAPI jkgm::DirectDraw_impl::SetCooperativeLevel(HWND a, DWORD b)
 {
     if(((b & DDSCL_EXCLUSIVE) != 0) && ((b & DDSCL_FULLSCREEN) != 0)) {
         LOG_DEBUG("DirectDraw::SetCooperativeLevel(Exclusive Fullscreen)");
+        r->restore_from_directplay_dialog();
     }
     else if(b == DDSCL_NORMAL) {
         LOG_DEBUG("DirectDraw::SetCooperativeLevel(Normal)");

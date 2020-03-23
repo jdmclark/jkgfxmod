@@ -13,6 +13,6 @@ jobs:
     - name: Enable Developer Command Prompt
       uses: ilammy/msvc-dev-cmd@v1.0.0
     - name: Restore NuGet packages
-      run: MSBuild.exe -t:Restore
+      run: MSBuild.exe -t:Restore -p:Configuration=Release -p:Platform=x86 jkgfxmod.sln
     - name: Build
       run: MSBuild.exe -t:Build -p:Configuration=Release -p:Platform=x86 jkgfxmod.sln

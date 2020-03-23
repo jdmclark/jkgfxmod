@@ -537,7 +537,7 @@ static_assert(static_cast<DWORD>(jkgm::win32::process_creation_flag::create_no_w
                   CREATE_NO_WINDOW,
               "process_creation_flag::create_no_window value mismatch");
 
-static_assert(std::is_same_v<std::underlying_type_t<jkgm::win32::process_id>, DWORD>,
+static_assert(std::is_same_v<jkgm::win32::process_id::value_type, DWORD>,
               "process_id type mismatch");
 
 static_assert(static_cast<DWORD>(jkgm::win32::std_device::std_input) == STD_INPUT_HANDLE,
@@ -554,12 +554,12 @@ static_assert(static_cast<DWORD>(jkgm::win32::wait_state::abandoned) == WAIT_ABA
 static_assert(static_cast<DWORD>(jkgm::win32::wait_state::timeout) == WAIT_TIMEOUT,
               "wait_state::timeout value mismatch");
 
-static_assert(sizeof(std::underlying_type_t<jkgm::win32::handle_id>) == sizeof(HANDLE),
+static_assert(sizeof(jkgm::win32::handle_id::value_type) == sizeof(HANDLE),
               "win32::handle_id size mismatch");
 static_assert(jkgm::win32::invalid_handle_value.get() == (size_t)INVALID_HANDLE_VALUE,
               "win32::invalid_handle_value value mismatch");
 
-static_assert(std::is_same_v<std::underlying_type_t<jkgm::win32::socket_id>, SOCKET>,
+static_assert(std::is_same_v<jkgm::win32::socket_id::value_type, SOCKET>,
               "win32::socket_id type mismatch");
 static_assert(jkgm::win32::invalid_socket.get() == INVALID_SOCKET,
               "win32::invalid_socket value mismatch");

@@ -30,6 +30,8 @@ namespace jkgm {
         UT value;
 
     public:
+        using value_type = UT;
+
         tagged() = default;
 
         template <class... ArgT>
@@ -110,17 +112,5 @@ namespace jkgm {
             : tagged_range<TagT, UT, EmT>(std::forward<UT>(value))
         {
         }
-    };
-}
-
-namespace std {
-    template <class TagT, class UT>
-    struct underlying_type<::jkgm::tagged<TagT, UT>> {
-        using type = UT;
-    };
-
-    template <class TagT, class UT, class EmT>
-    struct underlying_type<::jkgm::tagged_range<TagT, UT, EmT>> {
-        using type = UT;
     };
 }

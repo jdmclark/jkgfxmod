@@ -319,6 +319,7 @@ namespace jkgm {
         size<2, int> conf_scr_res;
 
         size<2, int> internal_scr_res;
+        size<2, float> internal_scr_res_f;
         size<2, float> internal_scr_res_scale_f;
         box<2, int> actual_display_area;
         box<2, int> actual_menu_area;
@@ -369,6 +370,7 @@ namespace jkgm {
         sorted_triangle_batch world_transparent_batch;
         triangle_batch gun_batch;
         sorted_triangle_batch gun_transparent_batch;
+        triangle_batch overlay_batch;
 
         bool is_gun = false;
         bool is_transparent = false;
@@ -381,6 +383,7 @@ namespace jkgm {
             : the_config(the_config)
             , conf_scr_res(std::get<0>(the_config->resolution), std::get<1>(the_config->resolution))
             , internal_scr_res(make_internal_scr_res(the_config))
+            , internal_scr_res_f(static_cast<size<2, float>>(internal_scr_res))
             , internal_scr_res_scale_f(make_internal_scr_res_scale_f(conf_scr_res))
             , actual_display_area(make_internal_scr_area(conf_scr_res, internal_scr_res))
             , actual_menu_area(make_internal_menu_area(conf_scr_res,
@@ -1040,6 +1043,12 @@ namespace jkgm {
                        false,
                        posterize_lighting);
 
+            // Draw overlay
+            gl::disable(gl::capability::depth_test);
+            gl::set_depth_mask(false);
+            draw_batch(
+                overlay_batch, &trimdl->overlay_trimdl, /*force opaque*/ false, posterize_lighting);
+
             gl::enable(gl::capability::depth_test);
             gl::enable(gl::capability::blend);
             gl::set_depth_mask(true);
@@ -1188,20 +1197,55 @@ namespace jkgm {
                         auto c3 =
                             gamma18_to_linear(extend(get<rgb>(sc3) * get<a>(sc3), get<a>(sc3)));
 
-                        current_triangle_batch->insert(triangle(
-                            triangle_vertex(
-                                d3dtl_to_point(internal_scr_res_scale_f, internal_scr_offset_f, v1),
-                                make_point(v1.tu, v1.tv),
-                                c1),
-                            triangle_vertex(
-                                d3dtl_to_point(internal_scr_res_scale_f, internal_scr_offset_f, v2),
-                                make_point(v2.tu, v2.tv),
-                                c2),
-                            triangle_vertex(
-                                d3dtl_to_point(internal_scr_res_scale_f, internal_scr_offset_f, v3),
-                                make_point(v3.tu, v3.tv),
-                                c3),
-                            current_material));
+                        // Check if the current triangle is part of an overlay
+                        if(is_gun &&
+                           almost_equal(make_point(v1.sx, v1.sy, v1.sz), point<3, float>::zero()) &&
+                           almost_equal(v2.sx, get<x>(internal_scr_res_f)) &&
+                           (almost_equal(v2.sy, 0.0f) ||
+                            almost_equal(v2.sy, get<y>(internal_scr_res_f))) &&
+                           almost_equal(v2.sz, 0.0f) &&
+                           (almost_equal(v3.sx, 0.0f) ||
+                            almost_equal(v3.sx, get<x>(internal_scr_res_f))) &&
+                           almost_equal(v3.sy, get<y>(internal_scr_res_f)) &&
+                           almost_equal(v3.sz, 0.0f)) {
+                            // Check if the current triangle is part of an overlay
+                            overlay_batch.insert(
+                                triangle(triangle_vertex(d3dtl_to_point(internal_scr_res_scale_f,
+                                                                        internal_scr_offset_f,
+                                                                        v1),
+                                                         make_point(v1.tu, v1.tv),
+                                                         c1),
+                                         triangle_vertex(d3dtl_to_point(internal_scr_res_scale_f,
+                                                                        internal_scr_offset_f,
+                                                                        v2),
+                                                         make_point(v2.tu, v2.tv),
+                                                         c2),
+                                         triangle_vertex(d3dtl_to_point(internal_scr_res_scale_f,
+                                                                        internal_scr_offset_f,
+                                                                        v3),
+                                                         make_point(v3.tu, v3.tv),
+                                                         c3),
+                                         current_material));
+                        }
+                        else {
+                            current_triangle_batch->insert(
+                                triangle(triangle_vertex(d3dtl_to_point(internal_scr_res_scale_f,
+                                                                        internal_scr_offset_f,
+                                                                        v1),
+                                                         make_point(v1.tu, v1.tv),
+                                                         c1),
+                                         triangle_vertex(d3dtl_to_point(internal_scr_res_scale_f,
+                                                                        internal_scr_offset_f,
+                                                                        v2),
+                                                         make_point(v2.tu, v2.tv),
+                                                         c2),
+                                         triangle_vertex(d3dtl_to_point(internal_scr_res_scale_f,
+                                                                        internal_scr_offset_f,
+                                                                        v3),
+                                                         make_point(v3.tu, v3.tv),
+                                                         c3),
+                                         current_material));
+                        }
                     } break;
 
                     default:
@@ -1228,11 +1272,13 @@ namespace jkgm {
             world_transparent_batch.sort();
             gun_batch.sort();
             gun_transparent_batch.sort();
+            overlay_batch.sort();
 
             fill_buffer(world_batch, &trimdl->world_trimdl);
             fill_buffer(world_transparent_batch, &trimdl->world_transparent_trimdl);
             fill_buffer(gun_batch, &trimdl->gun_trimdl);
             fill_buffer(gun_transparent_batch, &trimdl->gun_transparent_trimdl);
+            fill_buffer(overlay_batch, &trimdl->overlay_trimdl);
 
             bool posterize_lighting = the_config->enable_posterized_lighting;
             draw_game_gbuffer_pass(trimdl, posterize_lighting);
@@ -1250,6 +1296,7 @@ namespace jkgm {
             world_transparent_batch.clear();
             gun_batch.clear();
             gun_transparent_batch.clear();
+            overlay_batch.clear();
         }
 
         void depth_clear_game() override

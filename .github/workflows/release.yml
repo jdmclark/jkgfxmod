@@ -1,8 +1,9 @@
 name: Release
 
-on: [push]
-#  schedule:
-#    - cron: '22 11 * * *'
+on:
+  push:
+    tags: 
+      - 'v*'
 
 jobs:
   build:

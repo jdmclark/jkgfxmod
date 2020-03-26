@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  schedule:
+    - cron: '22 11 * * *'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+      
+    - name: Enable Developer Command Prompt
+      uses: ilammy/msvc-dev-cmd@v1.0.0
+      
+    - name: Build
+      run: MSBuild.exe -t:Build -p:Configuration=Release -p:Platform=x86 jkgfxmod.sln
+      
+    - name: Assemble JkGfxMod
+      shell: bash
+      run: |
+        export MOD_DIR=Artifacts/JkGfxMod
+        mkdir -p ${MOD_DIR}/jkgm/materials
+        echo "Copy material pack directories here" > ${MOD_DIR}/jkgm/materials/placeholder.txt
+        cp -r assets/shaders ${MOD_DIR}/jkgm/shaders
+        mkdir -p ${MOD_DIR}/doc
+        cp doc/config.md ${MOD_DIR}/doc/config.md
+        cp doc/install.md ${MOD_DIR}/doc/install.md
+        cp assets/jkgm.json ${MOD_DIR}
+        cp Release/inject.exe ${MOD_DIR}
+        cp Release/renderer.dll ${MOD_DIR}
+        cp README.md ${MOD_DIR}
+        cp LICENSE.md ${MOD_DIR}
+        cp THIRDPARTY.md ${MOD_DIR}
+        cd ${MOD_DIR}
+        zip jkgfxmod.zip *
+        
+    - name: Assemble Compiler
+      shell: bash
+      run: |
+        export CMP_DIR=Artifacts/Compile
+        mkdir -p ${CMP_DIR}/doc
+        cp doc/compile.md ${CMP_DIR}/doc/compile.md
+        cp -r assets/sample_matpack ${CMP_DIR}
+        cp Release/compile.exe ${CMP_DIR}
+        cp README.md ${CMP_DIR}
+        cp LICENSE.md ${CMP_DIR}
+        cp THIRDPARTY.md ${CMP_DIR}
+        cd ${CMP_DIR}
+        zip compile.zip *
+        
+    - name: Upload JkGfxMod Artifact
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: JkGfxMod
+        path: Artifacts/JkGfxMod/jkgfxmod.zip
+        
+    - name: Upload Compile Artifact
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: Compile
+        path: Artifacts/Compile/compile.zip

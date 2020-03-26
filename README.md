@@ -33,8 +33,6 @@ Please follow the [installation guide](doc/install.md) for your version of the g
 
 Copy the material pack directory to the `jkgm/materials` directory in your Jedi Knight directory.
 
-**Note:** If you properly install an optional material pack and the textures are not showing up, try setting the brightness slider all the way to min.  The brightness slider can be found in Setup → Display → Brightness.
-
 ## Creating material packs (optional)
 
 Material packs must be compiled using the `compile` utility.
@@ -47,6 +45,16 @@ Material packs must be compiled using the `compile` utility.
 After the `compile` command completes, the finished material pack will be inside the output directory.
 
 For more information, please see the [material compiler reference](doc/compile.md).
+
+## Common problems
+
+### Materials don't show up in-game
+
+If you properly install an optional material pack and the textures are not showing up, try setting the brightness slider all the way to min.  The brightness slider can be found in Setup → Display → Brightness.
+
+### Textures look scrambled after loading a save
+
+Start a new game. Save files in Jedi Knight: Dark Forces II cannot be reused after installing or removing most mods.
 
 ## Issues, questions, and feedback
 

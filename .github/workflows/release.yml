@@ -33,8 +33,6 @@ jobs:
         cp README.md ${MOD_DIR}
         cp LICENSE.md ${MOD_DIR}
         cp THIRDPARTY.md ${MOD_DIR}
-        cd ${MOD_DIR}
-        zip jkgfxmod.zip *
         
     - name: Assemble Compiler
       shell: bash
@@ -47,17 +45,15 @@ jobs:
         cp README.md ${CMP_DIR}
         cp LICENSE.md ${CMP_DIR}
         cp THIRDPARTY.md ${CMP_DIR}
-        cd ${CMP_DIR}
-        zip compile.zip *
         
     - name: Upload JkGfxMod Artifact
       uses: actions/upload-artifact@v1.0.0
       with:
         name: JkGfxMod
-        path: Artifacts/JkGfxMod/jkgfxmod.zip
+        path: Artifacts/JkGfxMod
         
     - name: Upload Compile Artifact
       uses: actions/upload-artifact@v1.0.0
       with:
         name: Compile
-        path: Artifacts/Compile/compile.zip
+        path: Artifacts/Compile

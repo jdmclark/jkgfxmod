@@ -22,7 +22,8 @@ in float vp_z;
 
 layout(location = 0) out vec4 out_color;
 layout(location = 1) out vec4 out_emissive;
-layout(location = 2) out vec4 out_depth_nrm;
+layout(location = 2) out vec4 out_normal;
+layout(location = 3) out vec4 out_depth;
 
 mat3 construct_tbn()
 {
@@ -118,5 +119,6 @@ void main()
 
     out_color = albedo;
     out_emissive = vec4(emissive, albedo.a);
-    out_depth_nrm = vec4(normalize(vp_normal), adj_vp_z);
+    out_normal = vec4(normalize(vp_normal), 1.0);
+    out_depth = vec4(adj_vp_z, 0.0, 0.0, 1.0);
 }

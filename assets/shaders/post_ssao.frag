@@ -1,11 +1,12 @@
 #version 330 core
 #extension GL_ARB_explicit_uniform_location : require
 
-layout(location = 0) uniform sampler2D depth_image;
-layout(location = 1) uniform sampler2D noise_image;
+layout(location = 0) uniform sampler2D normal_image;
+layout(location = 1) uniform sampler2D depth_image;
+layout(location = 2) uniform sampler2D noise_image;
 
 const int num_kernel_samples = 16;
-layout(location = 2) uniform vec3[num_kernel_samples] samples;
+layout(location = 3) uniform vec3[num_kernel_samples] samples;
 
 in vec2 vp_texcoords;
 
@@ -20,7 +21,7 @@ const float kernel_bias = 0.25;
 
 float sample_depth_direct(vec2 pos)
 {
-    float depth_samp = texture(depth_image, pos).a;
+    float depth_samp = texture(depth_image, pos).r;
     return depth_samp;
 
     const float z_near = 0.1;
@@ -48,9 +49,8 @@ float sample_depth(vec3 origin, vec3 offset)
 
 void main()
 {
-    vec4 origin_sample = texture(depth_image, vp_texcoords);
-    vec3 rndnrm = origin_sample.rgb;
-    float origin_depth = origin_sample.a;
+    vec3 rndnrm = normalize(texture(normal_image, vp_texcoords).rgb);
+    float origin_depth = texture(depth_image, vp_texcoords).r;
 
     vec3 rndvec = texture(noise_image, gl_FragCoord.xy / 4.0).xyz;
 

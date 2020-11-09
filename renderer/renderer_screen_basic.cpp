@@ -75,13 +75,13 @@ jkgm::render_gbuffer::render_gbuffer(size<2, int> dims, render_depthbuffer *rbo)
     gl::framebuffer_texture(
         gl::framebuffer_bind_target::any, gl::framebuffer_attachment::color1, emissive_tex, 0);
 
-    // Set up depth normal texture:
-    gl::bind_texture(gl::texture_bind_target::texture_2d, depth_nrm_tex);
+    // Set up normal texture:
+    gl::bind_texture(gl::texture_bind_target::texture_2d, normal_tex);
     gl::tex_image_2d(gl::texture_bind_target::texture_2d,
                      /*level*/ 0,
-                     gl::texture_internal_format::rgba32f,
+                     gl::texture_internal_format::rgb16f,
                      dims,
-                     gl::texture_pixel_format::rgba,
+                     gl::texture_pixel_format::rgb,
                      gl::texture_pixel_type::float32,
                      make_span((char const *)nullptr, 0U));
     gl::set_texture_max_level(gl::texture_bind_target::texture_2d, 0U);
@@ -97,7 +97,32 @@ jkgm::render_gbuffer::render_gbuffer(size<2, int> dims, render_depthbuffer *rbo)
                                  color(0.0f, 0.0f, 1.0f, std::numeric_limits<float>::lowest()));
     gl::framebuffer_texture(gl::framebuffer_bind_target::any,
                             gl::framebuffer_attachment::color2,
-                            depth_nrm_tex,
+                            normal_tex,
+                            /*level*/ 0);
+
+    // Set up depth texture:
+    gl::bind_texture(gl::texture_bind_target::texture_2d, depth_tex);
+    gl::tex_image_2d(gl::texture_bind_target::texture_2d,
+                     /*level*/ 0,
+                     gl::texture_internal_format::r16f,
+                     dims,
+                     gl::texture_pixel_format::red,
+                     gl::texture_pixel_type::float32,
+                     make_span((char const *)nullptr, 0U));
+    gl::set_texture_max_level(gl::texture_bind_target::texture_2d, 0U);
+    gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
+    gl::set_texture_min_filter(gl::texture_bind_target::texture_2d, gl::min_filter::linear);
+    gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
+                              gl::texture_direction::s,
+                              gl::texture_wrap_mode::clamp_to_border);
+    gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
+                              gl::texture_direction::t,
+                              gl::texture_wrap_mode::clamp_to_border);
+    gl::set_texture_border_color(gl::texture_bind_target::texture_2d,
+                                 color(0.0f, 0.0f, 1.0f, std::numeric_limits<float>::lowest()));
+    gl::framebuffer_texture(gl::framebuffer_bind_target::any,
+                            gl::framebuffer_attachment::color3,
+                            depth_tex,
                             /*level*/ 0);
 
     // Set up real depth buffer:
@@ -105,7 +130,10 @@ jkgm::render_gbuffer::render_gbuffer(size<2, int> dims, render_depthbuffer *rbo)
         gl::framebuffer_bind_target::any, gl::framebuffer_attachment::depth, rbo->rbo);
 
     // Finish:
-    gl::draw_buffers(gl::draw_buffer::color0, gl::draw_buffer::color1, gl::draw_buffer::color2);
+    gl::draw_buffers(gl::draw_buffer::color0,
+                     gl::draw_buffer::color1,
+                     gl::draw_buffer::color2,
+                     gl::draw_buffer::color3);
 
     auto fbs = gl::check_framebuffer_status(gl::framebuffer_bind_target::any);
     if(gl::check_framebuffer_status(gl::framebuffer_bind_target::any) !=
@@ -154,9 +182,14 @@ jkgm::gl::texture_view jkgm::renderer_screen_basic::get_resolved_emissive_textur
     return screen_gbuffer.emissive_tex;
 }
 
-jkgm::gl::texture_view jkgm::renderer_screen_basic::get_resolved_depth_normal_texture()
+jkgm::gl::texture_view jkgm::renderer_screen_basic::get_resolved_normal_texture()
 {
-    return screen_gbuffer.depth_nrm_tex;
+    return screen_gbuffer.normal_tex;
+}
+
+jkgm::gl::texture_view jkgm::renderer_screen_basic::get_resolved_depth_texture()
+{
+    return screen_gbuffer.depth_tex;
 }
 
 void jkgm::renderer_screen_basic::begin_compose_opaque_pass()

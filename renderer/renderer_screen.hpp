@@ -17,7 +17,8 @@ namespace jkgm {
         virtual void end_opaque_pass() = 0;
         virtual gl::texture_view get_resolved_color_texture() = 0;
         virtual gl::texture_view get_resolved_emissive_texture() = 0;
-        virtual gl::texture_view get_resolved_depth_normal_texture() = 0;
+        virtual gl::texture_view get_resolved_normal_texture() = 0;
+        virtual gl::texture_view get_resolved_depth_texture() = 0;
 
         virtual void begin_compose_opaque_pass() = 0;
         virtual void end_compose_opaque_pass() = 0;

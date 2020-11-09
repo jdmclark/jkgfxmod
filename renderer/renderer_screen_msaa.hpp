@@ -30,7 +30,8 @@ namespace jkgm {
         gl::framebuffer fbo;
         gl::texture color_tex;
         gl::texture emissive_tex;
-        gl::texture depth_nrm_tex;
+        gl::texture normal_tex;
+        gl::texture depth_tex;
 
         box<2, int> viewport;
 
@@ -58,7 +59,8 @@ namespace jkgm {
 
         msaa_resolve_buffer gbuffer_color_resolve;
         msaa_resolve_buffer gbuffer_emissive_resolve;
-        msaa_resolve_buffer gbuffer_depth_nrm_resolve;
+        msaa_resolve_buffer gbuffer_normal_resolve;
+        msaa_resolve_buffer gbuffer_depth_resolve;
         msaa_resolve_buffer buffer_resolve;
 
     public:
@@ -72,7 +74,8 @@ namespace jkgm {
         void end_opaque_pass() override;
         gl::texture_view get_resolved_color_texture() override;
         gl::texture_view get_resolved_emissive_texture() override;
-        gl::texture_view get_resolved_depth_normal_texture() override;
+        gl::texture_view get_resolved_normal_texture() override;
+        gl::texture_view get_resolved_depth_texture() override;
 
         void begin_compose_opaque_pass() override;
         void end_compose_opaque_pass() override;

@@ -25,7 +25,9 @@ namespace jkgm {
     public:
         explicit renderer_ao_ssao(size<2, int> screen_res);
 
-        void update_ssao_texture(opengl_state *ogs, gl::texture_view depth_nrm_tex) override;
+        void update_ssao_texture(opengl_state *ogs,
+                                 gl::texture_view normal_tex,
+                                 gl::texture_view depth_tex) override;
         gl::texture_view get_ssao_texture() const override;
     };
 }

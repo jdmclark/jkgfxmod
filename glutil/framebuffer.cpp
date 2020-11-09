@@ -98,10 +98,12 @@ namespace jkgm::gl {
     static_assert(draw_buffer::color0 == draw_buffer(GL_COLOR_ATTACHMENT0));
     static_assert(draw_buffer::color1 == draw_buffer(GL_COLOR_ATTACHMENT1));
     static_assert(draw_buffer::color2 == draw_buffer(GL_COLOR_ATTACHMENT2));
+    static_assert(draw_buffer::color3 == draw_buffer(GL_COLOR_ATTACHMENT3));
 
     static_assert(framebuffer_attachment::color0 == framebuffer_attachment(GL_COLOR_ATTACHMENT0));
     static_assert(framebuffer_attachment::color1 == framebuffer_attachment(GL_COLOR_ATTACHMENT1));
     static_assert(framebuffer_attachment::color2 == framebuffer_attachment(GL_COLOR_ATTACHMENT2));
+    static_assert(framebuffer_attachment::color3 == framebuffer_attachment(GL_COLOR_ATTACHMENT3));
     static_assert(framebuffer_attachment::depth == framebuffer_attachment(GL_DEPTH_ATTACHMENT));
     static_assert(framebuffer_attachment::stencil == framebuffer_attachment(GL_STENCIL_ATTACHMENT));
     static_assert(framebuffer_attachment::depth_stencil ==

@@ -990,7 +990,8 @@ namespace jkgm {
             frame_screen->end_opaque_pass();
 
             frame_ao->update_ssao_texture(ogs.get(),
-                                          frame_screen->get_resolved_depth_normal_texture());
+                                          frame_screen->get_resolved_normal_texture(),
+                                          frame_screen->get_resolved_depth_texture());
 
             frame_screen->begin_compose_opaque_pass();
             draw_game_opaque_composite();

@@ -79,7 +79,9 @@ jkgm::renderer_ao_ssao::renderer_ao_ssao(size<2, int> screen_res)
     gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::nearest);
 }
 
-void jkgm::renderer_ao_ssao::update_ssao_texture(opengl_state *ogs, gl::texture_view depth_nrm_tex)
+void jkgm::renderer_ao_ssao::update_ssao_texture(opengl_state *ogs,
+                                                 gl::texture_view normal_tex,
+                                                 gl::texture_view depth_tex)
 {
     // Compute SSAO:
     gl::bind_framebuffer(gl::framebuffer_bind_target::any, ssao_occlusionbuffer2.fbo);
@@ -90,14 +92,20 @@ void jkgm::renderer_ao_ssao::update_ssao_texture(opengl_state *ogs, gl::texture_
     gl::set_uniform_integer(gl::uniform_location_id(1), 1);
 
     for(size_t i = 0; i < ssao_kernel.size(); ++i) {
-        gl::set_uniform_vector(gl::uniform_location_id(2 + i), ssao_kernel[i]);
+        gl::set_uniform_vector(gl::uniform_location_id(3 + i), ssao_kernel[i]);
     }
 
-    gl::set_active_texture_unit(1);
+    gl::set_uniform_integer(gl::uniform_location_id(2), 2);
+    gl::set_active_texture_unit(2);
     gl::bind_texture(gl::texture_bind_target::texture_2d, ssao_noise_texture);
 
+    gl::set_uniform_integer(gl::uniform_location_id(1), 1);
+    gl::set_active_texture_unit(1);
+    gl::bind_texture(gl::texture_bind_target::texture_2d, depth_tex);
+
+    gl::set_uniform_integer(gl::uniform_location_id(0), 0);
     gl::set_active_texture_unit(0);
-    gl::bind_texture(gl::texture_bind_target::texture_2d, depth_nrm_tex);
+    gl::bind_texture(gl::texture_bind_target::texture_2d, normal_tex);
 
     gl::bind_vertex_array(ogs->postmdl.vao);
     gl::draw_elements(
@@ -109,9 +117,13 @@ void jkgm::renderer_ao_ssao::update_ssao_texture(opengl_state *ogs, gl::texture_
     gl::bind_framebuffer(gl::framebuffer_bind_target::any, ssao_occlusionbuffer.fbo);
     gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
 
+    gl::set_uniform_integer(gl::uniform_location_id(2), 2);
+    gl::set_active_texture_unit(2);
+    gl::bind_texture(gl::texture_bind_target::texture_2d, depth_tex);
+
     gl::set_uniform_integer(gl::uniform_location_id(1), 1);
     gl::set_active_texture_unit(1);
-    gl::bind_texture(gl::texture_bind_target::texture_2d, depth_nrm_tex);
+    gl::bind_texture(gl::texture_bind_target::texture_2d, normal_tex);
 
     gl::set_uniform_integer(gl::uniform_location_id(0), 0);
     gl::set_active_texture_unit(0);

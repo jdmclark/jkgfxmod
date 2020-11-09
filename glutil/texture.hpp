@@ -49,6 +49,7 @@ namespace jkgm::gl {
         rgba = 0x1908,
         srgb = 0x8C41,
         srgb_a8 = 0x8C43,
+        rgb16f = 0x881B,
         rgba16f = 0x881A,
         rgba32f = 0x8814,
         r16f = 0x822D,

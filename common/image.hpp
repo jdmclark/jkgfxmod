@@ -4,6 +4,7 @@
 #include "base/output_stream.hpp"
 #include "math/color.hpp"
 #include "math/size.hpp"
+#include <memory>
 #include <vector>
 
 namespace jkgm {

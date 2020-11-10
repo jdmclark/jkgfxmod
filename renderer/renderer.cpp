@@ -649,8 +649,9 @@ namespace jkgm {
             // Render
             gl::enable(gl::capability::blend);
             gl::disable(gl::capability::depth_test);
-            gl::use_program(ogs->menu_program);
-            gl::set_uniform_integer(gl::uniform_location_id(0), 0);
+
+            ogs->menu_program.use_program();
+            ogs->menu_program.set_menu_sampler(0);
 
             gl::bind_vertex_array(ogs->menumdl.vao);
             gl::draw_elements(
@@ -681,8 +682,9 @@ namespace jkgm {
             // Render
             gl::enable(gl::capability::blend);
             gl::disable(gl::capability::depth_test);
-            gl::use_program(ogs->menu_program);
-            gl::set_uniform_integer(gl::uniform_location_id(0), 0);
+
+            ogs->menu_program.use_program();
+            ogs->menu_program.set_menu_sampler(0);
 
             gl::bind_vertex_array(ogs->menumdl.vao);
             gl::draw_elements(
@@ -752,8 +754,8 @@ namespace jkgm {
             gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->hud_texture);
 
             // Render
-            gl::use_program(ogs->menu_program);
-            gl::set_uniform_integer(gl::uniform_location_id(0), 0);
+            ogs->menu_program.use_program();
+            ogs->menu_program.set_menu_sampler(0);
 
             gl::bind_vertex_array(ogs->hudmdl.vao);
             gl::draw_elements(
@@ -776,7 +778,10 @@ namespace jkgm {
             }
         }
 
-        void bind_material(material_instance_id id, bool force_opaque, bool posterize_lighting)
+        void bind_material(shaders::game_pass_shader *prog,
+                           material_instance_id id,
+                           bool force_opaque,
+                           bool posterize_lighting)
         {
             if(id.get() == 0U) {
                 // This is the default (untextured) material
@@ -788,23 +793,22 @@ namespace jkgm {
                 gl::bind_texture(gl::texture_bind_target::texture_2d, gl::default_texture);
 
                 // Enable features
-                gl::set_uniform_vector(gl::uniform_location_id(1),
-                                       make_point(/*has albedo map*/ 0.0f,
-                                                  /*has emissive map*/ 0.0f,
-                                                  /*alpha mode*/ 0.0f,
-                                                  (posterize_lighting ? 1.0f : 0.0f)));
+                prog->set_features(make_point(/*has albedo map*/ 0.0f,
+                                              /*has emissive map*/ 0.0f,
+                                              /*alpha mode*/ 0.0f,
+                                              (posterize_lighting ? 1.0f : 0.0f)));
 
                 // Albedo factor
-                gl::set_uniform_vector(gl::uniform_location_id(3), color::fill(1.0f));
+                prog->set_albedo_factor(color::fill(1.0f));
 
                 // Emissive factor
-                gl::set_uniform_vector(gl::uniform_location_id(5), color_rgb::zero());
+                prog->set_emissive_factor(color_rgb::zero());
 
                 // Displacement factor
-                gl::set_uniform_float(gl::uniform_location_id(8), 0.0f);
+                prog->set_displacement_factor(0.0f);
 
                 // Alpha cutoff
-                gl::set_uniform_float(gl::uniform_location_id(6), 0.0f);
+                prog->set_alpha_cutoff(0.0f);
             }
             else {
                 auto const &mat = vidmem_texture_surfaces.at(id.get() - 1);
@@ -832,25 +836,24 @@ namespace jkgm {
                 gl::bind_texture(gl::texture_bind_target::texture_2d, albedo_map);
 
                 // Enable features
-                gl::set_uniform_vector(
-                    gl::uniform_location_id(1),
-                    make_point(mat->albedo_map.has_value() ? 1.0f : 0.0f,
-                               mat->emissive_map.has_value() ? 1.0f : 0.0f,
-                               ((mat->alpha_mode == material_alpha_mode::mask) && (!force_opaque))
-                                   ? 1.0f
-                                   : 0.0f,
-                               (posterize_lighting ? 1.0f : 0.0f)));
+                prog->set_features(make_point(
+                    mat->albedo_map.has_value() ? 1.0f : 0.0f,
+                    mat->emissive_map.has_value() ? 1.0f : 0.0f,
+                    ((mat->alpha_mode == material_alpha_mode::mask) && (!force_opaque)) ? 1.0f
+                                                                                        : 0.0f,
+                    (posterize_lighting ? 1.0f : 0.0f)));
 
-                gl::set_uniform_vector(gl::uniform_location_id(3), mat->albedo_factor);
-                gl::set_uniform_vector(gl::uniform_location_id(5), mat->emissive_factor);
-                gl::set_uniform_float(gl::uniform_location_id(8), mat->displacement_factor);
-                gl::set_uniform_float(gl::uniform_location_id(6), mat->alpha_cutoff);
+                prog->set_albedo_factor(mat->albedo_factor);
+                prog->set_emissive_factor(mat->emissive_factor);
+                prog->set_displacement_factor(mat->displacement_factor);
+                prog->set_alpha_cutoff(mat->alpha_cutoff);
             }
 
             current_material = id;
         }
 
-        void draw_batch(triangle_batch const &tb,
+        void draw_batch(shaders::game_pass_shader *prog,
+                        triangle_batch const &tb,
                         triangle_buffer_model *trimdl,
                         bool force_opaque,
                         bool posterize_lighting)
@@ -860,7 +863,7 @@ namespace jkgm {
             size_t curr_offset = 0U;
             size_t num_verts = 0U;
 
-            bind_material(material_instance_id(0U), force_opaque, posterize_lighting);
+            bind_material(prog, material_instance_id(0U), force_opaque, posterize_lighting);
 
             for(auto const &tri : tb) {
                 if(current_material != tri.material) {
@@ -872,7 +875,7 @@ namespace jkgm {
                         num_verts = 0U;
                     }
 
-                    bind_material(tri.material, force_opaque, posterize_lighting);
+                    bind_material(prog, tri.material, force_opaque, posterize_lighting);
                 }
 
                 num_verts += 3;
@@ -930,29 +933,37 @@ namespace jkgm {
                                    gl::blend_function::one_minus_source_alpha);
             gl::set_depth_function(gl::comparison_function::less);
 
-            gl::use_program(ogs->game_opaque_pass_program);
-
-            gl::set_uniform_vector(gl::uniform_location_id(0),
-                                   static_cast<size<2, float>>(conf_scr_res));
-            gl::set_uniform_integer(gl::uniform_location_id(2), 0);
-            gl::set_uniform_integer(gl::uniform_location_id(4), 1);
-            gl::set_uniform_integer(gl::uniform_location_id(7), 2);
+            ogs->game_opaque_pass_program.use_program();
+            ogs->game_opaque_pass_program.set_screen_resolution(
+                static_cast<size<2, float>>(conf_scr_res));
+            ogs->game_opaque_pass_program.set_albedo_map_sampler(0);
+            ogs->game_opaque_pass_program.set_emissive_map_sampler(1);
+            ogs->game_opaque_pass_program.set_displacement_map_sampler(2);
 
             // Draw first pass (opaque world geometry)
-            draw_batch(
-                world_batch, &trimdl->world_trimdl, /*force opaque*/ true, posterize_lighting);
+            draw_batch(&ogs->game_opaque_pass_program,
+                       world_batch,
+                       &trimdl->world_trimdl,
+                       /*force opaque*/ true,
+                       posterize_lighting);
 
             // Draw second pass (transparent world geometry with alpha testing)
-            draw_batch(world_transparent_batch,
+            draw_batch(&ogs->game_opaque_pass_program,
+                       world_transparent_batch,
                        &trimdl->world_transparent_trimdl,
                        /*force opaque*/ true,
                        posterize_lighting);
 
             // Draw fourth pass (opaque gun geometry)
-            draw_batch(gun_batch, &trimdl->gun_trimdl, /*force opaque*/ true, posterize_lighting);
+            draw_batch(&ogs->game_opaque_pass_program,
+                       gun_batch,
+                       &trimdl->gun_trimdl,
+                       /*force opaque*/ true,
+                       posterize_lighting);
 
             // Draw fifth pass (transparent gun geometry with alpha testing)
-            draw_batch(gun_transparent_batch,
+            draw_batch(&ogs->game_opaque_pass_program,
+                       gun_transparent_batch,
                        &trimdl->gun_transparent_trimdl,
                        /*force opaque*/ true,
                        posterize_lighting);
@@ -962,10 +973,10 @@ namespace jkgm {
         {
             gl::disable(gl::capability::depth_test);
 
-            gl::use_program(ogs->game_post_opaque_composite_program);
-            gl::set_uniform_integer(gl::uniform_location_id(0), 0);
-            gl::set_uniform_integer(gl::uniform_location_id(1), 1);
-            gl::set_uniform_integer(gl::uniform_location_id(2), 2);
+            ogs->game_post_opaque_composite_program.use_program();
+            ogs->game_post_opaque_composite_program.set_color_sampler(0);
+            ogs->game_post_opaque_composite_program.set_emissive_sampler(1);
+            ogs->game_post_opaque_composite_program.set_occlusion_sampler(2);
 
             gl::set_active_texture_unit(2);
             gl::bind_texture(gl::texture_bind_target::texture_2d, frame_ao->get_ssao_texture());
@@ -1012,18 +1023,19 @@ namespace jkgm {
                                    gl::blend_function::one_minus_source_alpha);
             gl::set_depth_function(gl::comparison_function::less);
 
-            gl::use_program(ogs->game_transparency_pass_program);
-            gl::set_uniform_vector(gl::uniform_location_id(0),
-                                   static_cast<size<2, float>>(conf_scr_res));
-            gl::set_uniform_integer(gl::uniform_location_id(2), 0);
-            gl::set_uniform_integer(gl::uniform_location_id(4), 1);
-            gl::set_uniform_integer(gl::uniform_location_id(7), 2);
+            ogs->game_transparency_pass_program.use_program();
+            ogs->game_transparency_pass_program.set_screen_resolution(
+                static_cast<size<2, float>>(conf_scr_res));
+            ogs->game_transparency_pass_program.set_albedo_map_sampler(0);
+            ogs->game_transparency_pass_program.set_emissive_map_sampler(1);
+            ogs->game_transparency_pass_program.set_displacement_map_sampler(2);
             gl::set_active_texture_unit(0);
 
             // Draw third pass (transparent world geometry with alpha blending)
             gl::enable(gl::capability::blend);
             gl::set_depth_mask(false);
-            draw_batch(world_transparent_batch,
+            draw_batch(&ogs->game_transparency_pass_program,
+                       world_transparent_batch,
                        &trimdl->world_transparent_trimdl,
                        /*force opaque*/ false,
                        posterize_lighting);
@@ -1032,14 +1044,20 @@ namespace jkgm {
             gl::set_depth_mask(true);
             gl::clear({gl::clear_flag::depth});
 
-            draw_batch(gun_batch, &trimdl->gun_trimdl, /*force opaque*/ true, posterize_lighting);
-            draw_batch(gun_transparent_batch,
+            draw_batch(&ogs->game_transparency_pass_program,
+                       gun_batch,
+                       &trimdl->gun_trimdl,
+                       /*force opaque*/ true,
+                       posterize_lighting);
+            draw_batch(&ogs->game_transparency_pass_program,
+                       gun_transparent_batch,
                        &trimdl->gun_transparent_trimdl,
                        /*force opaque*/ true,
                        posterize_lighting);
 
             // Draw gun transparency
-            draw_batch(gun_transparent_batch,
+            draw_batch(&ogs->game_transparency_pass_program,
+                       gun_transparent_batch,
                        &trimdl->gun_transparent_trimdl, /*force opaque*/
                        false,
                        posterize_lighting);
@@ -1047,8 +1065,11 @@ namespace jkgm {
             // Draw overlay
             gl::disable(gl::capability::depth_test);
             gl::set_depth_mask(false);
-            draw_batch(
-                overlay_batch, &trimdl->overlay_trimdl, /*force opaque*/ false, posterize_lighting);
+            draw_batch(&ogs->game_transparency_pass_program,
+                       overlay_batch,
+                       &trimdl->overlay_trimdl,
+                       /*force opaque*/ false,
+                       posterize_lighting);
 
             gl::enable(gl::capability::depth_test);
             gl::enable(gl::capability::blend);

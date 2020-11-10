@@ -1,12 +1,11 @@
 #version 330 core
-#extension GL_ARB_explicit_uniform_location : require
 
-layout(location = 0) uniform sampler2D normal_image;
-layout(location = 1) uniform sampler2D depth_image;
-layout(location = 2) uniform sampler2D noise_image;
+uniform sampler2D normal_image;
+uniform sampler2D depth_image;
+uniform sampler2D noise_image;
 
 const int num_kernel_samples = 16;
-layout(location = 3) uniform vec3[num_kernel_samples] samples;
+uniform vec3[num_kernel_samples] samples;
 
 in vec2 vp_texcoords;
 

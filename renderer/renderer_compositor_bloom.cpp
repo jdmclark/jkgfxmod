@@ -16,9 +16,8 @@ void jkgm::renderer_compositor_bloom::end_frame(opengl_state *ogs,
     gl::set_clear_color(solid(colors::black));
     gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
 
-    gl::use_program(ogs->post_low_pass);
-
-    gl::set_uniform_integer(gl::uniform_location_id(0), 0);
+    ogs->post_low_pass.use_program();
+    ogs->post_low_pass.set_fbuf_sampler(0);
 
     gl::set_active_texture_unit(0);
     gl::bind_texture(gl::texture_bind_target::texture_2d, composed_screen);
@@ -31,17 +30,16 @@ void jkgm::renderer_compositor_bloom::end_frame(opengl_state *ogs,
 
     gl::texture_view src_tx = ogs->screen_postbuffer2.tex;
 
-    gl::use_program(ogs->post_gauss7);
-    gl::set_uniform_integer(gl::uniform_location_id(0), 0);
+    ogs->post_gauss7.use_program();
+    ogs->post_gauss7.set_fbuf_sampler(0);
 
     auto hdr_vp_size = static_cast<size<2, float>>(screen_size);
     float hdr_aspect_ratio = get<x>(hdr_vp_size) / get<y>(hdr_vp_size);
 
     for(auto &hdr_stack_em : ogs->bloom_layers.elements) {
         auto layer_vp_size = static_cast<size<2, float>>(hdr_stack_em.a.viewport.size());
-        gl::set_uniform_vector(gl::uniform_location_id(1),
-                               make_size(get<x>(layer_vp_size) * hdr_aspect_ratio,
-                                         get<y>(layer_vp_size)));
+        ogs->post_gauss7.set_fbuf_dimensions(
+            make_size(get<x>(layer_vp_size) * hdr_aspect_ratio, get<y>(layer_vp_size)));
 
         for(int i = 0; i < hdr_stack_em.num_passes; ++i) {
             // Blur horizontally
@@ -51,7 +49,7 @@ void jkgm::renderer_compositor_bloom::end_frame(opengl_state *ogs,
             gl::set_clear_color(solid(colors::black));
             gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
 
-            gl::set_uniform_vector(gl::uniform_location_id(2), make_direction(1.0f, 0.0f));
+            ogs->post_gauss7.set_blur_direction(make_direction(1.0f, 0.0f));
             gl::bind_texture(gl::texture_bind_target::texture_2d, src_tx);
             gl::draw_elements(
                 gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
@@ -62,7 +60,7 @@ void jkgm::renderer_compositor_bloom::end_frame(opengl_state *ogs,
             gl::set_clear_color(solid(colors::black));
             gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
 
-            gl::set_uniform_vector(gl::uniform_location_id(2), make_direction(0.0f, 1.0f));
+            ogs->post_gauss7.set_blur_direction(make_direction(0.0f, 1.0f));
             gl::bind_texture(gl::texture_bind_target::texture_2d, hdr_stack_em.b.tex);
             gl::draw_elements(
                 gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
@@ -81,26 +79,29 @@ void jkgm::renderer_compositor_bloom::end_frame(opengl_state *ogs,
     gl::disable(gl::capability::cull_face);
 
     // Copy to front buffer while converting to srgb
-    gl::use_program(ogs->post_to_srgb);
-
-    gl::set_uniform_integer(gl::uniform_location_id(0), 0);
+    ogs->post_to_srgb.use_program();
+    ogs->post_to_srgb.set_fbuf_sampler(0);
 
     gl::set_active_texture_unit(0);
     gl::bind_texture(gl::texture_bind_target::texture_2d, composed_screen);
 
-    int curr_em = 1;
-    for(auto &hdr_stack_em : ogs->bloom_layers.elements) {
-        gl::set_uniform_integer(gl::uniform_location_id(curr_em), curr_em);
-        gl::set_active_texture_unit(curr_em);
+    std::array<int, shaders::post_to_srgb_shader::num_bloom_layers> bloom_samplers;
+    std::array<float, shaders::post_to_srgb_shader::num_bloom_layers> bloom_weights;
+
+    int curr_sampler = 1;
+    for(int i = 0; i < shaders::post_to_srgb_shader::num_bloom_layers; ++i) {
+        auto const &hdr_stack_em = ogs->bloom_layers.elements.at(i);
+
+        bloom_samplers.at(i) = curr_sampler;
+        gl::set_active_texture_unit(curr_sampler);
         gl::bind_texture(gl::texture_bind_target::texture_2d, hdr_stack_em.a.tex);
-        ++curr_em;
+        ++curr_sampler;
+
+        bloom_weights.at(i) = hdr_stack_em.weight;
     }
 
-    curr_em = 5;
-    for(auto &hdr_stack_em : ogs->bloom_layers.elements) {
-        gl::set_uniform_float(gl::uniform_location_id(curr_em), hdr_stack_em.weight);
-        ++curr_em;
-    }
+    ogs->post_to_srgb.set_bloom_samplers(make_span(bloom_samplers));
+    ogs->post_to_srgb.set_bloom_weights(make_span(bloom_weights));
 
     gl::draw_elements(
         gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);

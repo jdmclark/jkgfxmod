@@ -1,9 +1,8 @@
 #version 330 core
-#extension GL_ARB_explicit_uniform_location : require
 
-layout(location = 0) uniform sampler2D fbuf_image;
-layout(location = 1) uniform sampler2D normal_image;
-layout(location = 2) uniform sampler2D depth_image;
+uniform sampler2D fbuf_image;
+uniform sampler2D normal_image;
+uniform sampler2D depth_image;
 
 in vec2 vp_texcoords;
 

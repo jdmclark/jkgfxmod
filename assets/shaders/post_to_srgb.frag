@@ -1,11 +1,10 @@
 #version 330 core
-#extension GL_ARB_explicit_uniform_location : require
 
-layout(location = 0) uniform sampler2D fbuf_image;
+uniform sampler2D fbuf_image;
 
 const int num_bloom_layers = 4;
-layout(location = 1) uniform sampler2D bloom_fbuf[num_bloom_layers];
-layout(location = 5) uniform float bloom_weight[num_bloom_layers];
+uniform sampler2D bloom_fbuf[num_bloom_layers];
+uniform float bloom_weight[num_bloom_layers];
 
 in vec2 vp_texcoords;
 

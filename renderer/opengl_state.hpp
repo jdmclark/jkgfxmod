@@ -9,18 +9,12 @@
 #include "glutil/shader.hpp"
 #include "glutil/texture.hpp"
 #include "glutil/vertex_array.hpp"
+#include "shaders.hpp"
 #include <map>
 #include <optional>
 #include <vector>
 
 namespace jkgm {
-    gl::shader compile_shader_from_file(fs::path const &filename, gl::shader_type type);
-
-    void link_program_from_files(std::string const &name,
-                                 gl::program *prog,
-                                 fs::path const &vx,
-                                 fs::path const &fg);
-
     class post_model {
     public:
         gl::vertex_array vao;
@@ -127,18 +121,20 @@ namespace jkgm {
     };
 
     struct opengl_state {
-        gl::program menu_program;
+        fs::path data_root;
 
-        gl::program game_opaque_pass_program;
-        gl::program game_post_ssao_program;
-        gl::program game_post_opaque_composite_program;
+        shaders::menu_shader menu_program;
 
-        gl::program game_transparency_pass_program;
+        shaders::game_opaque_pass_shader game_opaque_pass_program;
+        shaders::game_post_ssao_shader game_post_ssao_program;
+        shaders::game_post_opaque_composite_shader game_post_opaque_composite_program;
 
-        gl::program post_box4;
-        gl::program post_gauss7;
-        gl::program post_low_pass;
-        gl::program post_to_srgb;
+        shaders::game_transparency_pass_shader game_transparency_pass_program;
+
+        shaders::post_box4_shader post_box4;
+        shaders::post_gauss7_shader post_gauss7;
+        shaders::post_low_pass_shader post_low_pass;
+        shaders::post_to_srgb_shader post_to_srgb;
 
         post_model postmdl;
         overlay_model menumdl;

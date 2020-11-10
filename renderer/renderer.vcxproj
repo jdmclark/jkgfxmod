@@ -53,6 +53,7 @@
     <ClCompile Include="renderer_screen.cpp" />
     <ClCompile Include="renderer_screen_basic.cpp" />
     <ClCompile Include="renderer_screen_msaa.cpp" />
+    <ClCompile Include="shaders.cpp" />
     <ClCompile Include="sysmem_texture.cpp" />
     <ClCompile Include="texture_cache.cpp" />
     <ClCompile Include="triangle_batch.cpp" />
@@ -88,6 +89,7 @@
     <ClInclude Include="renderer_screen.hpp" />
     <ClInclude Include="renderer_screen_basic.hpp" />
     <ClInclude Include="renderer_screen_msaa.hpp" />
+    <ClInclude Include="shaders.hpp" />
     <ClInclude Include="sysmem_texture.hpp" />
     <ClInclude Include="texture_cache.hpp" />
     <ClInclude Include="triangle_batch.hpp" />

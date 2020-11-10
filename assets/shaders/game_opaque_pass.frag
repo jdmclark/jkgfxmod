@@ -1,18 +1,17 @@
 #version 330 core
-#extension GL_ARB_explicit_uniform_location : require
 
-layout(location = 1) uniform vec4 features;
+uniform vec4 features;
 
-layout(location = 2) uniform sampler2D albedo_map;
-layout(location = 3) uniform vec4 albedo_factor;
+uniform sampler2D albedo_map;
+uniform vec4 albedo_factor;
 
-layout(location = 4) uniform sampler2D emissive_map;
-layout(location = 5) uniform vec3 emissive_factor;
+uniform sampler2D emissive_map;
+uniform vec3 emissive_factor;
 
-layout(location = 6) uniform float alpha_cutoff;
+uniform float alpha_cutoff;
 
-layout(location = 7) uniform sampler2D displacement_map;
-layout(location = 8) uniform float displacement_factor;
+uniform sampler2D displacement_map;
+uniform float displacement_factor;
 
 in vec3 vp_pos;
 in vec2 vp_texcoords;

@@ -1,9 +1,8 @@
 #version 330 core
-#extension GL_ARB_explicit_uniform_location : require
 
-layout(location = 0) uniform sampler2D color_image;
-layout(location = 1) uniform sampler2D emissive_image;
-layout(location = 2) uniform sampler2D occlusion_image;
+uniform sampler2D color_image;
+uniform sampler2D emissive_image;
+uniform sampler2D occlusion_image;
 
 layout(location = 0) out vec4 out_color;
 

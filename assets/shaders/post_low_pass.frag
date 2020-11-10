@@ -1,7 +1,6 @@
 #version 330 core
-#extension GL_ARB_explicit_uniform_location : require
 
-layout(location = 0) uniform sampler2D fbuf_image;
+uniform sampler2D fbuf_image;
 
 in vec2 vp_texcoords;
 

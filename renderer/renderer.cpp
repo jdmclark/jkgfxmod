@@ -738,31 +738,58 @@ namespace jkgm {
             }
         }
 
+        static constexpr int hud_texture_num_slabs = 4;
+
+        int curr_slab = 0;
         void update_hud_texture()
         {
-            ZeroMemory(ogs->hud_texture_data.data(), ogs->hud_texture_data.size());
+            if(curr_slab == 0) {
+                // Convert HUD bitmap into valid texture data once every 4 frames
+                ZeroMemory(ogs->hud_texture_data.data(), ogs->hud_texture_data.size());
 
-            for(size_t i = 0; i < ddraw1_backbuffer_surface.buffer.size(); ++i) {
-                auto const &in_em = ddraw1_backbuffer_surface.buffer[i];
+                for(size_t i = 0; i < ddraw1_backbuffer_surface.buffer.size(); ++i) {
+                    auto const &in_em = ddraw1_backbuffer_surface.buffer[i];
 
-                // Convert from RGB565 to RGBA8888
-                ogs->hud_texture_data[i] = rgb565_key_to_srgb_a8(
-                    in_em, /*transparent?*/ in_em == ddraw1_backbuffer_surface.color_key);
+                    // Convert from RGB565 to RGBA8888
+                    ogs->hud_texture_data[i] = rgb565_key_to_srgb_a8(
+                        in_em, /*transparent?*/ in_em == ddraw1_backbuffer_surface.color_key);
+                }
             }
 
-            // Blit texture data into texture
+            // Blit 1/nslabs of the HUD texture data into GPU texture
             gl::set_active_texture_unit(0);
-            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->hud_texture);
-            gl::tex_image_2d(gl::texture_bind_target::texture_2d,
-                             /*level*/ 0,
-                             /*internal format*/ gl::texture_internal_format::srgb_a8,
-                             internal_scr_res,
-                             gl::texture_pixel_format::rgba,
-                             gl::texture_pixel_type::uint8,
-                             make_span(ogs->hud_texture_data).as_const_bytes());
+            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->hud_texture_back);
 
-            for(auto &em : ddraw1_backbuffer_surface.buffer) {
-                em = ddraw1_backbuffer_surface.color_key;
+            int slab_rows = get<y>(internal_scr_res) / hud_texture_num_slabs;
+            int start_row = slab_rows * curr_slab;
+
+            int stop_row = slab_rows * (curr_slab + 1);
+            if(curr_slab >= (hud_texture_num_slabs - 1)) {
+                stop_row = get<y>(internal_scr_res);
+            }
+
+            auto region =
+                make_box(make_point(0, start_row), make_point(get<x>(internal_scr_res), stop_row));
+            auto offset = start_row * get<x>(internal_scr_res);
+            auto num_pixels = volume(region);
+
+            gl::tex_sub_image_2d(
+                gl::texture_bind_target::texture_2d,
+                /*level*/ 0,
+                region,
+                gl::texture_pixel_format::rgba,
+                gl::texture_pixel_type::uint8,
+                make_span(ogs->hud_texture_data).subspan(offset, num_pixels).as_const_bytes());
+
+            ++curr_slab;
+            if(curr_slab >= hud_texture_num_slabs) {
+                // Swap and present after all 4 slabs have been copied
+                std::fill(ddraw1_backbuffer_surface.buffer.begin(),
+                          ddraw1_backbuffer_surface.buffer.end(),
+                          ddraw1_backbuffer_surface.color_key);
+
+                std::swap(ogs->hud_texture_front, ogs->hud_texture_back);
+                curr_slab = 0;
             }
         }
 
@@ -772,7 +799,7 @@ namespace jkgm {
             gl::disable(gl::capability::depth_test);
 
             gl::set_active_texture_unit(0);
-            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->hud_texture);
+            gl::bind_texture(gl::texture_bind_target::texture_2d, ogs->hud_texture_front);
 
             // Render
             ogs->menu_program.use_program();

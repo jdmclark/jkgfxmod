@@ -144,7 +144,10 @@ namespace jkgm {
         gl::texture menu_texture;
         std::vector<color_rgba8> menu_texture_data;
 
-        gl::texture hud_texture;
+        gl::texture hud_texture_a;
+        gl::texture hud_texture_b;
+        gl::texture_view hud_texture_front;
+        gl::texture_view hud_texture_back;
         std::vector<color_rgba8> hud_texture_data;
 
         post_buffer screen_postbuffer1;

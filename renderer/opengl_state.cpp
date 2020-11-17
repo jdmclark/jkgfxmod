@@ -379,6 +379,8 @@ jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res,
     , post_to_srgb(data_root)
     , menumdl(screen_res, actual_menu_area)
     , hudmdl(screen_res, internal_screen_res, actual_scr_area, the_config->hud_scale)
+    , hud_texture_front(hud_texture_a)
+    , hud_texture_back(hud_texture_b)
     , screen_postbuffer1(screen_res)
     , screen_postbuffer2(screen_res)
 {
@@ -403,22 +405,24 @@ jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res,
 
     menu_texture_data.resize(640 * 480, color_rgba8::zero());
 
-    gl::bind_texture(gl::texture_bind_target::texture_2d, hud_texture);
-    gl::tex_image_2d(gl::texture_bind_target::texture_2d,
-                     0,
-                     gl::texture_internal_format::srgb_a8,
-                     make_size(get<x>(internal_screen_res), get<y>(internal_screen_res)),
-                     gl::texture_pixel_format::bgra,
-                     gl::texture_pixel_type::uint8,
-                     make_span<char const>(nullptr, 0U));
-    gl::set_texture_max_level(gl::texture_bind_target::texture_2d, 0U);
-    gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
-    gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
-                              gl::texture_direction::s,
-                              gl::texture_wrap_mode::clamp_to_edge);
-    gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
-                              gl::texture_direction::t,
-                              gl::texture_wrap_mode::clamp_to_edge);
+    for(gl::texture_view hud_texture : {hud_texture_front, hud_texture_back}) {
+        gl::bind_texture(gl::texture_bind_target::texture_2d, hud_texture);
+        gl::tex_image_2d(gl::texture_bind_target::texture_2d,
+                         0,
+                         gl::texture_internal_format::srgb_a8,
+                         make_size(get<x>(internal_screen_res), get<y>(internal_screen_res)),
+                         gl::texture_pixel_format::bgra,
+                         gl::texture_pixel_type::uint8,
+                         make_span<char const>(nullptr, 0U));
+        gl::set_texture_max_level(gl::texture_bind_target::texture_2d, 0U);
+        gl::set_texture_mag_filter(gl::texture_bind_target::texture_2d, gl::mag_filter::linear);
+        gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
+                                  gl::texture_direction::s,
+                                  gl::texture_wrap_mode::clamp_to_edge);
+        gl::set_texture_wrap_mode(gl::texture_bind_target::texture_2d,
+                                  gl::texture_direction::t,
+                                  gl::texture_wrap_mode::clamp_to_edge);
+    }
 
     hud_texture_data.resize(volume(internal_screen_res), color_rgba8::zero());
 }

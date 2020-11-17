@@ -59,6 +59,9 @@ namespace jkgm {
                                                         UINT *nNumFormats);
     static wglChoosePixelFormatARB_type wglChoosePixelFormatARB = nullptr;
 
+    using wglSwapIntervalEXT_type = BOOL(WINAPI *)(int interval);
+    static wglSwapIntervalEXT_type wglSwapIntervalEXT = nullptr;
+
     // See https://www.opengl.org/registry/specs/ARB/wgl_create_context.txt for all values
 #define WGL_CONTEXT_MAJOR_VERSION_ARB 0x2091
 #define WGL_CONTEXT_MINOR_VERSION_ARB 0x2092
@@ -157,6 +160,14 @@ namespace jkgm {
         if(wglChoosePixelFormatARB == NULL) {
             report_fatal_message(str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: "
                                             "Failed to acquire wglChoosePixelFormatARB extension (",
+                                            win32::win32_category().message(GetLastError()),
+                                            ")")));
+        }
+
+        wglSwapIntervalEXT = (wglSwapIntervalEXT_type)wglGetProcAddress("wglSwapIntervalEXT");
+        if(wglSwapIntervalEXT == NULL) {
+            report_fatal_message(str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: "
+                                            "Failed to acquire wglSwapIntervalEXT extension (",
                                             win32::win32_category().message(GetLastError()),
                                             ")")));
         }
@@ -501,7 +512,7 @@ namespace jkgm {
             if(!cpf_res) {
                 report_fatal_message(
                     str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: "
-                               "Call to wglChoosePixelFormatARB failed unexpectedly (returned",
+                               "Call to wglChoosePixelFormatARB failed unexpectedly (returned ",
                                GetLastError(),
                                ")")));
             }
@@ -532,6 +543,16 @@ namespace jkgm {
             }
 
             wglMakeCurrent(hDC, hGLRC);
+
+            int present_interval = the_config->enable_vsync ? 1 : 0;
+            auto vsync_res = wglSwapIntervalEXT(present_interval);
+            if(!vsync_res) {
+                report_fatal_message(
+                    str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: Call to "
+                               "wglSwapIntervalEXT failed unexpectedly (returned ",
+                               GetLastError(),
+                               ")")));
+            }
 
             if(!gladLoadGL()) {
                 report_fatal_message("JkGfxMod could not initialize OpenGL.\n\nDetails: Failed to "

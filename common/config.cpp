@@ -80,6 +80,10 @@ std::unique_ptr<jkgm::config> jkgm::load_config_file()
             j.at("enable_posterized_lighting").get_to(rv->enable_posterized_lighting);
         }
 
+        if(j.contains("enable_vsync")) {
+            j.at("enable_vsync").get_to(rv->enable_vsync);
+        }
+
         if(j.contains("command")) {
             j.at("command").get_to(rv->command);
         }

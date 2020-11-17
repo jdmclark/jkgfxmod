@@ -26,6 +26,7 @@ namespace jkgm {
         bool enable_parallax = true;
         bool enable_texture_filtering = true;
         bool enable_posterized_lighting = false;
+        bool enable_vsync = false;
         std::string command = "jk.exe";
         std::string data_path = "jkgm";
         std::optional<std::string> log_path;

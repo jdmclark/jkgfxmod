@@ -34,9 +34,9 @@ namespace jkgm {
             }
         };
 
-        size_t dims_to_bytes(size<2, int> dims)
+        uint64_t dims_to_bytes(size<2, int> dims)
         {
-            return static_cast<size_t>(volume(dims)) * 4;
+            return static_cast<uint64_t>(volume(dims) * 4);
         }
 
         class texture_cache_impl : public texture_cache {
@@ -50,14 +50,15 @@ namespace jkgm {
             std::vector<linear_texture> linear_textures;
             std::map<fs::path, size_t> file_to_linear_texture_map;
 
-            size_t current_capacity = 0U;
+            uint64_t current_capacity = 0U;
 
             explicit texture_cache_impl(config const *the_config)
                 : the_config(the_config)
             {
                 materials.create_map(fs::path(the_config->data_path) / "materials");
 
-                size_t preload_capacity = the_config->vram_texture_preload_size * 1024U * 1024U;
+                uint64_t preload_capacity =
+                    the_config->vram_texture_preload_size * uint64_t(1048576U);
 
                 auto const &raw_materials = materials.get_materials();
 

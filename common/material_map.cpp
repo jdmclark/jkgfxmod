@@ -115,3 +115,8 @@ std::optional<jkgm::material const *> jkgm::material_map::get_material(md5 const
 
     return std::nullopt;
 }
+
+std::vector<std::unique_ptr<jkgm::material>> const &jkgm::material_map::get_materials() const
+{
+    return materials;
+}

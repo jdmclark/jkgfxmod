@@ -4,6 +4,9 @@
 #include "common/config.hpp"
 #include "common/image.hpp"
 #include "common/material_map.hpp"
+#include <algorithm>
+#include <numeric>
+#include <random>
 
 namespace jkgm {
     namespace {
@@ -31,6 +34,11 @@ namespace jkgm {
             }
         };
 
+        size_t dims_to_bytes(size<2, int> dims)
+        {
+            return static_cast<size_t>(volume(dims)) * 4;
+        }
+
         class texture_cache_impl : public texture_cache {
         public:
             config const *the_config;
@@ -42,10 +50,53 @@ namespace jkgm {
             std::vector<linear_texture> linear_textures;
             std::map<fs::path, size_t> file_to_linear_texture_map;
 
+            size_t current_capacity = 0U;
+
             explicit texture_cache_impl(config const *the_config)
                 : the_config(the_config)
             {
                 materials.create_map(fs::path(the_config->data_path) / "materials");
+
+                size_t preload_capacity = the_config->vram_texture_preload_size * 1024U * 1024U;
+
+                auto const &raw_materials = materials.get_materials();
+
+                std::vector<size_t> shuffled_materials;
+                shuffled_materials.resize(raw_materials.size());
+                std::iota(shuffled_materials.begin(), shuffled_materials.end(), size_t(0U));
+
+                std::random_device rd;
+                std::mt19937 g(rd());
+                std::shuffle(shuffled_materials.begin(), shuffled_materials.end(), g);
+
+                for(size_t mat_index : shuffled_materials) {
+                    if(current_capacity >= preload_capacity) {
+                        break;
+                    }
+
+                    auto const &mat = raw_materials.at(mat_index);
+
+                    if(mat->albedo_map.has_value()) {
+                        get_srgb_texture_from_filename(*mat->albedo_map);
+                    }
+
+                    if(mat->emissive_map.has_value()) {
+                        get_srgb_texture_from_filename(*mat->emissive_map);
+                    }
+
+                    if(mat->displacement_map.has_value()) {
+                        get_linear_texture_from_filename(*mat->displacement_map);
+                    }
+                }
+
+                // Reset reference counts from preloaded textures
+                for(auto &em : srgb_textures) {
+                    em.refct = 0U;
+                }
+
+                for(auto &em : linear_textures) {
+                    em.refct = 0U;
+                }
             }
 
             std::optional<material const *> get_replacement_material(md5 const &sig) override
@@ -95,6 +146,7 @@ namespace jkgm {
                 // Create new texture
                 srgb_texture_id rv(srgb_textures.size());
                 srgb_textures.emplace_back(dims);
+                current_capacity += dims_to_bytes(dims);
 
                 auto &em = srgb_textures.back();
                 em.refct = 1;
@@ -197,6 +249,7 @@ namespace jkgm {
                 // Create new texture
                 linear_texture_id rv(linear_textures.size());
                 linear_textures.emplace_back(dims);
+                current_capacity += dims_to_bytes(dims);
 
                 auto &em = linear_textures.back();
                 em.refct = 1;

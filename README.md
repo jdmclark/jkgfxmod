@@ -56,6 +56,10 @@ If you properly install an optional material pack and the textures are not showi
 
 Start a new game. Save files in Jedi Knight: Dark Forces II cannot be reused after installing or removing most mods.
 
+### Stuttering during gameplay
+
+JkGfxMod streams materials from storage as they are needed. This may cause some stuttering, especially if JkGfxMod materials are installed on a slow hard disk. This can be corrected by adding a `vram_texture_preload_size` entry to the configuration file. Please see the [configuration guide](doc/config.md) for more information.
+
 ## Issues, questions, and feedback
 
 Please follow these steps to report issues:

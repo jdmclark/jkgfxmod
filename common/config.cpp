@@ -98,6 +98,10 @@ std::unique_ptr<jkgm::config> jkgm::load_config_file()
                 rv->log_path = em;
             }
         }
+
+        if(j.contains("vram_texture_preload_size")) {
+            j.at("vram_texture_preload_size").get_to(rv->vram_texture_preload_size);
+        }
     }
     catch(std::exception const &e) {
         LOG_WARNING("Failed to load configuration file: ", e.what());

@@ -17,5 +17,6 @@ namespace jkgm {
         void create_map(fs::path const &materials_dir);
 
         std::optional<material const *> get_material(md5 const &sig) const;
+        std::vector<std::unique_ptr<material>> const &get_materials() const;
     };
 }

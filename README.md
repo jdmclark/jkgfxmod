@@ -19,10 +19,6 @@ JkGfxMod makes Jedi Knight: Dark Forces II look better and run on new computers.
 - Better mods:
     - Support and tooling for advanced, high-quality materials
 
-## Limitations
-
-This is a beta release. Please report any issues you encounter.
-
 ## Using JkGfxMod
 
 **Note:** JkGfxMod is a standalone compatibility tool for Jedi Knight. JkGfxMod does not require any Windows compatibility settings, compatibility shims (installed by certain digital distributions), administrative privileges, or DirectDraw wrappers (e.g. dgVoodoo). We recommend disabling these compatibility fixes before using JkGfxMod.

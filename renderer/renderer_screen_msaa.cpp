@@ -235,6 +235,7 @@ void jkgm::renderer_screen_msaa::begin_opaque_pass()
     gl::clear_buffer_color(0, color::zero());
     gl::clear_buffer_color(1, color::zero());
     gl::clear_buffer_color(2, color::zero());
+    gl::clear_buffer_color(3, color::fill(1.0f));
     gl::clear_buffer_depth(1.0f);
 }
 

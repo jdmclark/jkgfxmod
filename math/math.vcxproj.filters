@@ -36,28 +36,25 @@
     <ClInclude Include="direction.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="lerp.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="point.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="size.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="to_opengl.hpp">
+    <ClInclude Include="abstract_vector_def.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="abstract_matrix.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="abstract_scalar.hpp">
+    <ClInclude Include="color_conv.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="abstract_vector.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="color_conv.hpp">
+    <ClInclude Include="abstract_vector_simd.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

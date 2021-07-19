@@ -1,8 +1,6 @@
 #pragma once
 
 #include "gl.hpp"
-#include "math/abstract_matrix.hpp"
-#include "math/to_opengl.hpp"
 #include "shader.hpp"
 #include "base/cstring_view.hpp"
 #include "base/id.hpp"
@@ -68,14 +66,6 @@ namespace jkgm::gl {
                 inner_set_uniform_vec(std::forward<ArgT>(args)...);
             }
         };
-    }
-
-    template <class F, class TagT>
-    void set_uniform_matrix(uniform_location_id uniform,
-                            bool transpose,
-                            abstract_matrix<4, 4, F, TagT> const &mat)
-    {
-        detail::inner_set_uniform_matrix_4fv(uniform, transpose, to_opengl<float>(mat));
     }
 
     void set_uniform_integer(uniform_location_id uniform, int value);

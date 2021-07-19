@@ -1,5 +1,6 @@
 #include "renderer_ao_ssao.hpp"
 #include "base/log.hpp"
+#include "math/utility.hpp"
 #include "opengl_state.hpp"
 #include <random>
 

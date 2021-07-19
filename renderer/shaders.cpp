@@ -263,12 +263,30 @@ void jkgm::shaders::post_box4_shader::set_depth_sampler(int sampler)
     gl::set_uniform_integer(depth_image, sampler);
 }
 
-jkgm::shaders::post_gauss7_shader::post_gauss7_shader(fs::path const &data_root)
-    : opengl_shader("post_gauss7",
-                    data_root / "shaders/postprocess.vert",
-                    data_root / "shaders/post_gauss7.frag")
+jkgm::shaders::post_gauss3_shader::post_gauss3_shader(fs::path const &data_root)
+    : post_gauss_shader("post_gauss3",
+                        data_root / "shaders/postprocess.vert",
+                        data_root / "shaders/post_gauss3.frag")
     , fbuf_image(gl::get_uniform_location(the_program, "fbuf_image"))
-    , fbuf_dimensions(gl::get_uniform_location(the_program, "fbuf_dimensions"))
+    , blur_direction(gl::get_uniform_location(the_program, "blur_direction"))
+{
+}
+
+void jkgm::shaders::post_gauss3_shader::set_fbuf_sampler(int sampler)
+{
+    gl::set_uniform_integer(fbuf_image, sampler);
+}
+
+void jkgm::shaders::post_gauss3_shader::set_blur_direction(direction<2, int> dir)
+{
+    gl::set_uniform_vector(blur_direction, dir);
+}
+
+jkgm::shaders::post_gauss7_shader::post_gauss7_shader(fs::path const &data_root)
+    : post_gauss_shader("post_gauss7",
+                        data_root / "shaders/postprocess.vert",
+                        data_root / "shaders/post_gauss7.frag")
+    , fbuf_image(gl::get_uniform_location(the_program, "fbuf_image"))
     , blur_direction(gl::get_uniform_location(the_program, "blur_direction"))
 {
 }
@@ -278,12 +296,45 @@ void jkgm::shaders::post_gauss7_shader::set_fbuf_sampler(int sampler)
     gl::set_uniform_integer(fbuf_image, sampler);
 }
 
-void jkgm::shaders::post_gauss7_shader::set_fbuf_dimensions(size<2, float> dims)
+void jkgm::shaders::post_gauss7_shader::set_blur_direction(direction<2, int> dir)
 {
-    gl::set_uniform_vector(fbuf_dimensions, dims);
+    gl::set_uniform_vector(blur_direction, dir);
 }
 
-void jkgm::shaders::post_gauss7_shader::set_blur_direction(direction<2, float> dir)
+jkgm::shaders::post_gauss9_shader::post_gauss9_shader(fs::path const &data_root)
+    : post_gauss_shader("post_gauss9",
+                        data_root / "shaders/postprocess.vert",
+                        data_root / "shaders/post_gauss9.frag")
+    , fbuf_image(gl::get_uniform_location(the_program, "fbuf_image"))
+    , blur_direction(gl::get_uniform_location(the_program, "blur_direction"))
+{
+}
+
+void jkgm::shaders::post_gauss9_shader::set_fbuf_sampler(int sampler)
+{
+    gl::set_uniform_integer(fbuf_image, sampler);
+}
+
+void jkgm::shaders::post_gauss9_shader::set_blur_direction(direction<2, int> dir)
+{
+    gl::set_uniform_vector(blur_direction, dir);
+}
+
+jkgm::shaders::post_gauss15_shader::post_gauss15_shader(fs::path const &data_root)
+    : post_gauss_shader("post_gauss15",
+                        data_root / "shaders/postprocess.vert",
+                        data_root / "shaders/post_gauss15.frag")
+    , fbuf_image(gl::get_uniform_location(the_program, "fbuf_image"))
+    , blur_direction(gl::get_uniform_location(the_program, "blur_direction"))
+{
+}
+
+void jkgm::shaders::post_gauss15_shader::set_fbuf_sampler(int sampler)
+{
+    gl::set_uniform_integer(fbuf_image, sampler);
+}
+
+void jkgm::shaders::post_gauss15_shader::set_blur_direction(direction<2, int> dir)
 {
     gl::set_uniform_vector(blur_direction, dir);
 }
@@ -297,6 +348,19 @@ jkgm::shaders::post_low_pass_shader::post_low_pass_shader(fs::path const &data_r
 }
 
 void jkgm::shaders::post_low_pass_shader::set_fbuf_sampler(int sampler)
+{
+    gl::set_uniform_integer(fbuf_image, sampler);
+}
+
+jkgm::shaders::post_scale_shader::post_scale_shader(fs::path const &data_root)
+    : opengl_shader("post_scale",
+                    data_root / "shaders/postprocess.vert",
+                    data_root / "shaders/post_scale.frag")
+    , fbuf_image(gl::get_uniform_location(the_program, "fbuf_image"))
+{
+}
+
+void jkgm::shaders::post_scale_shader::set_fbuf_sampler(int sampler)
 {
     gl::set_uniform_integer(fbuf_image, sampler);
 }

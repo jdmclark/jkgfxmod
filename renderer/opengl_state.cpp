@@ -264,20 +264,30 @@ jkgm::post_buffer::post_buffer(size<2, int> dims)
     gl::bind_framebuffer(gl::framebuffer_bind_target::any, gl::default_framebuffer);
 }
 
-jkgm::hdr_stack_em::hdr_stack_em(size<2, int> dims, int num_passes, float weight)
+jkgm::hdr_stack_em::hdr_stack_em(size<2, int> dims, int taps, float weight)
     : a(dims)
     , b(dims)
-    , num_passes(num_passes)
+    , taps(taps)
     , weight(weight)
 {
 }
 
-jkgm::hdr_stack::hdr_stack()
+namespace jkgm {
+    namespace {
+        size<2, int> scale_framebuffer_size(size<2, int> base_size, int denom)
+        {
+            return pairwise_max(size<2, int>::fill(1), base_size / denom);
+        }
+    }
+}
+
+jkgm::hdr_stack::hdr_stack(size<2, int> dims)
 {
-    elements.emplace_back(make_size(1024, 1024), /*passes*/ 2, /*weight*/ 1.0f);
-    elements.emplace_back(make_size(512, 512), /*passes*/ 4, /*weight*/ 0.5f);
-    elements.emplace_back(make_size(256, 256), /*passes*/ 8, /*weight*/ 0.25f);
-    elements.emplace_back(make_size(128, 128), /*passes*/ 8, /*weight*/ 0.125f);
+    elements.emplace_back(scale_framebuffer_size(dims, 2), /*taps*/ 3, /*weight*/ 0.5f);
+    elements.emplace_back(scale_framebuffer_size(dims, 4), /*taps*/ 7, /*weight*/ 0.34f);
+    elements.emplace_back(scale_framebuffer_size(dims, 8), /*taps*/ 9, /*weight*/ 0.18f);
+    elements.emplace_back(scale_framebuffer_size(dims, 16), /*taps*/ 15, /*weight*/ 0.07f);
+    elements.emplace_back(scale_framebuffer_size(dims, 32), /*taps*/ 15, /*weight*/ 0.022f);
 }
 
 jkgm::triangle_buffer_model::triangle_buffer_model()
@@ -374,8 +384,12 @@ jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res,
     , game_post_opaque_composite_program(data_root)
     , game_transparency_pass_program(data_root)
     , post_box4(data_root)
+    , post_gauss3(data_root)
     , post_gauss7(data_root)
+    , post_gauss9(data_root)
+    , post_gauss15(data_root)
     , post_low_pass(data_root)
+    , post_scale(data_root)
     , post_to_srgb(data_root)
     , menumdl(screen_res, actual_menu_area)
     , hudmdl(screen_res, internal_screen_res, actual_scr_area, the_config->hud_scale)
@@ -383,6 +397,7 @@ jkgm::opengl_state::opengl_state::opengl_state(size<2, int> screen_res,
     , hud_texture_back(hud_texture_b)
     , screen_postbuffer1(screen_res)
     , screen_postbuffer2(screen_res)
+    , bloom_layers(screen_res)
 {
     LOG_DEBUG("Loading OpenGL assets");
 

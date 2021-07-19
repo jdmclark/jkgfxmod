@@ -63,17 +63,17 @@ namespace jkgm {
     public:
         post_buffer a;
         post_buffer b;
-        int num_passes;
+        int taps;
         float weight;
 
-        hdr_stack_em(size<2, int> dims, int num_passes, float weight);
+        hdr_stack_em(size<2, int> dims, int taps, float weight);
     };
 
     class hdr_stack {
     public:
         std::vector<hdr_stack_em> elements;
 
-        hdr_stack();
+        explicit hdr_stack(size<2, int> dims);
     };
 
     struct alignas(32) triangle_buffer_vertex {
@@ -132,8 +132,12 @@ namespace jkgm {
         shaders::game_transparency_pass_shader game_transparency_pass_program;
 
         shaders::post_box4_shader post_box4;
+        shaders::post_gauss3_shader post_gauss3;
         shaders::post_gauss7_shader post_gauss7;
+        shaders::post_gauss9_shader post_gauss9;
+        shaders::post_gauss15_shader post_gauss15;
         shaders::post_low_pass_shader post_low_pass;
+        shaders::post_scale_shader post_scale;
         shaders::post_to_srgb_shader post_to_srgb;
 
         post_model postmdl;

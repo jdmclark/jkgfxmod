@@ -135,18 +135,60 @@ namespace jkgm {
             void set_depth_sampler(int sampler);
         };
 
-        class post_gauss7_shader : public opengl_shader {
+        class post_gauss_shader : public opengl_shader {
+        public:
+            using opengl_shader::opengl_shader;
+
+            virtual void set_fbuf_sampler(int sampler) = 0;
+            virtual void set_blur_direction(direction<2, int> dir) = 0;
+        };
+
+        class post_gauss3_shader : public post_gauss_shader {
         private:
             gl::uniform_location_id fbuf_image;
-            gl::uniform_location_id fbuf_dimensions;
+            gl::uniform_location_id blur_direction;
+
+        public:
+            explicit post_gauss3_shader(fs::path const &data_root);
+
+            void set_fbuf_sampler(int sampler) override;
+            void set_blur_direction(direction<2, int> dir) override;
+        };
+
+        class post_gauss7_shader : public post_gauss_shader {
+        private:
+            gl::uniform_location_id fbuf_image;
             gl::uniform_location_id blur_direction;
 
         public:
             explicit post_gauss7_shader(fs::path const &data_root);
 
-            void set_fbuf_sampler(int sampler);
-            void set_fbuf_dimensions(size<2, float> dims);
-            void set_blur_direction(direction<2, float> dir);
+            void set_fbuf_sampler(int sampler) override;
+            void set_blur_direction(direction<2, int> dir) override;
+        };
+
+        class post_gauss9_shader : public post_gauss_shader {
+        private:
+            gl::uniform_location_id fbuf_image;
+            gl::uniform_location_id blur_direction;
+
+        public:
+            explicit post_gauss9_shader(fs::path const &data_root);
+
+            void set_fbuf_sampler(int sampler) override;
+            void set_blur_direction(direction<2, int> dir) override;
+        };
+
+        class post_gauss15_shader : public post_gauss_shader {
+        private:
+            gl::uniform_location_id fbuf_image;
+            gl::uniform_location_id blur_direction;
+
+        public:
+            explicit post_gauss15_shader(fs::path const &data_root);
+
+            void set_fbuf_sampler(int sampler) override;
+            void set_blur_direction(direction<2, int> dir) override;
         };
 
         class post_low_pass_shader : public opengl_shader {
@@ -159,9 +201,19 @@ namespace jkgm {
             void set_fbuf_sampler(int sampler);
         };
 
+        class post_scale_shader : public opengl_shader {
+        private:
+            gl::uniform_location_id fbuf_image;
+
+        public:
+            explicit post_scale_shader(fs::path const &data_root);
+
+            void set_fbuf_sampler(int sampler);
+        };
+
         class post_to_srgb_shader : public opengl_shader {
         public:
-            static constexpr int num_bloom_layers = 4;
+            static constexpr int num_bloom_layers = 5;
 
         private:
             gl::uniform_location_id fbuf_image;

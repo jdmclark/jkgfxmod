@@ -25,49 +25,76 @@ void jkgm::renderer_compositor_bloom::end_frame(opengl_state *ogs,
     gl::draw_elements(
         gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
 
-    // Blur and down sample:
+    // Downsample:
     gl::set_active_texture_unit(0);
 
     gl::texture_view src_tx = ogs->screen_postbuffer2.tex;
 
-    ogs->post_gauss7.use_program();
-    ogs->post_gauss7.set_fbuf_sampler(0);
+    ogs->post_scale.use_program();
+    ogs->post_scale.set_fbuf_sampler(0);
+    for(auto &hdr_stack_em : ogs->bloom_layers.elements) {
+        gl::bind_framebuffer(gl::framebuffer_bind_target::any, hdr_stack_em.a.fbo);
+        gl::set_viewport(hdr_stack_em.a.viewport);
 
-    auto hdr_vp_size = static_cast<size<2, float>>(screen_size);
-    float hdr_aspect_ratio = get<x>(hdr_vp_size) / get<y>(hdr_vp_size);
+        gl::set_clear_color(solid(colors::black));
+        gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
+
+        gl::bind_texture(gl::texture_bind_target::texture_2d, src_tx);
+        gl::draw_elements(
+            gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
+
+        src_tx = hdr_stack_em.a.tex;
+    }
+
+    // Blur:
+    gl::set_active_texture_unit(0);
 
     for(auto &hdr_stack_em : ogs->bloom_layers.elements) {
-        auto layer_vp_size = static_cast<size<2, float>>(hdr_stack_em.a.viewport.size());
-        ogs->post_gauss7.set_fbuf_dimensions(
-            make_size(get<x>(layer_vp_size) * hdr_aspect_ratio, get<y>(layer_vp_size)));
+        shaders::post_gauss_shader *curr_prog = &ogs->post_gauss3;
+        switch(hdr_stack_em.taps) {
+        case 15:
+            curr_prog = &ogs->post_gauss15;
+            break;
 
-        for(int i = 0; i < hdr_stack_em.num_passes; ++i) {
-            // Blur horizontally
-            gl::bind_framebuffer(gl::framebuffer_bind_target::any, hdr_stack_em.b.fbo);
-            gl::set_viewport(hdr_stack_em.b.viewport);
+        case 9:
+            curr_prog = &ogs->post_gauss9;
+            break;
 
-            gl::set_clear_color(solid(colors::black));
-            gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
+        case 7:
+            curr_prog = &ogs->post_gauss7;
+            break;
 
-            ogs->post_gauss7.set_blur_direction(make_direction(1.0f, 0.0f));
-            gl::bind_texture(gl::texture_bind_target::texture_2d, src_tx);
-            gl::draw_elements(
-                gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
-
-            // Blur vertically
-            gl::bind_framebuffer(gl::framebuffer_bind_target::any, hdr_stack_em.a.fbo);
-
-            gl::set_clear_color(solid(colors::black));
-            gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
-
-            ogs->post_gauss7.set_blur_direction(make_direction(0.0f, 1.0f));
-            gl::bind_texture(gl::texture_bind_target::texture_2d, hdr_stack_em.b.tex);
-            gl::draw_elements(
-                gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
-
-            // Set up next stage
-            src_tx = hdr_stack_em.a.tex;
+        default:
+        case 3:
+            curr_prog = &ogs->post_gauss3;
+            break;
         }
+
+        curr_prog->use_program();
+        curr_prog->set_fbuf_sampler(0);
+
+        // Blur horizontally
+        gl::bind_framebuffer(gl::framebuffer_bind_target::any, hdr_stack_em.b.fbo);
+        gl::set_viewport(hdr_stack_em.b.viewport);
+
+        gl::set_clear_color(solid(colors::black));
+        gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
+
+        curr_prog->set_blur_direction(make_direction(1, 0));
+        gl::bind_texture(gl::texture_bind_target::texture_2d, hdr_stack_em.a.tex);
+        gl::draw_elements(
+            gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
+
+        // Blur vertically
+        gl::bind_framebuffer(gl::framebuffer_bind_target::any, hdr_stack_em.a.fbo);
+
+        gl::set_clear_color(solid(colors::black));
+        gl::clear({gl::clear_flag::color, gl::clear_flag::depth});
+
+        curr_prog->set_blur_direction(make_direction(0, 1));
+        gl::bind_texture(gl::texture_bind_target::texture_2d, hdr_stack_em.b.tex);
+        gl::draw_elements(
+            gl::element_type::triangles, ogs->postmdl.num_indices, gl::index_type::uint32);
     }
 
     gl::bind_framebuffer(gl::framebuffer_bind_target::any, gl::default_framebuffer);

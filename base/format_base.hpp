@@ -75,7 +75,7 @@ namespace jkgm {
             explicit formatter_sequence_fill_op(format_buffer *buffer);
 
             template <class... T>
-            void operator()(T const &... fmt)
+            void operator()(T const &...fmt)
             {
                 formatter_fill_op fill_op(buffer);
                 (fill_op(fmt), ...);
@@ -96,7 +96,7 @@ namespace jkgm {
         class formatter_sequence_est_op {
         public:
             template <class... T>
-            size_t operator()(T const &... fmt)
+            size_t operator()(T const &...fmt)
             {
                 formatter_est_op est_op;
                 (est_op(fmt), ...);
@@ -152,10 +152,9 @@ namespace jkgm {
     };
 
     template <class... T>
-    auto format(T &&... v)
+    auto fmt(T &&...v)
     {
-        return formatter_sequence<formatter_type_t<T>...>(
-            std::forward<T>(v)...);
+        return formatter_sequence<formatter_type_t<T>...>(std::forward<T>(v)...);
     }
 
     namespace detail {

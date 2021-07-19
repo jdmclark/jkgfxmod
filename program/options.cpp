@@ -47,7 +47,7 @@ void jkgm::options::insert(std::unique_ptr<abstract_option> &&opt)
 
     opt_map.emplace(reg_opt->name, reg_opt);
 
-    auto full_name = jkgm::str(jkgm::format("--", reg_opt->name));
+    auto full_name = jkgm::str(jkgm::fmt("--", reg_opt->name));
     add_alias(reg_opt->name, full_name);
 }
 

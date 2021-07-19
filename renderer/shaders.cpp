@@ -19,19 +19,18 @@ namespace jkgm {
                 fs->copy_to(&mob);
             }
             catch(std::exception const &e) {
-                report_fatal_message(
-                    str(format("JkGfxMod could not open an essential file and cannot "
-                               "continue.\n\nDetails: Error while opening ",
-                               filename.generic_string(),
-                               "\n",
-                               e.what())));
+                report_fatal_message(str(fmt("JkGfxMod could not open an essential file and cannot "
+                                             "continue.\n\nDetails: Error while opening ",
+                                             filename.generic_string(),
+                                             "\n",
+                                             e.what())));
             }
 
             gl::shader_source(rv, make_string_span(""), make_span(mb.str()));
             gl::compile_shader(rv);
             if(!gl::get_shader_compile_status(rv)) {
                 auto err_str = gl::get_shader_info_log(rv);
-                report_fatal_message(str(format(
+                report_fatal_message(str(fmt(
                     "JkGfxMod failed to compile an essential shader. This may have happened "
                     "because your "
                     "graphics device does not support OpenGL 3.3, because the shader file has been "
@@ -60,15 +59,15 @@ namespace jkgm {
 
             if(!gl::get_program_link_status(prog)) {
                 auto err_str = gl::get_program_info_log(prog);
-                report_fatal_message(str(format("JkGfxMod failed to link an essential shader. This "
-                                                "may have happened because your "
-                                                "graphics device does not support OpenGL 3.3, "
-                                                "because the shader files have been "
-                                                "incorrectly modified, or because of a bug in "
-                                                "JkGfxMod.\n\nDetails: Failed to link ",
-                                                name,
-                                                "\n",
-                                                err_str)));
+                report_fatal_message(str(fmt("JkGfxMod failed to link an essential shader. This "
+                                             "may have happened because your "
+                                             "graphics device does not support OpenGL 3.3, "
+                                             "because the shader files have been "
+                                             "incorrectly modified, or because of a bug in "
+                                             "JkGfxMod.\n\nDetails: Failed to link ",
+                                             name,
+                                             "\n",
+                                             err_str)));
             }
         }
     }
@@ -177,7 +176,7 @@ jkgm::shaders::game_post_ssao_shader::game_post_ssao_shader(fs::path const &data
 
     std::string name_buf;
     for(int i = 0; i < num_kernel_samples; ++i) {
-        name_buf = str(format("samples[", i, "]"));
+        name_buf = str(fmt("samples[", i, "]"));
         samples.push_back(gl::get_uniform_location(the_program, name_buf));
     }
 }
@@ -313,10 +312,10 @@ jkgm::shaders::post_to_srgb_shader::post_to_srgb_shader(fs::path const &data_roo
 
     std::string name_buf;
     for(int i = 0; i < num_bloom_layers; ++i) {
-        name_buf = str(format("bloom_fbuf[", i, "]"));
+        name_buf = str(fmt("bloom_fbuf[", i, "]"));
         bloom_fbuf.push_back(gl::get_uniform_location(the_program, name_buf));
 
-        name_buf = str(format("bloom_weight[", i, "]"));
+        name_buf = str(fmt("bloom_weight[", i, "]"));
         bloom_weight.push_back(gl::get_uniform_location(the_program, name_buf));
     }
 }

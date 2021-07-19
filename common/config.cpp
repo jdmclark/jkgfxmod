@@ -106,9 +106,9 @@ std::unique_ptr<jkgm::config> jkgm::load_config_file()
     catch(std::exception const &e) {
         LOG_WARNING("Failed to load configuration file: ", e.what());
         report_warning_message(
-            str(format("JkGfxMod could not load the jkgm.json configuration file. This session "
-                       "will use the default options.\n\nDetails: ",
-                       e.what())));
+            str(fmt("JkGfxMod could not load the jkgm.json configuration file. This session "
+                    "will use the default options.\n\nDetails: ",
+                    e.what())));
     }
 
     return rv;

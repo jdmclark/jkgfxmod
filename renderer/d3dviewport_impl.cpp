@@ -11,7 +11,7 @@ jkgm::Direct3DViewport_impl::Direct3DViewport_impl(renderer *r)
 HRESULT WINAPI jkgm::Direct3DViewport_impl::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
     report_unimplemented_function(
-        str(format("Direct3DViewport::QueryInterface(", to_string(riid), ")")));
+        str(fmt("Direct3DViewport::QueryInterface(", to_string(riid), ")")));
 }
 
 ULONG WINAPI jkgm::Direct3DViewport_impl::AddRef()
@@ -26,7 +26,7 @@ ULONG WINAPI jkgm::Direct3DViewport_impl::Release()
     return 1000;
 }
 
-HRESULT WINAPI jkgm::Direct3DViewport_impl::Initialize(LPDIRECT3D a)
+HRESULT WINAPI jkgm::Direct3DViewport_impl ::Initialize(LPDIRECT3D a)
 {
     report_unimplemented_function("Direct3DViewport::Initialize");
 }

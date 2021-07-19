@@ -12,7 +12,7 @@ jkgm::execute_buffer::execute_buffer(size_t bufsz)
 HRESULT WINAPI jkgm::execute_buffer::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
     report_unimplemented_function(
-        str(format("Direct3DExecuteBuffer::QueryInterface(", to_string(riid), ")")));
+        str(fmt("Direct3DExecuteBuffer::QueryInterface(", to_string(riid), ")")));
 }
 
 ULONG WINAPI jkgm::execute_buffer::AddRef()

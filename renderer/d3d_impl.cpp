@@ -11,7 +11,7 @@ jkgm::Direct3D_impl::Direct3D_impl(renderer *r)
 
 HRESULT WINAPI jkgm::Direct3D_impl::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
-    report_unimplemented_function(str(format("Direct3D::QueryInterface(", to_string(riid), ")")));
+    report_unimplemented_function(str(fmt("Direct3D::QueryInterface(", to_string(riid), ")")));
 }
 
 ULONG WINAPI jkgm::Direct3D_impl::AddRef()

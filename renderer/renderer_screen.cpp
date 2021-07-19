@@ -57,10 +57,9 @@ std::unique_ptr<jkgm::renderer_screen> jkgm::create_renderer_screen(config const
         }
 
         LOG_WARNING("Unknown antialiasing type ignored: ", aa_type);
-        report_warning_message(
-            str(format("The configuration contains an unknown antialiasing type '",
-                       aa_type,
-                       "'. This session will not use antialiasing.")));
+        report_warning_message(str(fmt("The configuration contains an unknown antialiasing type '",
+                                       aa_type,
+                                       "'. This session will not use antialiasing.")));
     }
 
     return std::make_unique<renderer_screen_basic>(screen_res);

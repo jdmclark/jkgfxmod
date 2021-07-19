@@ -23,7 +23,7 @@ void jkgm::DirectDrawPalette_impl::recompute_palette()
 HRESULT WINAPI jkgm::DirectDrawPalette_impl::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
     report_unimplemented_function(
-        str(format("DirectDrawPalette::QueryInterface(", to_string(riid), ")")));
+        str(fmt("DirectDrawPalette::QueryInterface(", to_string(riid), ")")));
 }
 
 ULONG WINAPI jkgm::DirectDrawPalette_impl::AddRef()

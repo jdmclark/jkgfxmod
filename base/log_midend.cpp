@@ -20,10 +20,10 @@ void jkgm::log_midend::erase_log_backends()
 }
 
 void jkgm::log_midend::write_log_message(std::string_view filename,
-                                        int line_number,
-                                        log_level level,
-                                        std::string_view diagnostic_context,
-                                        format_script const &message)
+                                         int line_number,
+                                         log_level level,
+                                         std::string_view diagnostic_context,
+                                         format_script const &message)
 {
     std::lock_guard<std::mutex> lock(log_backend_lock);
 
@@ -32,7 +32,7 @@ void jkgm::log_midend::write_log_message(std::string_view filename,
         return;
     }
 
-    auto msg = str(format(diagnostic_context, message));
+    auto msg = str(fmt(diagnostic_context, message));
 
     for(auto &b : log_backends) {
         if(std::get<0>(b) & level) {

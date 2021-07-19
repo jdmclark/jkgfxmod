@@ -45,10 +45,10 @@ void jkgm::report_warning_message(std::string_view msg)
 void jkgm::report_unimplemented_function(std::string_view function_name)
 {
     LOG_ERROR(function_name, " unimplemented");
-    error_dialog(str(format("The program called an undefined function in JkGfxMod. The program may "
-                            "not be compatible with JkGfxMod, or it may have been modified in an "
-                            "unsupported way.\n\nDetails: Failed to call \"",
-                            function_name,
-                            "\", because it is not implemented")));
+    error_dialog(str(fmt("The program called an undefined function in JkGfxMod. The program may "
+                         "not be compatible with JkGfxMod, or it may have been modified in an "
+                         "unsupported way.\n\nDetails: Failed to call \"",
+                         function_name,
+                         "\", because it is not implemented")));
     abort();
 }

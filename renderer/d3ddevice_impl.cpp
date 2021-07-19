@@ -12,7 +12,7 @@ jkgm::Direct3DDevice_impl::Direct3DDevice_impl(renderer *r)
 HRESULT WINAPI jkgm::Direct3DDevice_impl::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
     report_unimplemented_function(
-        str(format("Direct3DDevice::QueryInterface(", to_string(riid), ")")));
+        str(fmt("Direct3DDevice::QueryInterface(", to_string(riid), ")")));
 }
 
 ULONG WINAPI jkgm::Direct3DDevice_impl::AddRef()
@@ -49,7 +49,7 @@ HRESULT WINAPI jkgm::Direct3DDevice_impl::CreateExecuteBuffer(LPD3DEXECUTEBUFFER
 {
     if(a->lpData != NULL) {
         report_unimplemented_function(
-            str(format("Direct3DDevice::CreateExecuteBuffer with creation time data")));
+            str(fmt("Direct3DDevice::CreateExecuteBuffer with creation time data")));
     }
 
     *b = r->create_direct3dexecutebuffer(a->dwBufferSize);

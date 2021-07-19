@@ -43,7 +43,7 @@ HRESULT WINAPI jkgm::primary_surface::GetAttachedSurface(LPDDSCAPS a, LPDIRECTDR
     }
 
     report_unimplemented_function(
-        str(format("DirectDrawSurface(primary)::GetAttachedSurface(", a->dwCaps, ")")));
+        str(fmt("DirectDrawSurface(primary)::GetAttachedSurface(", a->dwCaps, ")")));
 }
 
 HRESULT WINAPI jkgm::primary_surface::GetBltStatus(DWORD a)

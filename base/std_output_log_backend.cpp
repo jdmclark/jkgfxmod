@@ -28,5 +28,5 @@ void jkgm::std_output_log_backend::write_message(std::string_view /*filename*/,
         break;
     }
 
-    std::cerr << str(format(tag, message, "\n"));
+    std::cerr << str(fmt(tag, message, "\n"));
 }

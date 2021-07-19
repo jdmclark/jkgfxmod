@@ -94,11 +94,11 @@ void jkgm::material_map::create_map(fs::path const &materials_dir)
                 LOG_WARNING(
                     "Failed to load materials from ", md_path.generic_string(), ": ", e.what());
                 report_warning_message(
-                    str(format("JkGfxMod could not load the material pack \"",
-                               dir_iter->path().filename().generic_string(),
-                               "\". The directory either does not contain a material pack, or the "
-                               "material pack is corrupt.\n\nDetails: ",
-                               e.what())));
+                    str(fmt("JkGfxMod could not load the material pack \"",
+                            dir_iter->path().filename().generic_string(),
+                            "\". The directory either does not contain a material pack, or the "
+                            "material pack is corrupt.\n\nDetails: ",
+                            e.what())));
             }
         }
     }

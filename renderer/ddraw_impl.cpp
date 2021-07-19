@@ -22,7 +22,7 @@ HRESULT WINAPI jkgm::DirectDraw_impl::QueryInterface(REFIID riid, LPVOID *ppvObj
         return S_OK;
     }
 
-    report_unimplemented_function(str(format("DirectDraw::QueryInterface(", to_string(riid), ")")));
+    report_unimplemented_function(str(fmt("DirectDraw::QueryInterface(", to_string(riid), ")")));
 }
 
 ULONG WINAPI jkgm::DirectDraw_impl::AddRef()
@@ -57,7 +57,7 @@ HRESULT WINAPI jkgm::DirectDraw_impl::CreatePalette(DWORD a,
         return DD_OK;
     }
 
-    report_unimplemented_function(str(format("DirectDraw::CreatePalette(", a, ")")));
+    report_unimplemented_function(str(fmt("DirectDraw::CreatePalette(", a, ")")));
 }
 
 HRESULT WINAPI jkgm::DirectDraw_impl::CreateSurface(LPDDSURFACEDESC a,
@@ -87,8 +87,7 @@ HRESULT WINAPI jkgm::DirectDraw_impl::CreateSurface(LPDDSURFACEDESC a,
         }
     }
 
-    report_unimplemented_function(
-        str(format("DirectDraw::CreateSurface(", a->ddsCaps.dwCaps, ")")));
+    report_unimplemented_function(str(fmt("DirectDraw::CreateSurface(", a->ddsCaps.dwCaps, ")")));
 }
 
 HRESULT WINAPI jkgm::DirectDraw_impl::DuplicateSurface(LPDIRECTDRAWSURFACE a,
@@ -209,8 +208,7 @@ HRESULT WINAPI jkgm::DirectDraw_impl::SetCooperativeLevel(HWND a, DWORD b)
         LOG_DEBUG("DirectDraw::SetCooperativeLevel(Normal)");
     }
     else {
-        report_unimplemented_function(
-            str(format("DirectDraw::SetCooperativeLevel(Unknown ", b, ")")));
+        report_unimplemented_function(str(fmt("DirectDraw::SetCooperativeLevel(Unknown ", b, ")")));
     }
 
     return DD_OK;

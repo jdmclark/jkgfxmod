@@ -11,7 +11,7 @@
 
 namespace jkgm {
     template <class T, class... ArgT>
-    void emplace_log_backend(log_levels filter, ArgT &&... arg)
+    void emplace_log_backend(log_levels filter, ArgT &&...arg)
     {
         get_global<log_midend>()->insert_log_backend(
             filter, std::make_unique<T>(std::forward<ArgT>(arg)...));
@@ -26,7 +26,7 @@ namespace jkgm {
 }
 
 #define LOG_WITH_LEVEL(level, ...)                                                                 \
-    ::jkgm::write_log_message(__FILE__, __LINE__, (level), (::jkgm::format(__VA_ARGS__)))
+    ::jkgm::write_log_message(__FILE__, __LINE__, (level), (::jkgm::fmt(__VA_ARGS__)))
 
 #define LOG_ERROR(...) LOG_WITH_LEVEL(::jkgm::log_level::error, __VA_ARGS__)
 

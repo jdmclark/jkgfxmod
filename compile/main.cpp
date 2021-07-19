@@ -276,7 +276,7 @@ namespace jkgm {
         }
 
         if(doc.contains("albedo_map")) {
-            auto map_filename = str(format(rv->name, ".albedo.png"));
+            auto map_filename = str(fmt(rv->name, ".albedo.png"));
             auto real_map_filename =
                 get_convert_image(img_map,
                                   /*input path*/ script_path.parent_path() /
@@ -300,7 +300,7 @@ namespace jkgm {
         }
 
         if(doc.contains("emissive_map")) {
-            auto map_filename = str(format(rv->name, ".emissive.png"));
+            auto map_filename = str(fmt(rv->name, ".emissive.png"));
             auto real_map_filename =
                 get_convert_image(img_map,
                                   /*input path*/ script_path.parent_path() /
@@ -322,7 +322,7 @@ namespace jkgm {
         }
 
         if(doc.contains("displacement_map")) {
-            auto map_filename = str(format(rv->name, ".displacement.png"));
+            auto map_filename = str(fmt(rv->name, ".displacement.png"));
             auto real_map_filename =
                 get_convert_linear_image(img_map,
                                          /*input path*/ script_path.parent_path() /

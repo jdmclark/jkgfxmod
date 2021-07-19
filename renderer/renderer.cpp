@@ -92,10 +92,10 @@ namespace jkgm {
 
         if(!RegisterClass(&dummy_class)) {
             report_fatal_message(
-                str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: Failed to register "
-                           "WGL extension loader window class (",
-                           win32::win32_category().message(GetLastError()),
-                           ")")));
+                str(fmt("JkGfxMod could not initialize OpenGL.\n\nDetails: Failed to register "
+                        "WGL extension loader window class (",
+                        win32::win32_category().message(GetLastError()),
+                        ")")));
         }
 
         HWND dummy_window = CreateWindowEx(0,
@@ -112,10 +112,10 @@ namespace jkgm {
                                            NULL);
 
         if(!dummy_window) {
-            report_fatal_message(str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: "
-                                            "Failed to create WGL extension loader window (",
-                                            win32::win32_category().message(GetLastError()),
-                                            ")")));
+            report_fatal_message(str(fmt("JkGfxMod could not initialize OpenGL.\n\nDetails: "
+                                         "Failed to create WGL extension loader window (",
+                                         win32::win32_category().message(GetLastError()),
+                                         ")")));
         }
 
         HDC hDC = GetDC(dummy_window);
@@ -137,10 +137,10 @@ namespace jkgm {
 
         HGLRC dummy_context = wglCreateContext(hDC);
         if(dummy_context == NULL) {
-            report_fatal_message(str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: "
-                                            "Failed to create WGL extension loader context (",
-                                            win32::win32_category().message(GetLastError()),
-                                            ")")));
+            report_fatal_message(str(fmt("JkGfxMod could not initialize OpenGL.\n\nDetails: "
+                                         "Failed to create WGL extension loader context (",
+                                         win32::win32_category().message(GetLastError()),
+                                         ")")));
         }
 
         wglMakeCurrent(hDC, dummy_context);
@@ -149,27 +149,27 @@ namespace jkgm {
             (wglCreateContextAttribsARB_type)wglGetProcAddress("wglCreateContextAttribsARB");
         if(wglCreateContextAttribsARB == NULL) {
             report_fatal_message(
-                str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: Failed to acquire "
-                           "wglCreateContextAttribsARB extension (",
-                           win32::win32_category().message(GetLastError()),
-                           ")")));
+                str(fmt("JkGfxMod could not initialize OpenGL.\n\nDetails: Failed to acquire "
+                        "wglCreateContextAttribsARB extension (",
+                        win32::win32_category().message(GetLastError()),
+                        ")")));
         }
 
         wglChoosePixelFormatARB =
             (wglChoosePixelFormatARB_type)wglGetProcAddress("wglChoosePixelFormatARB");
         if(wglChoosePixelFormatARB == NULL) {
-            report_fatal_message(str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: "
-                                            "Failed to acquire wglChoosePixelFormatARB extension (",
-                                            win32::win32_category().message(GetLastError()),
-                                            ")")));
+            report_fatal_message(str(fmt("JkGfxMod could not initialize OpenGL.\n\nDetails: "
+                                         "Failed to acquire wglChoosePixelFormatARB extension (",
+                                         win32::win32_category().message(GetLastError()),
+                                         ")")));
         }
 
         wglSwapIntervalEXT = (wglSwapIntervalEXT_type)wglGetProcAddress("wglSwapIntervalEXT");
         if(wglSwapIntervalEXT == NULL) {
-            report_fatal_message(str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: "
-                                            "Failed to acquire wglSwapIntervalEXT extension (",
-                                            win32::win32_category().message(GetLastError()),
-                                            ")")));
+            report_fatal_message(str(fmt("JkGfxMod could not initialize OpenGL.\n\nDetails: "
+                                         "Failed to acquire wglSwapIntervalEXT extension (",
+                                         win32::win32_category().message(GetLastError()),
+                                         ")")));
         }
 
         wglMakeCurrent(hDC, 0);
@@ -473,7 +473,7 @@ namespace jkgm {
 
                 auto rv = ChangeDisplaySettings(&dm, CDS_FULLSCREEN);
                 if(rv != DISP_CHANGE_SUCCESSFUL) {
-                    report_fatal_message(str(format(
+                    report_fatal_message(str(fmt(
                         "JkGfxMod could not change the display to the configured resolution. This "
                         "may have happened because your graphics device does not support the "
                         "configured resolution, or due to an implementation bug in "
@@ -511,10 +511,10 @@ namespace jkgm {
                 hDC, pfd_attribs.data(), nullptr, /*max formats*/ 1, &pfdid, &num_formats);
             if(!cpf_res) {
                 report_fatal_message(
-                    str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: "
-                               "Call to wglChoosePixelFormatARB failed unexpectedly (returned ",
-                               GetLastError(),
-                               ")")));
+                    str(fmt("JkGfxMod could not initialize OpenGL.\n\nDetails: "
+                            "Call to wglChoosePixelFormatARB failed unexpectedly (returned ",
+                            GetLastError(),
+                            ")")));
             }
 
             if(num_formats == 0) {
@@ -536,10 +536,10 @@ namespace jkgm {
             hGLRC = wglCreateContextAttribsARB(hDC, NULL, gl_attribs.data());
 
             if(hGLRC == NULL) {
-                report_fatal_message(str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: "
-                                                "Failed to create OpenGL context (returned ",
-                                                GetLastError(),
-                                                ")")));
+                report_fatal_message(str(fmt("JkGfxMod could not initialize OpenGL.\n\nDetails: "
+                                             "Failed to create OpenGL context (returned ",
+                                             GetLastError(),
+                                             ")")));
             }
 
             wglMakeCurrent(hDC, hGLRC);
@@ -548,10 +548,10 @@ namespace jkgm {
             auto vsync_res = wglSwapIntervalEXT(present_interval);
             if(!vsync_res) {
                 report_fatal_message(
-                    str(format("JkGfxMod could not initialize OpenGL.\n\nDetails: Call to "
-                               "wglSwapIntervalEXT failed unexpectedly (returned ",
-                               GetLastError(),
-                               ")")));
+                    str(fmt("JkGfxMod could not initialize OpenGL.\n\nDetails: Call to "
+                            "wglSwapIntervalEXT failed unexpectedly (returned ",
+                            GetLastError(),
+                            ")")));
             }
 
             if(!gladLoadGL()) {
@@ -1176,14 +1176,14 @@ namespace jkgm {
                         auto const *payload = (D3DPROCESSVERTICES const *)cmd_span.data();
                         if(payload->dwFlags != D3DPROCESSVERTICES_COPY || payload->wStart != 0 ||
                            payload->wDest != 0) {
-                            report_unimplemented_function(str(format("Process vertices opcode: ",
-                                                                     payload->dwFlags,
-                                                                     " ",
-                                                                     payload->dwCount,
-                                                                     " ",
-                                                                     payload->wStart,
-                                                                     " ",
-                                                                     payload->wDest)));
+                            report_unimplemented_function(str(fmt("Process vertices opcode: ",
+                                                                  payload->dwFlags,
+                                                                  " ",
+                                                                  payload->dwCount,
+                                                                  " ",
+                                                                  payload->wStart,
+                                                                  " ",
+                                                                  payload->wDest)));
                         }
                     } break;
 

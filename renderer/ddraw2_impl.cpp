@@ -18,8 +18,7 @@ HRESULT WINAPI jkgm::DirectDraw2_impl::QueryInterface(REFIID riid, LPVOID *ppvOb
         return S_OK;
     }
 
-    report_unimplemented_function(
-        str(format("DirectDraw2::QueryInterface(", to_string(riid), ")")));
+    report_unimplemented_function(str(fmt("DirectDraw2::QueryInterface(", to_string(riid), ")")));
 }
 
 ULONG WINAPI jkgm::DirectDraw2_impl::AddRef()
@@ -141,7 +140,7 @@ HRESULT WINAPI jkgm::DirectDraw2_impl::SetCooperativeLevel(HWND a, DWORD b)
     }
     else {
         report_unimplemented_function(
-            str(format("DirectDraw2::SetCooperativeLevel(Unknown ", b, ")")));
+            str(fmt("DirectDraw2::SetCooperativeLevel(Unknown ", b, ")")));
     }
 
     return DD_OK;

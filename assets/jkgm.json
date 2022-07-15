@@ -15,5 +15,6 @@
     "enable_texture_filtering": true,
     "enable_posterized_lighting": false,
     "enable_vsync": false,
-    "command": "jk.exe"
+    "command": "jk.exe",
+    "path": ""
 }

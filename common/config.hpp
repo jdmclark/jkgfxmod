@@ -30,6 +30,7 @@ namespace jkgm {
         std::string command = "jk.exe";
         std::string data_path = "jkgm";
         std::optional<std::string> log_path;
+        std::string path = "";
         uint64_t vram_texture_preload_size = 0U;
     };
 

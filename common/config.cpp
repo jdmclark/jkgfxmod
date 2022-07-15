@@ -99,6 +99,10 @@ std::unique_ptr<jkgm::config> jkgm::load_config_file()
             }
         }
 
+        if(j.contains("path")) {
+            j.at("path").get_to(rv->path);
+        }
+
         if(j.contains("vram_texture_preload_size")) {
             j.at("vram_texture_preload_size").get_to(rv->vram_texture_preload_size);
         }

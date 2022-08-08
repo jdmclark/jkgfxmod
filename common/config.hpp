@@ -31,6 +31,7 @@ namespace jkgm {
         std::string data_path = "jkgm";
         std::optional<std::string> log_path;
         std::string path = "";
+        bool devmode = false;
         uint64_t vram_texture_preload_size = 0U;
     };
 

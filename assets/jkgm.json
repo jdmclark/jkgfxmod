@@ -16,5 +16,6 @@
     "enable_posterized_lighting": false,
     "enable_vsync": false,
     "command": "jk.exe",
-    "path": ""
+    "path": "",
+    "devmode": false
 }

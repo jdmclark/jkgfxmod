@@ -41,6 +41,10 @@ int APIENTRY wWinMain(HINSTANCE /*hInstance*/,
             filtered_cmdline.append(cfg->path.begin(), cfg->path.end());
         }
 
+        if(cfg->devmode) {
+            filtered_cmdline.append(L" -devmode");
+        }
+
         std::wstring cmdbuf = L"jk";
         cmdbuf.append(filtered_cmdline);
 
